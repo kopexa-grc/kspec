@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/juliankoehn/kspec/core"
+	"github.com/kopexa-grc/kspec/core"
 	"github.com/miekg/dns"
 )
 

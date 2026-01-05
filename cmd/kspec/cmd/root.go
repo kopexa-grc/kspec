@@ -7,11 +7,18 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// Build information - injected at build time via ldflags
+var (
+	version = "dev"
+	commit  = "none"
+	date    = "unknown"
+)
+
 var (
 	// Persistent flags for all commands
 	policyFile string
 	policyDir  string
-	
+
 	// Credential flags
 	token          string
 	credentialType string
@@ -25,7 +32,14 @@ var rootCmd = &cobra.Command{
 	Long: `kspec is a powerful policy-as-code scanner that validates infrastructure,
 security, and compliance requirements across various platforms including
 GitHub organizations, repositories, and network resources.`,
-	Version: "1.0.0",
+}
+
+// SetVersionInfo sets the version information for the CLI
+func SetVersionInfo(v, c, d string) {
+	version = v
+	commit = c
+	date = d
+	rootCmd.Version = fmt.Sprintf("%s (commit: %s, built: %s)", version, commit, date)
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.

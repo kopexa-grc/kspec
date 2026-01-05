@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/juliankoehn/kspec/core"
+	"github.com/kopexa-grc/kspec/core"
 )
 
 type AppleCareResource struct{}

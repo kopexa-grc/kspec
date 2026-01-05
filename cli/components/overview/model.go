@@ -6,7 +6,7 @@ import (
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/juliankoehn/kspec/cli/components/common"
+	"github.com/kopexa-grc/kspec/cli/components/common"
 )
 
 // Model represents the asset overview table

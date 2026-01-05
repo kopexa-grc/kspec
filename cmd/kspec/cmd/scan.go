@@ -8,9 +8,9 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
 
-	"github.com/juliankoehn/kspec/cli"
-	"github.com/juliankoehn/kspec/core"
-	"github.com/juliankoehn/kspec/provider/scanner"
+	"github.com/kopexa-grc/kspec/cli"
+	"github.com/kopexa-grc/kspec/core"
+	"github.com/kopexa-grc/kspec/provider/scanner"
 )
 
 // scanCmd represents the scan command

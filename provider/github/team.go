@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/google/go-github/v62/github"
-	"github.com/juliankoehn/kspec/core"
+	"github.com/kopexa-grc/kspec/core"
 )
 
 type TeamResource struct {

@@ -1,0 +1,140 @@
+# GoReleaser configuration for kspec
+# https://goreleaser.com/customization/
+
+version: 2
+
+project_name: kspec
+
+before:
+  hooks:
+    - go mod tidy
+    - go generate ./...
+
+builds:
+  - id: kspec
+    main: ./cmd/kspec
+    binary: kspec
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}}
+      - -X main.commit={{.Commit}}
+      - -X main.date={{.Date}}
+    mod_timestamp: "{{ .CommitTimestamp }}"
+
+archives:
+  - id: default
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- .Version }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+    formats:
+      - tar.gz
+    format_overrides:
+      - goos: windows
+        formats:
+          - zip
+    files:
+      - LICENSE
+      - README.md
+      - policies/*.yml
+
+checksum:
+  name_template: "checksums.txt"
+  algorithm: sha256
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-next"
+
+changelog:
+  use: github
+  sort: asc
+  abbrev: -1
+  groups:
+    - title: "Features"
+      regexp: '^.*?feat(\([[:word:]]+\))??!?:.+$'
+      order: 0
+    - title: "Bug Fixes"
+      regexp: '^.*?fix(\([[:word:]]+\))??!?:.+$'
+      order: 1
+    - title: "Performance"
+      regexp: '^.*?perf(\([[:word:]]+\))??!?:.+$'
+      order: 2
+    - title: "Documentation"
+      regexp: '^.*?docs(\([[:word:]]+\))??!?:.+$'
+      order: 3
+    - title: "Dependencies"
+      regexp: '^.*?deps(\([[:word:]]+\))??!?:.+$'
+      order: 4
+    - title: "Other"
+      order: 999
+  filters:
+    exclude:
+      - "^chore:"
+      - "^ci:"
+      - "^test:"
+      - "Merge pull request"
+      - "Merge branch"
+
+release:
+  github:
+    owner: kopexa-grc
+    name: kspec
+  draft: false
+  prerelease: auto
+  mode: replace
+  name_template: "v{{.Version}}"
+  header: |
+    ## kspec v{{.Version}}
+
+    Welcome to this release of kspec! 🎉
+
+    ### Installation
+
+    **macOS (Homebrew)**
+    ```bash
+    # Coming soon
+    ```
+
+    **Linux/macOS (Binary)**
+    ```bash
+    # Download the appropriate binary for your platform from the assets below
+    curl -Lo kspec.tar.gz https://github.com/kopexa-grc/kspec/releases/download/v{{.Version}}/kspec_{{.Version}}_$(uname -s)_$(uname -m).tar.gz
+    tar -xzf kspec.tar.gz
+    chmod +x kspec
+    sudo mv kspec /usr/local/bin/
+    ```
+
+    **Windows**
+    Download the `.zip` file from the assets below and extract it.
+
+  footer: |
+    ---
+
+    **Full Changelog**: https://github.com/kopexa-grc/kspec/compare/{{ .PreviousTag }}...{{ .Tag }}
+
+    > ⚠️ **License**: This software is licensed under the PolyForm Noncommercial License 1.0.0.
+    > Commercial use requires a separate license.
+
+# Disable features we don't need
+brews: []
+scoops: []
+nfpms: []
+snapcrafts: []
+dockers: []
+
+# Announce (optional - can be enabled later)
+# announce:
+#   discord:
+#     enabled: false

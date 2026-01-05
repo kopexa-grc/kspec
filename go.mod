@@ -1,4 +1,4 @@
-module github.com/juliankoehn/kspec
+module github.com/kopexa-grc/kspec
 
 go 1.24.5
 

@@ -2,8 +2,8 @@ package cli
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/juliankoehn/kspec/cli/components/browser"
-	"github.com/juliankoehn/kspec/cli/components/common"
+	"github.com/kopexa-grc/kspec/cli/components/browser"
+	"github.com/kopexa-grc/kspec/cli/components/common"
 )
 
 // Model is the main UI model that uses the hierarchical browser

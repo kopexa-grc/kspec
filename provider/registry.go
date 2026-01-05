@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/juliankoehn/kspec/core"
-	"github.com/juliankoehn/kspec/provider/azure"
-	"github.com/juliankoehn/kspec/provider/github"
-	"github.com/juliankoehn/kspec/provider/ms365"
-	"github.com/juliankoehn/kspec/provider/network"
-	"github.com/juliankoehn/kspec/provider/os"
+	"github.com/kopexa-grc/kspec/core"
+	"github.com/kopexa-grc/kspec/provider/azure"
+	"github.com/kopexa-grc/kspec/provider/github"
+	"github.com/kopexa-grc/kspec/provider/ms365"
+	"github.com/kopexa-grc/kspec/provider/network"
+	"github.com/kopexa-grc/kspec/provider/os"
 )
 
 // GetProviders returns all available provider factories

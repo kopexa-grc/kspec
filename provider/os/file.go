@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/juliankoehn/kspec/core"
+	"github.com/kopexa-grc/kspec/core"
 )
 
 type FileResource struct{}
