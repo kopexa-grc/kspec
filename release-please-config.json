@@ -9,7 +9,7 @@
       "draft": false,
       "prerelease": false,
       "changelog-path": "CHANGELOG.md",
-      "changelog-type": "github",
+      "changelog-type": "default",
       "versioning": "default",
       "extra-files": []
     }

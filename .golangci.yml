@@ -7,14 +7,9 @@ run:
   modules-download-mode: readonly
   go: "1.21"
 
-output:
-  print-issued-lines: true
-  print-linter-name: true
-  sort-results: true
-
 formatters:
   enable:
-    - goimports        # Check import order
+    - goimports
   settings:
     goimports:
       local-prefixes:
@@ -23,26 +18,25 @@ formatters:
 linters:
   default: standard
   enable:
-    # Additional linters
-    - bodyclose        # Check HTTP response body is closed
-    - dogsled          # Check for excessive blank identifiers
-    - dupl             # Code clone detection
-    - errname          # Check error naming conventions
-    - errorlint        # Find problems with error wrapping
-    - exhaustive       # Check exhaustiveness of enum switch statements
-    - goconst          # Find repeated strings that could be constants
-    - gocritic         # Various checks
-    - goprintffuncname # Check printf-like function names
-    - gosec            # Security checks
-    - misspell         # Spell checker
-    - nakedret         # Check for naked returns
-    - nilerr           # Find code returning nil error with non-nil
-    - noctx            # Check for http requests without context
-    - nolintlint       # Check nolint directives
-    - prealloc         # Check for slice preallocation
-    - predeclared      # Check for shadowing predeclared identifiers
-    - revive           # Fast, extensible linter
-    - tparallel        # Check for t.Parallel() in tests
+    - bodyclose
+    - dogsled
+    - dupl
+    - errname
+    - errorlint
+    - exhaustive
+    - goconst
+    - gocritic
+    - goprintffuncname
+    - gosec
+    - misspell
+    - nakedret
+    - nilerr
+    - noctx
+    - nolintlint
+    - prealloc
+    - predeclared
+    - revive
+    - tparallel
 
   settings:
     errcheck:
@@ -55,7 +49,7 @@ linters:
 
     govet:
       disable:
-        - fieldalignment # Too noisy
+        - fieldalignment
 
     dupl:
       threshold: 150
@@ -70,13 +64,13 @@ linters:
         - performance
         - style
       disabled-checks:
-        - hugeParam       # Too noisy for struct parameters
-        - rangeValCopy    # Too noisy
+        - hugeParam
+        - rangeValCopy
 
     gosec:
       excludes:
-        - G104 # Audit errors not checked - too noisy
-        - G304 # File path provided as taint input - false positives
+        - G104
+        - G304
 
     misspell:
       locale: US
@@ -106,37 +100,25 @@ linters:
         - name: empty-block
         - name: superfluous-else
         - name: unused-parameter
-          disabled: true # Too noisy
+          disabled: true
         - name: unreachable-code
+
+  exclusions:
+    generated: lax
+    rules:
+      - path: _test\.go
+        linters:
+          - dupl
+          - gosec
+          - errcheck
+          - goconst
+      - path: generated
+        linters:
+          - all
+      - path: (cmd|main)\.go
+        linters:
+          - forbidigo
 
 issues:
   max-issues-per-linter: 50
   max-same-issues: 10
-
-  exclude-rules:
-    # Exclude some linters from running on tests files
-    - path: _test\.go
-      linters:
-        - dupl
-        - gosec
-        - errcheck
-        - goconst
-
-    # Exclude some linters from running on generated files
-    - path: generated
-      linters:
-        - all
-
-    # Allow fmt.Print in main and cmd packages
-    - path: (cmd|main)\.go
-      linters:
-        - forbidigo
-
-    # Test files can have longer functions
-    - path: _test\.go
-      linters:
-        - funlen
-
-severity:
-  default: warning
-  case-sensitive: false
