@@ -1,0 +1,62 @@
+# Lefthook configuration for kspec
+# Install hooks: lefthook install
+# Run manually: lefthook run pre-commit
+
+# Skip lefthook in CI
+skip_in_ci: true
+
+pre-commit:
+  parallel: true
+  commands:
+    fmt:
+      glob: "*.go"
+      run: go fmt {staged_files}
+      stage_fixed: true
+
+    vet:
+      glob: "*.go"
+      run: go vet ./...
+
+    lint:
+      glob: "*.go"
+      run: |
+        if command -v golangci-lint >/dev/null 2>&1; then
+          golangci-lint run --new-from-rev=HEAD~1 --timeout=5m
+        else
+          echo "golangci-lint not installed, skipping..."
+        fi
+
+    mod-tidy:
+      glob: "go.{mod,sum}"
+      run: go mod tidy && git diff --exit-code go.mod go.sum
+
+pre-push:
+  parallel: true
+  commands:
+    test:
+      run: go test -race -short ./...
+
+    build:
+      run: go build -o /dev/null ./cmd/kspec
+
+commit-msg:
+  commands:
+    conventional:
+      run: |
+        # Check for conventional commit format
+        MSG=$(cat "$1" 2>/dev/null || echo "")
+        if [ -z "$MSG" ]; then
+          exit 0
+        fi
+        # Allow merge commits
+        if echo "$MSG" | grep -qE "^Merge "; then
+          exit 0
+        fi
+        # Check conventional commit pattern
+        if ! echo "$MSG" | grep -qE "^(feat|fix|docs|refactor|test|perf|ci|deps|chore)(\(.+\))?: .+"; then
+          echo "ERROR: Commit message does not follow Conventional Commits format"
+          echo "Expected: <type>[optional scope]: <description>"
+          echo "Types: feat, fix, docs, refactor, test, perf, ci, deps, chore"
+          echo "Example: feat(provider): add AWS support"
+          exit 1
+        fi
