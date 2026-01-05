@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation
+    url: https://github.com/kopexa-grc/kspec/tree/main/docs
+    about: Check our documentation before opening an issue
+  - name: Discussions
+    url: https://github.com/kopexa-grc/kspec/discussions
+    about: Ask questions and discuss ideas
+  - name: Security Vulnerabilities
+    url: https://github.com/kopexa-grc/kspec/security/advisories/new
+    about: Report security vulnerabilities privately

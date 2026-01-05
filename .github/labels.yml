@@ -1,0 +1,158 @@
+# GitHub Labels Configuration
+# Synced via github-labeler action
+
+# Type labels
+- name: "type: bug"
+  color: "d73a4a"
+  description: "Something isn't working"
+
+- name: "type: feature"
+  color: "a2eeef"
+  description: "New feature or request"
+
+- name: "type: enhancement"
+  color: "84b6eb"
+  description: "Improvement to existing functionality"
+
+- name: "type: documentation"
+  color: "0075ca"
+  description: "Improvements or additions to documentation"
+
+- name: "type: question"
+  color: "d876e3"
+  description: "Further information is requested"
+
+- name: "type: security"
+  color: "ee0701"
+  description: "Security related issue"
+
+# Priority labels
+- name: "priority: critical"
+  color: "b60205"
+  description: "Must be fixed ASAP"
+
+- name: "priority: high"
+  color: "d93f0b"
+  description: "High priority issue"
+
+- name: "priority: medium"
+  color: "fbca04"
+  description: "Medium priority issue"
+
+- name: "priority: low"
+  color: "0e8a16"
+  description: "Low priority issue"
+
+# Status labels
+- name: "status: triage"
+  color: "ededed"
+  description: "Needs triage"
+
+- name: "status: confirmed"
+  color: "215cea"
+  description: "Issue has been confirmed"
+
+- name: "status: in-progress"
+  color: "7057ff"
+  description: "Work in progress"
+
+- name: "status: blocked"
+  color: "b60205"
+  description: "Blocked by another issue"
+
+- name: "status: needs-info"
+  color: "d876e3"
+  description: "Needs more information from reporter"
+
+- name: "status: wontfix"
+  color: "ffffff"
+  description: "This will not be worked on"
+
+- name: "status: duplicate"
+  color: "cfd3d7"
+  description: "This issue or PR already exists"
+
+# Provider labels
+- name: "provider: azure"
+  color: "0078d4"
+  description: "Related to Azure provider"
+
+- name: "provider: ms365"
+  color: "d83b01"
+  description: "Related to Microsoft 365 provider"
+
+- name: "provider: github"
+  color: "24292e"
+  description: "Related to GitHub provider"
+
+- name: "provider: network"
+  color: "1f6feb"
+  description: "Related to Network provider"
+
+# Component labels
+- name: "component: cli"
+  color: "bfd4f2"
+  description: "Related to CLI interface"
+
+- name: "component: tui"
+  color: "bfd4f2"
+  description: "Related to terminal UI"
+
+- name: "component: scanner"
+  color: "bfd4f2"
+  description: "Related to scanner engine"
+
+- name: "component: policies"
+  color: "bfd4f2"
+  description: "Related to policy files"
+
+- name: "component: cel"
+  color: "bfd4f2"
+  description: "Related to CEL evaluation"
+
+# Dependency labels (for Dependabot)
+- name: "dependencies"
+  color: "0366d6"
+  description: "Pull requests that update a dependency file"
+
+- name: "go"
+  color: "00add8"
+  description: "Go related changes"
+
+- name: "github-actions"
+  color: "2088ff"
+  description: "GitHub Actions related"
+
+# Contribution labels
+- name: "good first issue"
+  color: "7057ff"
+  description: "Good for newcomers"
+
+- name: "help wanted"
+  color: "008672"
+  description: "Extra attention is needed"
+
+- name: "hacktoberfest"
+  color: "ff7518"
+  description: "Hacktoberfest participation"
+
+# Size labels
+- name: "size: xs"
+  color: "009900"
+  description: "Extra small change"
+
+- name: "size: s"
+  color: "77bb00"
+  description: "Small change"
+
+- name: "size: m"
+  color: "eebb00"
+  description: "Medium change"
+
+- name: "size: l"
+  color: "ee9900"
+  description: "Large change"
+
+- name: "size: xl"
+  color: "ee5500"
+  description: "Extra large change"
