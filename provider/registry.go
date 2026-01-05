@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/juliankoehn/kspec/core"
+	"github.com/juliankoehn/kspec/provider/azure"
 	"github.com/juliankoehn/kspec/provider/github"
 	"github.com/juliankoehn/kspec/provider/network"
 	"github.com/juliankoehn/kspec/provider/os"
@@ -16,11 +17,61 @@ func GetProviders() []core.Provider {
 		os.New(),
 		network.NewNetworkProvider(),
 		github.NewGithubProvider(),
+		azure.NewAzureProvider(),
 	}
+}
+
+// GetProviderByName returns a specific provider by name
+func GetProviderByName(name string) (core.Provider, error) {
+	switch name {
+	case "os", "local":
+		return os.New(), nil
+	case "network", "host":
+		return network.NewNetworkProvider(), nil
+	case "github":
+		return github.NewGithubProvider(), nil
+	case "azure":
+		return azure.NewAzureProvider(), nil
+	default:
+		return nil, fmt.Errorf("unknown provider: %s", name)
+	}
+}
+
+// InitProvider initializes a single provider by name with the given config
+func InitProvider(ctx context.Context, providerName string, config map[string]string) (map[string]core.ResourceSpec, error) {
+	provider, err := GetProviderByName(providerName)
+	if err != nil {
+		return nil, err
+	}
+
+	conn, err := provider.Connect(ctx, config)
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to provider %s: %w", provider.Name(), err)
+	}
+
+	registry := make(map[string]core.ResourceSpec)
+	
+	// Register all primary resources
+	for _, r := range conn.Resources() {
+		registry[r.Name()] = r
+		
+		// Check if this resource provides sub-resources
+		if subProvider, ok := r.(core.SubResourceProvider); ok {
+			subResources := subProvider.SubResources()
+			for _, subRes := range subResources {
+				// Register sub-resources
+				registry[subRes.Name()] = subRes
+			}
+		}
+	}
+
+	return registry, nil
 }
 
 // InitProviders initializes all providers with the given config and returns a unified resource map.
 // This is a helper for CLIs that want "all default providers".
+//
+// Deprecated: Use InitProvider for lazy-loading individual providers.
 func InitProviders(ctx context.Context, config map[string]string) (map[string]core.ResourceSpec, error) {
 	registry := make(map[string]core.ResourceSpec)
 

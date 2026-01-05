@@ -14,6 +14,26 @@ type ResourceSpec interface {
 	Fetch(ctx context.Context, asset Asset) ([]Resource, error)
 }
 
+// SubResourceProvider is an optional interface that ResourceSpecs can implement
+// to dynamically register additional resource types at runtime.
+// This allows resources to provide dependent sub-resources (e.g., SQL Server -> Databases).
+type SubResourceProvider interface {
+	ResourceSpec
+	// SubResources returns additional resource specs that should be registered
+	// These are typically dependent resources discovered during connection
+	SubResources() []ResourceSpec
+}
+
+// DiscoveryResource is an optional interface for resources that can discover
+// what sub-resources actually exist before scanning them.
+// This enables smart scanning that only checks resources that are present.
+type DiscoveryResource interface {
+	ResourceSpec
+	// Discover scans the environment and returns which resource types are present
+	// Returns a map of resource type name -> count of instances found
+	Discover(ctx context.Context, asset Asset) (map[string]int, error)
+}
+
 // Provider defines the interface for modular data sources (GitHub, AWS, etc.).
 type Provider interface {
 	Name() string
