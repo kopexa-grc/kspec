@@ -128,6 +128,9 @@ func (r *SubscriptionResource) Discover(ctx context.Context, asset core.Asset) (
 
 	discovered := make(map[string]int)
 
+	// The subscription itself is always 1
+	discovered["azure_subscription"] = 1
+
 	// Discover Storage Accounts
 	storageClient, err := armstorage.NewAccountsClient(r.subscriptionID, r.credential, nil)
 	if err == nil {

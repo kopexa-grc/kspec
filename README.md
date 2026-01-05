@@ -1,14 +1,13 @@
-
 <div align="center">
   <img src="docs/banner.png" alt="kspec banner" width="100%" />
 
   # kspec
-  
+
   **The Enterprise-Grade Policy-as-Code Engine.**
 
   [![License](https://img.shields.io/badge/License-PolyForm%20Noncommercial-blue.svg)](LICENSE)
-  [![Go Report Card](https://goreportcard.com/badge/github.com/cnspec/kspec)](https://goreportcard.com/report/github.com/cnspec/kspec)
-  
+  [![Go Report Card](https://goreportcard.com/badge/github.com/juliankoehn/kspec)](https://goreportcard.com/report/github.com/juliankoehn/kspec)
+
   <p align="center">
     <b>Validate. Secure. Comply.</b><br />
     A modern, extensible framework for defining and enforcing security policies across your digital infrastructure.
@@ -17,61 +16,218 @@
 
 ---
 
-## 🚀 Overview
+## Overview
 
-**kspec** is a powerful policy engine designed to bridge the gap between complex security requirements and automated validation. specific for cloud-native environments, it allows organizations to define security posture as code, ensuring consistent enforcement across network, cloud, and application layers.
+**kspec** is a powerful policy engine designed to bridge the gap between complex security requirements and automated validation. Built for cloud-native environments, it allows organizations to define security posture as code, ensuring consistent enforcement across cloud platforms, SaaS applications, networks, and infrastructure.
 
-Whether you are auditing TLS configurations, verifying email security standards (SPF/DMARC), or enforcing corporate compliance, **kspec** provides the primitives to build, test, and run policies at scale.
+Whether you are auditing cloud configurations, verifying GitHub repository security, enforcing Microsoft 365 compliance, or validating TLS settings, **kspec** provides the primitives to build, test, and run policies at scale.
 
-## ✨ Key Features
+## Key Features
 
--   **🔒 Context-Aware Security**: Go beyond simple checks. Validate TLS negotiation parameters, certificate chains, DNS records, and HTTP headers with deep, structure-aware providers.
--   **📄 Policy-as-Code**: Define your security expectations in clear, version-controlled YAML. Treat compliance as code.
--   **🔌 Extensible Provider Architecture**: Modular design allows for easy addition of new asset types and verification logic (Network, HTTP, Cloud, etc.).
--   **⚡ High Performance**: Built in Go for speed, portability, and minimal overhead.
+- **Multi-Cloud Support**: Scan Azure subscriptions, Microsoft 365 tenants, and GitHub organizations from a single tool
+- **Policy-as-Code**: Define your security expectations in clear, version-controlled YAML with CEL expressions
+- **Extensible Provider Architecture**: Modular design with providers for Azure, MS365, GitHub, Network, and more
+- **Interactive TUI**: Beautiful terminal UI showing real-time scan progress and results
+- **High Performance**: Built in Go for speed, portability, and minimal overhead
+- **CI/CD Ready**: Easy integration with GitHub Actions, Azure DevOps, and other CI/CD platforms
 
-## 🛠️ Usage
+## Supported Providers
 
-### Quick Scan
-Validate a target host against a specific policy file:
+| Provider | Description | Documentation |
+|----------|-------------|---------------|
+| **Azure** | Scan Azure subscriptions for security compliance | [Setup Guide](docs/azure-setup.md) |
+| **Microsoft 365** | Scan M365 tenants for identity and security settings | [Setup Guide](docs/ms365-setup.md) |
+| **GitHub** | Scan organizations and repositories for security best practices | [Setup Guide](docs/github-setup.md) |
+| **Network** | Validate TLS, DNS, and HTTP security configurations | - |
+| **Local** | Scan local system configurations | - |
+
+## Installation
+
+### From Source
 
 ```bash
-# Check Google for Email Security Compliance (SPF, DMARC)
-go run ./cmd/kspec scan host google.com -f policies/email-security.policy.yaml
+# Clone the repository
+git clone https://github.com/juliankoehn/kspec.git
+cd kspec
+
+# Build
+go build -o kspec ./cmd/kspec
+
+# Verify installation
+./kspec --help
 ```
 
-### Protocol Validation
-Ensure your web servers meet modern TLS standards:
+## Quick Start
+
+### Scan GitHub Organization
 
 ```bash
-# Check TLS configuration
-go run ./cmd/kspec scan host example.com -f policies/tls_security.yaml
+# Set your GitHub token
+export GITHUB_TOKEN="ghp_xxxxxxxxxxxx"
+
+# Scan an organization
+kspec scan github org <organization-name> -f policies/github-security.yml
 ```
 
-## 📦 Policy Library
+### Scan Azure Subscription
 
-The repository comes pre-loaded with essential security policies:
+```bash
+# Set Azure credentials
+export AZURE_TENANT_ID="your-tenant-id"
+export AZURE_CLIENT_ID="your-client-id"
+export AZURE_CLIENT_SECRET="your-client-secret"
 
-| Policy | Description |
-| :--- | :--- |
-| **[TLS Security](policies/tls_security.yaml)** | Validates Protocol Versions (TLS 1.2+), Cipher Suites, and Certificate validity. |
-| **[Email Security](policies/email-security.policy.yaml)** | Checks for generic SPF records, DMARC enforcement, and DNS hygiene. |
-| **[HTTP Security](policies/http_security.yaml)** | Verifies presence of security headers (HSTS, CSP, X-Frame-Options). |
-| **[DNS Security](policies/dns_security.yaml)** | Validates DNSSEC and name server configurations. |
+# Scan a subscription
+kspec scan azure subscription <subscription-id> -f policies/azure-security.yml
+```
 
-## 🏗️ Architecture
+### Scan Microsoft 365 Tenant
 
-kspec operates on a **Provider-Resource-Query** model:
-1.  **Providers** (e.g., `network`, `http`) connect to the target asset.
-2.  **Resources** (e.g., `tls`, `headers`) expose structured data.
-3.  **Policies** (MQL/YAML) define the expected state of those resources.
+```bash
+# Scan M365 tenant
+kspec scan ms365 tenant <tenant-id> \
+  --client-id <client-id> \
+  --client-secret <client-secret> \
+  -f policies/ms365-security.yml
+```
 
-## 📄 License
+### Scan Network Host
+
+```bash
+# Scan TLS and HTTP security
+kspec scan host example.com -f policies/tls-security.yml
+```
+
+## Policy Library
+
+The repository includes pre-built security policies:
+
+| Policy | Provider | Description |
+|--------|----------|-------------|
+| [Azure Security](policies/azure-security.yml) | Azure | Storage encryption, SQL auditing, Key Vault protection, NSG rules |
+| [MS365 Security](policies/ms365-security.yml) | MS365 | MFA enforcement, Conditional Access, identity protection, Teams security |
+| [GitHub Security](policies/github-security.yml) | GitHub | Branch protection, 2FA, repository security settings |
+| [TLS Security](policies/tls-security.yml) | Network | Protocol versions, cipher suites, certificate validation |
+| [Email Security](policies/email-security.yml) | Network | SPF records, DMARC enforcement, DNS hygiene |
+
+## Writing Policies
+
+Policies are defined in YAML with CEL (Common Expression Language) queries:
+
+```yaml
+policies:
+  - uid: my-security-policy
+    name: My Security Policy
+    version: 1.0.0
+    require:
+      - provider: azure
+    groups:
+      - title: Storage Security
+        checks:
+          - uid: storage-https-required
+
+queries:
+  - uid: storage-https-required
+    title: Ensure HTTPS is required for storage accounts
+    resource: azure_storage_account
+    impact: 90
+    query: |
+      has(resource.properties) &&
+      resource.properties.supportsHttpsTrafficOnly == true
+    docs:
+      desc: |
+        Storage accounts should require HTTPS to encrypt data in transit.
+      remediation: |
+        Enable "Secure transfer required" in the storage account settings.
+```
+
+## Architecture
+
+kspec operates on a **Provider-Resource-Policy** model:
+
+1. **Providers** (Azure, MS365, GitHub, Network) connect to target assets
+2. **Resources** expose structured data from the target (storage accounts, users, repos)
+3. **Policies** define expected security state using CEL expressions
+4. **Scanner** orchestrates discovery, fetching, and policy evaluation
+5. **TUI** displays real-time progress and results
+
+```
+┌─────────────┐     ┌──────────────┐     ┌─────────────┐
+│   Provider  │────▶│   Resources  │────▶│   Scanner   │
+│  (Azure)    │     │  (Storage,   │     │  (Evaluate  │
+│             │     │   SQL, etc)  │     │   Policies) │
+└─────────────┘     └──────────────┘     └──────┬──────┘
+                                                │
+                                                ▼
+                                         ┌─────────────┐
+                                         │     TUI     │
+                                         │  (Results)  │
+                                         └─────────────┘
+```
+
+## Documentation
+
+- [Azure Setup Guide](docs/azure-setup.md) - Configure Azure provider and credentials
+- [Microsoft 365 Setup Guide](docs/ms365-setup.md) - Configure MS365 provider and app registration
+- [GitHub Setup Guide](docs/github-setup.md) - Configure GitHub provider and tokens
+- [Discovery & Scanning](docs/discovery-scan.md) - How resource discovery works
+- [Sub-Resources](docs/sub-resources.md) - Understanding resource hierarchies
+
+## CI/CD Integration
+
+### GitHub Actions
+
+```yaml
+name: Security Scan
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+
+      - name: Build kspec
+        run: go build -o kspec ./cmd/kspec
+
+      - name: Run Security Scan
+        env:
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+        run: |
+          ./kspec scan azure subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }} \
+            -f policies/azure-security.yml
+```
+
+## Contributing
+
+Contributions are welcome for non-commercial purposes. Please read the license terms before contributing.
+
+## License
 
 This project is licensed under the **PolyForm Noncommercial License 1.0.0**.
 
--   **Non-commercial use:** You are free to use, modify, and distribute this software for non-commercial purposes.
--   **Commercial use:** Commercial use is strictly prohibited without a separate commercial license.
+- **Non-commercial use**: You are free to use, modify, and distribute this software for non-commercial purposes including personal use, research, education, and non-profit organizations.
+- **Commercial use**: Commercial use is strictly prohibited without a separate commercial license. Contact us for commercial licensing options.
+
+See [LICENSE](LICENSE) for the full license text.
 
 ### Attribution
-If you use this software in your project or product (where permitted), you must include a backlink or note referencing this repository.
+
+If you use this software in your project (where permitted), please include a reference to this repository.
+
+---
+
+<div align="center">
+  <p>Built with care by <a href="https://github.com/juliankoehn">Julian Koehn</a></p>
+</div>

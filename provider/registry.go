@@ -7,6 +7,7 @@ import (
 	"github.com/juliankoehn/kspec/core"
 	"github.com/juliankoehn/kspec/provider/azure"
 	"github.com/juliankoehn/kspec/provider/github"
+	"github.com/juliankoehn/kspec/provider/ms365"
 	"github.com/juliankoehn/kspec/provider/network"
 	"github.com/juliankoehn/kspec/provider/os"
 )
@@ -18,6 +19,7 @@ func GetProviders() []core.Provider {
 		network.NewNetworkProvider(),
 		github.NewGithubProvider(),
 		azure.NewAzureProvider(),
+		ms365.NewMS365Provider(),
 	}
 }
 
@@ -32,6 +34,8 @@ func GetProviderByName(name string) (core.Provider, error) {
 		return github.NewGithubProvider(), nil
 	case "azure":
 		return azure.NewAzureProvider(), nil
+	case "ms365", "microsoft365", "m365":
+		return ms365.NewMS365Provider(), nil
 	default:
 		return nil, fmt.Errorf("unknown provider: %s", name)
 	}
