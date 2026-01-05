@@ -1,0 +1,88 @@
+apiVersion: kopexa.io/v1alpha1
+kind: Policy
+metadata:
+  name: kopexa-http-security
+  title: Kopexa HTTP Security
+  version: 1.1.1
+groups:
+  - title: Headers for HTTP/HTTPS communication
+    filter: asset.type == 'host'
+    checks:
+      - uid: kopexa-http-security-x-content-type-options-nosniff
+      - uid: kopexa-http-security-content-security-policy
+      - uid: kopexa-http-security-obfuscate-server
+      - uid: kopexa-http-security-no-x-powered-by
+      - uid: kopexa-http-security-no-x-aspnet-version
+      - uid: kopexa-http-security-no-x-aspnetmvc-version
+      - uid: kopexa-http-security-no-public-key-pins
+  - title: Headers for HTTPS communication
+    filter: asset.type == 'host'
+    checks:
+      - uid: kopexa-http-security-strict-transport-security
+
+queries:
+  - uid: kopexa-http-security-x-content-type-options-nosniff
+    title: Set X-Content-Type-Options HTTP header to 'nosniff'
+    resource: http
+    query: resource.headers.exists(k, k == 'X-Content-Type-Options') && resource.headers['X-Content-Type-Options'].exists(v, v == 'nosniff')
+    docs: This check ensures that the 'X-Content-Type-Options' HTTP header is set to 'nosniff'.
+    remediation: Set X-Content-Type-Options header to "nosniff".
+    audit: Run curl -I <url> and verify X-Content-Type-Options is "nosniff".
+
+  - uid: kopexa-http-security-content-security-policy
+    title: Set Content Security Policy (CSP) HTTP header
+    resource: http
+    query: resource.headers.exists(k, k == 'Content-Security-Policy')
+    docs: This check ensures that the Content Security Policy (CSP) HTTP header is set.
+    remediation: Configure your web server to send the Content-Security-Policy header.
+    audit: Run curl -I <url> and verify Content-Security-Policy is present.
+
+  - uid: kopexa-http-security-strict-transport-security
+    title: Set Strict-Transport-Security (HSTS) HTTP header
+    resource: http
+    query: resource.headers.exists(k, k == 'Strict-Transport-Security')
+    docs: This check ensures that the Strict-Transport-Security (HSTS) HTTP header is set.
+    remediation: Configure your web server to send the Strict-Transport-Security header.
+    audit: Run curl -I <url> and verify Strict-Transport-Security is present.
+
+  - uid: kopexa-http-security-obfuscate-server
+    title: Remove or obfuscate the Server header
+    resource: http
+    query: |
+      !resource.headers.exists(k, k == 'Server') || 
+      resource.headers['Server'].all(v, !v.contains('nginx') && !v.contains('apache') && !v.contains('microsoft'))
+    docs: The Server header should be removed or obfuscated to hide server details.
+    remediation: Configure your web server to remove or obfuscate the Server header.
+    audit: Run curl -I <url> and verify the Server header is generic or missing.
+
+  - uid: kopexa-http-security-no-x-powered-by
+    title: Remove all X-Powered-By headers
+    resource: http
+    query: "!resource.headers.exists(k, k == 'X-Powered-By')"
+    docs: This check ensures that the X-Powered-By header is removed to prevent information disclosure.
+    remediation: Configure your web server to remove the X-Powered-By header.
+    audit: Run curl -I <url> and verify X-Powered-By is missing.
+
+  - uid: kopexa-http-security-no-x-aspnet-version
+    title: Remove all X-AspNet-Version headers
+    resource: http
+    query: "!resource.headers.exists(k, k == 'X-AspNet-Version')"
+    docs: This check ensures that the X-AspNet-Version header is removed.
+    remediation: Configure IIS/ASP.NET to remove the X-AspNet-Version header.
+    audit: Run curl -I <url> and verify X-AspNet-Version is missing.
+
+  - uid: kopexa-http-security-no-x-aspnetmvc-version
+    title: Remove all X-AspNetMvc-Version headers
+    resource: http
+    query: "!resource.headers.exists(k, k == 'X-AspNetMvc-Version')"
+    docs: This check ensures that the X-AspNetMvc-Version header is removed.
+    remediation: Configure IIS/ASP.NET MVC to remove the X-AspNetMvc-Version header.
+    audit: Run curl -I <url> and verify X-AspNetMvc-Version is missing.
+
+  - uid: kopexa-http-security-no-public-key-pins
+    title: The header Public-Key-Pins is deprecated and should not be used
+    resource: http
+    query: "!resource.headers.exists(k, k == 'Public-Key-Pins')"
+    docs: This check ensures that the deprecated Public-Key-Pins header is not used.
+    remediation: Remove the Public-Key-Pins header from your web server configuration.
+    audit: Run curl -I <url> and verify Public-Key-Pins is missing.

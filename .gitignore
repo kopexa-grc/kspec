@@ -1,0 +1,29 @@
+# Binaries
+/cnspec
+/cnquery
+kspec-engine
+*.exe
+*.test
+
+# OS Specific
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Go
+vendor/
+go.work
+
+# Output
+scan_output.json
+*.log
