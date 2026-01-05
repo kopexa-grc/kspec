@@ -1,0 +1,22 @@
+apiVersion: kopexa.io/v1alpha1
+kind: Policy
+metadata:
+  name: kopexa-github-security
+  title: kopexa GitHub Security
+  version: 1.0.0
+groups:
+  - title: GitHub Organization Security
+    filter: asset.platform == "github-org"
+    checks:
+      - uid: kopexa-github-organization-security-default-permission-level
+
+  - title: GitHub Repository Security
+    filter: asset.platform == "github-repo"
+    checks:
+      - uid: kopexa-github-repository-security-default-permission-level
+
+queries:
+  - uid: kopexa-github-organization-security-default-permission-level
+    title: Ensure default permission level is set to 'read'
+    resource: github-organization-security
+    query: resource.default_permission_level == 'read'

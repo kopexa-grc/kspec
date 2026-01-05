@@ -1,0 +1,82 @@
+apiVersion: kopexa.io/v1alpha1
+kind: Policy
+metadata:
+  name: kopexa-dns-security
+  title: Kopexa DNS Security
+  version: 1.0.0
+groups:
+  - title: Networking
+    filter: asset.type == 'host'
+    checks:
+      - uid: kopexa-dns-security-google-workspaces-mx-records
+      - uid: kopexa-dns-security-no-cname-for-root-domain
+      - uid: kopexa-dns-security-no-ip-for-ns-mx-records
+      - uid: kopexa-dns-security-no-legacy-ms-365-mx-records
+      - uid: kopexa-dns-security-dnssec-enabled
+      - uid: kopexa-dns-security-no-wildcard
+
+queries:
+  - uid: kopexa-dns-security-no-cname-for-root-domain
+    title: Ensure no CNAME is used for root domain
+    resource: dns
+    query: resource.records.filter(r, r.type == 'CNAME').size() == 0
+    docs: This check ensures that the root domain does not have a CNAME record.
+    remediation: Replace the CNAME record at the root domain with an A or ALIAS record.
+    audit: Run `dig +short CNAME <domain>` and ensure it returns empty.
+
+  - uid: kopexa-dns-security-no-ip-for-ns-mx-records
+    title: Ensure NS and MX records are not pointing to IP addresses
+    resource: dns
+    query: |
+      resource.mx.size() > 0 && 
+      resource.mx.all(m, !m.name.matches(regex.ipv4) && !m.name.matches(regex.ipv6)) &&
+      resource.params['NS']['rData'].size() > 0 &&
+      resource.params['NS']['rData'].all(d, !d.matches(regex.ipv4) && !d.matches(regex.ipv6))
+    docs: This check ensures that DNS NS and MX records point to FQDNs, not IP addresses.
+    remediation: Update NS and MX records to point to FQDNs.
+    audit: Run `dig NS <domain>` and `dig MX <domain>` and verify they return names, not IPs.
+
+  - uid: kopexa-dns-security-no-legacy-ms-365-mx-records
+    title: Ensure legacy MX records are not used with Microsoft 365
+    resource: dns
+    query: |
+      resource.mx.all(m, 
+        m.name != 'mail.outlook.com' &&
+        m.name != 'mail.messaging.microsoft.com' &&
+        m.name != 'mail.global.frontbridge.com' &&
+        m.name != 'mail.global.bigfish.com'
+      )
+    docs: This check ensures that legacy MX records are not used with Microsoft 365.
+    remediation: Replace legacy MX records with correct Microsoft 365 MX records.
+    audit: Check your MX records for legacy Microsoft domains.
+
+  - uid: kopexa-dns-security-google-workspaces-mx-records
+    title: Ensure the correct MX records are used with Google Workspaces
+    resource: dns
+    query: |
+      resource.mx.filter(m, m.name.contains('l.google.com')).all(m, 
+        m.name == 'aspmx.l.google.com' || 
+        m.name == 'alt1.aspmx.l.google.com' ||
+        m.name == 'alt2.aspmx.l.google.com' ||
+        m.name == 'alt3.aspmx.l.google.com' ||
+        m.name == 'alt4.aspmx.l.google.com'
+      )
+    docs: This check ensures that Google Workspace MX records are correctly configured.
+    remediation: Configure MX records to point to ASPMX.L.GOOGLE.COM and its alternates.
+    audit: Verify MX records match Google Workspace requirements.
+
+  - uid: kopexa-dns-security-dnssec-enabled
+    title: Ensure DNSSEC is enabled
+    resource: dns
+    query: resource.records.exists(r, r.type == 'DNSKEY')
+    docs: This check ensures that DNSSEC is enabled.
+    remediation: Enable DNSSEC at your registrar.
+    audit: Run `dig DNSKEY <domain>` and verify records exist.
+
+  - uid: kopexa-dns-security-no-wildcard
+    title: Ensure no wildcard DNS records are configured
+    resource: dns
+    query: "!resource.records.exists(r, r.name.startsWith('*'))"
+    docs: This check ensures that no wildcard DNS records are configured.
+    remediation: Remove wildcard (*) A/CNAME records.
+    audit: Check your DNS zone for entries starting with *.
