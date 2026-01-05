@@ -2,14 +2,14 @@ package core
 
 // Policy represents a collection of checks and groups.
 type Policy struct {
-	APIVersion     string            `yaml:"apiVersion,omitempty"`
-	Kind           string            `yaml:"kind,omitempty"`
-	Metadata       Metadata          `yaml:"metadata,omitempty"`
-	Groups         []Group           `yaml:"groups,omitempty"`
-	Queries        []Check           `yaml:"queries,omitempty"`
-	Require        []Requirement     `yaml:"require,omitempty"`
-	Authors        []Author          `yaml:"authors,omitempty"`
-	ScoringSystem  string            `yaml:"scoring_system,omitempty"`
+	APIVersion    string        `yaml:"apiVersion,omitempty"`
+	Kind          string        `yaml:"kind,omitempty"`
+	Metadata      Metadata      `yaml:"metadata,omitempty"`
+	Groups        []Group       `yaml:"groups,omitempty"`
+	Queries       []Check       `yaml:"queries,omitempty"`
+	Require       []Requirement `yaml:"require,omitempty"`
+	Authors       []Author      `yaml:"authors,omitempty"`
+	ScoringSystem string        `yaml:"scoring_system,omitempty"`
 }
 
 type Metadata struct {
@@ -51,9 +51,9 @@ type Check struct {
 	Remediation string `yaml:"remediation,omitempty"`
 	Severity    string `yaml:"severity,omitempty"`
 
-	Docs  interface{} `yaml:"docs,omitempty"`
-	Audit string      `yaml:"audit,omitempty"`
-	Props []Prop      `yaml:"props,omitempty"`
+	Docs  string `yaml:"docs,omitempty"`
+	Audit string `yaml:"audit,omitempty"`
+	Props []Prop `yaml:"props,omitempty"`
 }
 
 type Prop struct {

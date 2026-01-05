@@ -7,38 +7,42 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 
+	"github.com/juliankoehn/kspec/cli"
+	"github.com/juliankoehn/kspec/cli/components/common"
 	"github.com/juliankoehn/kspec/core"
 	"github.com/juliankoehn/kspec/provider"
-	"github.com/juliankoehn/kspec/ui"
-
-	tea "github.com/charmbracelet/bubbletea"
 )
 
 // scanCmd represents the scan command
 var scanCmd = &cobra.Command{
-	Use:   "scan <provider> <resource-type> <target>",
+	Use:   "scan <provider> [resource-type] [target]",
 	Short: "Scan resources using policy checks",
 	Long: `Scan resources across different providers using policy-as-code checks.
-	
-The scan command dynamically discovers available providers and their resource types.
 
 Examples:
+  kspec scan local -f policy.yml
+  kspec scan host example.com -f policy.yml
   kspec scan github org kopexa-grc -f policy.yml
   kspec scan github repo owner/repo -f policy.yml
-  kspec scan azure subscription <sub-id> -f policy.yml
-  kspec scan host example.com -f policy.yml
-  kspec scan local -f policy.yml`,
+  kspec scan azure subscription <sub-id> -f policy.yml`,
 	Args: cobra.MinimumNArgs(1),
 	RunE: runScan,
 }
 
 func init() {
 	rootCmd.AddCommand(scanCmd)
+
+	// Common flags
+	scanCmd.Flags().StringP("policy", "f", "", "Policy file to use")
+	scanCmd.Flags().StringP("policy-dir", "d", "", "Directory containing policy files")
+	scanCmd.Flags().String("token", "", "Authentication token")
+	scanCmd.Flags().String("credential-type", "", "Credential type (bearer, env, password)")
+	scanCmd.Flags().String("env-var", "GITHUB_TOKEN", "Environment variable for credentials")
 
 	// Azure-specific flags
 	scanCmd.Flags().String("client-id", "", "Azure Client ID (Service Principal)")
@@ -47,16 +51,25 @@ func init() {
 }
 
 func runScan(cmd *cobra.Command, args []string) error {
+	// Get common flags
+	policyFile, _ := cmd.Flags().GetString("policy")
+	policyDir, _ := cmd.Flags().GetString("policy-dir")
+	token, _ := cmd.Flags().GetString("token")
+	credentialType, _ := cmd.Flags().GetString("credential-type")
+	envVar, _ := cmd.Flags().GetString("env-var")
+
 	// Parse provider and determine asset type
 	providerArg := args[0]
 
 	var assetType string
 	var assetName string
-	var assetConfig map[string]string = make(map[string]string)
+	var assetConfig = make(map[string]string)
+	var providerName string
 
 	// Handle different provider patterns
 	switch providerArg {
 	case "local":
+		providerName = "os"
 		assetType = "local"
 		assetName = "localhost"
 
@@ -64,6 +77,7 @@ func runScan(cmd *cobra.Command, args []string) error {
 		if len(args) < 2 {
 			return fmt.Errorf("usage: kspec scan host <target> -f policy.yml")
 		}
+		providerName = "network"
 		assetType = "host"
 		assetName = args[1]
 		assetConfig["target"] = assetName
@@ -73,6 +87,7 @@ func runScan(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("usage: kspec scan github <org|repo> <target> -f policy.yml")
 		}
 
+		providerName = "github"
 		resourceType := args[1]
 		target := args[2]
 
@@ -101,6 +116,7 @@ func runScan(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("usage: kspec scan azure subscription <subscription-id> -f policy.yml")
 		}
 
+		providerName = "azure"
 		resourceType := args[1]
 		target := args[2]
 
@@ -168,11 +184,35 @@ func runScan(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	// Filter policies based on their 'require' field
+	// Only keep policies that match the current provider or have no requirements
+	var filteredPolicies []core.Policy
+	for _, policy := range policies {
+		if len(policy.Require) == 0 {
+			// No requirements - policy applies to all providers
+			filteredPolicies = append(filteredPolicies, policy)
+			continue
+		}
+
+		// Check if any requirement matches the current provider
+		for _, req := range policy.Require {
+			if req.Provider == providerName || req.Provider == providerArg {
+				filteredPolicies = append(filteredPolicies, policy)
+				break
+			}
+		}
+	}
+	policies = filteredPolicies
+
+	if len(policies) == 0 {
+		return fmt.Errorf("no policies found for provider %s", providerName)
+	}
+
 	// Setup provider config with credentials
 	providerConfig := make(map[string]string)
 
 	// Handle GitHub-specific credentials
-	if assetType == "github-org" || assetType == "github-repo" {
+	if providerName == "github" {
 		if token != "" {
 			providerConfig["credential_type"] = "bearer"
 			providerConfig["secret"] = token
@@ -188,7 +228,7 @@ func runScan(cmd *cobra.Command, args []string) error {
 	}
 
 	// Handle Azure-specific credentials
-	if assetType == "azure" {
+	if providerName == "azure" {
 		// Copy subscription_id and other config
 		for k, v := range assetConfig {
 			providerConfig[k] = v
@@ -196,47 +236,23 @@ func runScan(cmd *cobra.Command, args []string) error {
 
 		// Add credentials
 		if token != "" {
-			// Token provided via --token flag (client secret)
 			providerConfig["credential_type"] = "bearer"
 			providerConfig["secret"] = token
 		} else if credentialType != "" {
 			providerConfig["credential_type"] = credentialType
 			if credentialType == "env" {
-				// Will use DefaultAzureCredential (az cli, managed identity, etc.)
 				providerConfig["env_var"] = "AZURE"
 			}
 		} else {
-			// Default: use Azure DefaultAzureCredential
 			providerConfig["credential_type"] = "env"
 			providerConfig["env_var"] = "AZURE"
 		}
-	}
-
-	// Determine which provider to use based on asset type
-	var providerName string
-	switch {
-	case assetType == "local":
-		providerName = "local"
-	case assetType == "host":
-		providerName = "host"
-	case assetType == "github-org" || assetType == "github-repo":
-		providerName = "github"
-	case assetType == "azure":
-		providerName = "azure"
-	default:
-		return fmt.Errorf("cannot determine provider for asset type: %s", assetType)
 	}
 
 	// Initialize only the needed provider (lazy-loading)
 	registry, err := provider.InitProvider(context.Background(), providerName, providerConfig)
 	if err != nil {
 		return fmt.Errorf("failed to init provider %s: %w", providerName, err)
-	}
-
-	// Initialize evaluator
-	eval, err := core.NewEvaluator(registry)
-	if err != nil {
-		return fmt.Errorf("failed to init evaluator: %w", err)
 	}
 
 	// Create asset
@@ -251,40 +267,397 @@ func runScan(cmd *cobra.Command, args []string) error {
 
 	ctx := context.Background()
 
-	// Phase 1: Discovery (if supported)
-	discoveredResources := make(map[string]int)
-	fmt.Println("\n🔍 Discovering Azure Resources...")
-	for _, resSpec := range registry {
-		if discoverer, ok := resSpec.(core.DiscoveryResource); ok {
-			discovered, err := discoverer.Discover(ctx, asset)
-			if err != nil {
-				log.Printf("⚠️  Discovery failed: %v", err)
-				continue
-			}
+	// Initialize bubbletea UI
+	uiModel := cli.InitialModel()
+	p := tea.NewProgram(uiModel)
 
-			totalFound := 0
-			// Merge discovered resources
-			for resourceType, count := range discovered {
-				discoveredResources[resourceType] = count
-				if count > 0 {
-					fmt.Printf("  ✓ %s: %d\n", resourceType, count)
-					totalFound += count
+	// Start discovery and scan in background
+	go func() {
+		// Create resource tree with root node
+		tree := common.NewResourceTree(assetName, assetType)
+		tree.Root.State = common.AssetStateDiscovery
+
+		// Send initial tree to UI
+		p.Send(cli.SetTreeMsg{Tree: tree})
+
+		// Track discovered resources for discovery-capable providers
+		discoveredResources := make(map[string]int)
+		hasDiscovery := false
+
+		// Phase 1: Discovery (if supported)
+		for _, resSpec := range registry {
+			if discoverer, ok := resSpec.(core.DiscoveryResource); ok {
+				hasDiscovery = true
+				discovered, err := discoverer.Discover(ctx, asset)
+				if err != nil {
+					continue
+				}
+
+				// Store discovered resources
+				for resourceType, count := range discovered {
+					discoveredResources[resourceType] = count
+				}
+			}
+		}
+
+		// Create nodes in a sensible order based on provider
+		if hasDiscovery {
+			// Define preferred resource order per provider
+			// Note: github_branch is a sub-resource of github_repo, not a top-level type
+			var orderedTypes []string
+			switch providerName {
+			case "github":
+				orderedTypes = []string{"github_organization", "github_team", "github_repo"}
+			case "azure":
+				orderedTypes = []string{"azure_subscription", "azure_storage_account", "azure_sql_server", "azure_sql_database",
+					"azure_mysql_server", "azure_postgresql_server", "azure_keyvault_vault",
+					"azure_network_security_group", "azure_virtual_machine", "azure_app_service"}
+			default:
+				// For unknown providers, use discovered order
+				for resourceType := range discoveredResources {
+					orderedTypes = append(orderedTypes, resourceType)
 				}
 			}
 
-			if totalFound > 0 {
-				fmt.Printf("\n📊 Total: %d resources across %d types\n", totalFound, len(discovered))
+			// Create nodes in order
+			for _, resourceType := range orderedTypes {
+				count, exists := discoveredResources[resourceType]
+				if !exists || count == 0 {
+					continue
+				}
+
+				resourceNode := &common.ResourceNode{
+					ID:                fmt.Sprintf("%s-%s", tree.Root.ID, resourceType),
+					Name:              resourceType,
+					Type:              "resource_type",
+					ResourceType:      resourceType,
+					ResourceCount:     count,
+					State:             common.AssetStatePending,
+					Children:          []*common.ResourceNode{},
+					SubResources:      make(map[string][]*common.ResourceNode),
+					SubResourceCounts: make(map[string]int),
+					Metadata:          make(map[string]interface{}),
+				}
+
+				// Add to tree
+				if err := tree.AddNode(tree.Root.ID, resourceNode); err != nil {
+					log.Printf("Error adding resource node: %v", err)
+					continue
+				}
+
+				// Update root's total resource count
+				tree.Root.ResourceCount += count
+
+				// Check if this resource has sub-resources
+				if resSpec, ok := registry[resourceType]; ok {
+					if subProvider, ok := resSpec.(core.SubResourceProvider); ok {
+						subSpecs := subProvider.SubResources()
+						for _, subSpec := range subSpecs {
+							if subDiscoverer, ok := subSpec.(core.DiscoveryResource); ok {
+								subDiscovered, err := subDiscoverer.Discover(ctx, asset)
+								if err != nil {
+									continue
+								}
+
+								for subResType, subCount := range subDiscovered {
+									if subCount > 0 {
+										resourceNode.SubResourceCounts[subResType] = subCount
+									}
+								}
+							}
+						}
+					}
+				}
+
+				// Send updated tree to UI after each resource type
+				p.Send(cli.UpdateTreeMsg{Tree: tree})
+			}
+		}
+
+		// For non-discovery providers, create nodes based on registry resources
+		// Only create nodes for resource types that exist in the current provider's registry
+		if !hasDiscovery {
+			for _, resSpec := range registry {
+				resourceType := resSpec.Name()
+				nodeID := fmt.Sprintf("%s-%s", tree.Root.ID, resourceType)
+
+				// Check if we already have a node for this resource type
+				if _, exists := tree.GetNode(nodeID); !exists {
+					resourceNode := &common.ResourceNode{
+						ID:                nodeID,
+						Name:              resourceType,
+						Type:              "resource_type",
+						ResourceType:      resourceType,
+						ResourceCount:     1, // Will be updated during fetch
+						State:             common.AssetStatePending,
+						Children:          []*common.ResourceNode{},
+						SubResources:      make(map[string][]*common.ResourceNode),
+						SubResourceCounts: make(map[string]int),
+						Metadata:          make(map[string]interface{}),
+					}
+
+					if err := tree.AddNode(tree.Root.ID, resourceNode); err != nil {
+						log.Printf("Error adding resource node: %v", err)
+					}
+				}
+			}
+			p.Send(cli.UpdateTreeMsg{Tree: tree})
+		}
+
+		// Mark root as scanning
+		tree.Root.State = common.AssetStateScanning
+		p.Send(cli.UpdateTreeMsg{Tree: tree})
+
+		// Phase 2: Fetch and scan resources
+		// Process resources in a deterministic order based on discovered resources
+		var resourceOrder []string
+		for _, child := range tree.Root.Children {
+			resourceOrder = append(resourceOrder, child.ResourceType)
+		}
+
+		for _, resourceType := range resourceOrder {
+			resSpec, ok := registry[resourceType]
+			if !ok {
+				continue
+			}
+			nodeID := fmt.Sprintf("%s-%s", tree.Root.ID, resourceType)
+
+			resourceNode, exists := tree.GetNode(nodeID)
+			if !exists {
+				// For non-discovery mode, only process resources that have nodes
+				continue
+			}
+
+			// Discovery-based skip: if discovered with 0 count, skip
+			if count, discovered := discoveredResources[resourceType]; discovered && count == 0 {
+				resourceNode.State = common.AssetStateComplete
+				p.Send(cli.UpdateTreeMsg{Tree: tree})
+				continue
+			}
+
+			// Mark as scanning
+			resourceNode.State = common.AssetStateScanning
+			p.Send(cli.UpdateTreeMsg{Tree: tree})
+
+			// Fetch resources
+			resources, err := resSpec.Fetch(ctx, asset)
+			if err != nil {
+				resourceNode.State = common.AssetStateError
+				resourceNode.Error = err
+				p.Send(cli.UpdateTreeMsg{Tree: tree})
+				continue
+			}
+
+			// Update actual resource count
+			resourceNode.ResourceCount = len(resources)
+
+			// Create instance nodes for each resource
+			for i, resource := range resources {
+				// Get resource name/ID for display
+				resourceName := fmt.Sprintf("%s-%d", resourceType, i)
+				if name, ok := resource["name"]; ok {
+					resourceName = fmt.Sprintf("%v", name)
+				} else if id, ok := resource["id"]; ok {
+					resourceName = fmt.Sprintf("%v", id)
+				} else if login, ok := resource["login"]; ok {
+					resourceName = fmt.Sprintf("%v", login)
+				} else if fullName, ok := resource["full_name"]; ok {
+					resourceName = fmt.Sprintf("%v", fullName)
+				}
+
+				instanceID := fmt.Sprintf("%s-%d", nodeID, i)
+				instanceNode := &common.ResourceNode{
+					ID:           instanceID,
+					Name:         resourceName,
+					Type:         "resource_instance",
+					ResourceType: resourceType,
+					State:        common.AssetStateScanning,
+					Checks:       []common.CheckResult{},
+					Metadata:     resource,
+				}
+
+				// Add to tree
+				if err := tree.AddNode(nodeID, instanceNode); err != nil {
+					log.Printf("Error adding instance node: %v", err)
+					continue
+				}
+
+				// Run policy checks for this resource
+				checkResults := runPolicyChecksForResource(ctx, resource, resourceType, policies, registry, asset)
+
+				// Add check results to instance node
+				for _, checkResult := range checkResults {
+					instanceNode.Checks = append(instanceNode.Checks, checkResult)
+
+					// Update counts
+					switch checkResult.Status {
+					case "passed":
+						instanceNode.ChecksPassed++
+					case "failed":
+						instanceNode.ChecksFailed++
+					case "skipped":
+						instanceNode.ChecksSkipped++
+					}
+				}
+
+				instanceNode.State = common.AssetStateComplete
+
+				// Update parent counts
+				resourceNode.ChecksPassed += instanceNode.ChecksPassed
+				resourceNode.ChecksFailed += instanceNode.ChecksFailed
+				resourceNode.ChecksSkipped += instanceNode.ChecksSkipped
+
+				// Update root counts
+				tree.Root.ChecksPassed += instanceNode.ChecksPassed
+				tree.Root.ChecksFailed += instanceNode.ChecksFailed
+				tree.Root.ChecksSkipped += instanceNode.ChecksSkipped
+
+				// Fetch sub-resources for this specific instance (e.g., branches for a repo)
+				if subProvider, ok := resSpec.(core.SubResourceProvider); ok {
+					subSpecs := subProvider.SubResources()
+					for _, subSpec := range subSpecs {
+						subResType := subSpec.Name()
+
+						// Create a modified asset with instance-specific config
+						instanceAsset := core.Asset{
+							Type:   asset.Type,
+							Name:   asset.Name,
+							Config: make(map[string]string),
+						}
+						for k, v := range asset.Config {
+							instanceAsset.Config[k] = v
+						}
+
+						// Add instance-specific config for sub-resource fetching
+						// For repos, we need to specify which repo to get branches for
+						if resourceType == "github_repo" {
+							if repoName, ok := resource["name"]; ok {
+								instanceAsset.Config["repo"] = fmt.Sprintf("%v", repoName)
+							}
+						}
+
+						// Fetch sub-resources for this specific instance
+						subResources, err := subSpec.Fetch(ctx, instanceAsset)
+						if err != nil {
+							continue
+						}
+
+						// Create sub-resource instance nodes as children of this instance
+						for j, subResource := range subResources {
+							subResName := fmt.Sprintf("%s-%d", subResType, j)
+							if name, ok := subResource["name"]; ok {
+								subResName = fmt.Sprintf("%v", name)
+							}
+
+							subInstanceID := fmt.Sprintf("%s-sub-%s-%d", instanceID, subResType, j)
+
+							// Run checks for sub-resource
+							subCheckResults := runPolicyChecksForResource(ctx, subResource, subResType, policies, registry, asset)
+
+							subInstanceNode := &common.ResourceNode{
+								ID:           subInstanceID,
+								Name:         subResName,
+								Type:         "sub_resource_instance",
+								ResourceType: subResType,
+								State:        common.AssetStateComplete,
+								Checks:       subCheckResults,
+								Metadata:     subResource,
+							}
+
+							// Count check results
+							for _, cr := range subCheckResults {
+								switch cr.Status {
+								case "passed":
+									subInstanceNode.ChecksPassed++
+								case "failed":
+									subInstanceNode.ChecksFailed++
+								case "skipped":
+									subInstanceNode.ChecksSkipped++
+								}
+							}
+
+							// Add to parent instance's sub-resources
+							if err := tree.AddSubResource(instanceID, subResType, subInstanceNode); err != nil {
+								log.Printf("Error adding sub-resource: %v", err)
+								continue
+							}
+
+							// Update counts up the tree
+							instanceNode.ChecksPassed += subInstanceNode.ChecksPassed
+							instanceNode.ChecksFailed += subInstanceNode.ChecksFailed
+							instanceNode.ChecksSkipped += subInstanceNode.ChecksSkipped
+							resourceNode.ChecksPassed += subInstanceNode.ChecksPassed
+							resourceNode.ChecksFailed += subInstanceNode.ChecksFailed
+							resourceNode.ChecksSkipped += subInstanceNode.ChecksSkipped
+							tree.Root.ChecksPassed += subInstanceNode.ChecksPassed
+							tree.Root.ChecksFailed += subInstanceNode.ChecksFailed
+							tree.Root.ChecksSkipped += subInstanceNode.ChecksSkipped
+						}
+					}
+				}
+			}
+
+			// Mark resource type as complete
+			resourceNode.State = common.AssetStateComplete
+			p.Send(cli.UpdateTreeMsg{Tree: tree})
+		}
+
+		// Mark root as complete
+		tree.Root.State = common.AssetStateComplete
+		p.Send(cli.UpdateTreeMsg{Tree: tree})
+	}()
+
+	// Run the UI
+	if _, err := p.Run(); err != nil {
+		return fmt.Errorf("UI error: %w", err)
+	}
+
+	return nil
+}
+
+// evaluateGroupFilter performs a simple evaluation of group filters
+// This handles common patterns like: asset.type == "github-org"
+func evaluateGroupFilter(filter string, asset core.Asset) bool {
+	// Handle common asset.type filters
+	filter = strings.TrimSpace(filter)
+
+	// Pattern: asset.type == "value" or asset.type == 'value'
+	if strings.Contains(filter, "asset.type") {
+		// Extract the expected value
+		for _, sep := range []string{`== "`, `== '`, `=="`, `=='`} {
+			if idx := strings.Index(filter, sep); idx != -1 {
+				start := idx + len(sep)
+				end := strings.IndexAny(filter[start:], `"'`)
+				if end != -1 {
+					expectedType := filter[start : start+end]
+					return asset.Type == expectedType
+				}
 			}
 		}
 	}
-	fmt.Println() // Empty line before scan starts
 
-	// Execute scan with discovery hints
-	return executeScan(ctx, policies, registry, eval, asset, discoveredResources)
+	// If we can't parse the filter, default to true (include the group)
+	return true
 }
 
-func executeScan(ctx context.Context, policies []core.Policy, registry map[string]core.ResourceSpec, eval *core.Evaluator, asset core.Asset, discoveredResources map[string]int) error {
-	// Index Definitions from ALL policies
+// runPolicyChecksForResource executes policy checks for a given resource
+func runPolicyChecksForResource(
+	ctx context.Context,
+	resource core.Resource,
+	resourceType string,
+	policies []core.Policy,
+	registry map[string]core.ResourceSpec,
+	asset core.Asset,
+) []common.CheckResult {
+	var results []common.CheckResult
+
+	// Create evaluator
+	evaluator, err := core.NewEvaluator(registry)
+	if err != nil {
+		return results
+	}
+
+	// Build definitions index from all policies
 	definitions := make(map[string]core.Check)
 	for _, policy := range policies {
 		for _, q := range policy.Queries {
@@ -297,187 +670,141 @@ func executeScan(ctx context.Context, policies []core.Policy, registry map[strin
 		}
 	}
 
-	type ResolvedCheck struct {
-		GroupTitle string
-		CheckDef   core.Check
-	}
-	var executionPlan []ResolvedCheck
-	var uiItems []ui.CheckItem
-
-	// Collect checks from ALL policies
+	// Process each policy
 	for _, policy := range policies {
+		// Process groups to get checks that apply to this asset type
 		for _, group := range policy.Groups {
-			// Group filter evaluation (simplified for now)
+			// Evaluate group filter
 			if group.Filter != "" {
-				pass, err := eval.Evaluate(group.Filter, make(map[string]interface{}), nil, nil, asset)
-				if err != nil || !pass {
+				if !evaluateGroupFilter(group.Filter, asset) {
 					continue
 				}
 			}
 
+			// Process checks in this group
 			for _, checkRef := range group.Checks {
 				check := checkRef
-				if check.ID == "" && check.UID != "" {
-					check.ID = check.UID
-				}
+
+				// Resolve check definition if needed
 				if check.Query == "" {
-					if def, ok := definitions[check.UID]; ok {
-						check.Query = def.Query
-						check.Resource = def.Resource
-						check.Remediation = def.Remediation
-						check.Severity = def.Severity
-						if check.Title == "" {
-							check.Title = def.Title
-						}
-						config := make(map[string]string)
-						for k, v := range def.Config {
-							config[k] = v
-						}
-						for k, v := range checkRef.Config {
-							config[k] = v
-						}
-						check.Config = config
-					} else if def, ok := definitions[check.ID]; ok {
-						check.Query = def.Query
-						check.Resource = def.Resource
-						check.Remediation = def.Remediation
-						check.Severity = def.Severity
-						if check.Title == "" {
-							check.Title = def.Title
-						}
-						config := make(map[string]string)
-						for k, v := range def.Config {
-							config[k] = v
-						}
-						for k, v := range checkRef.Config {
-							config[k] = v
-						}
-						check.Config = config
+					var def core.Check
+					var found bool
+
+					if check.UID != "" {
+						def, found = definitions[check.UID]
+					}
+					if !found && check.ID != "" {
+						def, found = definitions[check.ID]
+					}
+
+					if !found {
+						continue
+					}
+
+					// Merge definition into check
+					check.Query = def.Query
+					check.Resource = def.Resource
+					check.Remediation = def.Remediation
+					check.Severity = def.Severity
+					check.Docs = def.Docs
+					check.Audit = def.Audit
+					if check.Title == "" {
+						check.Title = def.Title
+					}
+
+					// Merge config
+					config := make(map[string]string)
+					for k, v := range def.Config {
+						config[k] = v
+					}
+					for k, v := range checkRef.Config {
+						config[k] = v
+					}
+					check.Config = config
+
+					// Merge props
+					if len(def.Props) > 0 && len(check.Props) == 0 {
+						check.Props = def.Props
 					}
 				}
 
-				// Discovery-based filtering: Skip if resource type was discovered with 0 count
-				if count, discovered := discoveredResources[check.Resource]; discovered && count == 0 {
-					// Resource type exists in discovery but has 0 instances - skip
-					uiItems = append(uiItems, ui.CheckItem{
-						ID:     check.ID,
-						Group:  group.Title,
-						Name:   check.Title,
-						Status: ui.StatusSkipped,
-					})
+				// Check if this check applies to this resource type
+				if check.Resource != resourceType {
 					continue
 				}
 
-				executionPlan = append(executionPlan, ResolvedCheck{
-					GroupTitle: group.Title,
-					CheckDef:   check,
-				})
-
-				uiItems = append(uiItems, ui.CheckItem{
-					ID:     check.ID,
-					Group:  group.Title,
-					Name:   check.Title,
-					Status: ui.StatusPending,
-				})
-			}
-		}
-	}
-
-	// Init UI
-	model := ui.NewModel(uiItems)
-	p := tea.NewProgram(model)
-
-	// Run execution in background
-	go func() {
-		for _, item := range executionPlan {
-			check := item.CheckDef
-
-			p.Send(ui.CheckResultMsg{
-				ID:     check.ID,
-				Status: ui.StatusRunning,
-			})
-
-			checkCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
-
-			resSpec, ok := registry[check.Resource]
-			if !ok {
-				p.Send(ui.CheckResultMsg{
-					ID:       check.ID,
-					Status:   ui.StatusFailed,
-					ErrorMsg: "Unknown resource type: " + check.Resource,
-				})
-				cancel()
-				continue
-			}
-
-			fetchAsset := asset
-			fetchAsset.Config = make(map[string]string)
-			for k, v := range asset.Config {
-				fetchAsset.Config[k] = v
-			}
-			for k, v := range check.Config {
-				fetchAsset.Config[k] = v
-			}
-
-			resources, err := resSpec.Fetch(checkCtx, fetchAsset)
-			if err != nil {
-				p.Send(ui.CheckResultMsg{
-					ID:       check.ID,
-					Status:   ui.StatusFailed,
-					ErrorMsg: fmt.Sprintf("Fetch failed: %v", err),
-				})
-				cancel()
-				continue
-			}
-
-			if len(resources) == 0 {
-				p.Send(ui.CheckResultMsg{
-					ID:       check.ID,
-					Status:   ui.StatusSkipped,
-					ErrorMsg: "No resources found",
-				})
-				cancel()
-				continue
-			}
-
-			props := make(map[string]interface{})
-			for _, prop := range check.Props {
-				props[prop.UID] = prop.MQL
-			}
-
-			finalStatus := ui.StatusPassed
-			var errorMsgs []string
-
-			for _, res := range resources {
-				pass, err := eval.Evaluate(check.Query, res, check.Config, props, asset)
-				if err != nil {
-					finalStatus = ui.StatusFailed
-					errorMsgs = append(errorMsgs, err.Error())
-				} else if !pass {
-					finalStatus = ui.StatusFailed
+				// Build props map
+				propsMap := make(map[string]interface{})
+				for _, prop := range check.Props {
+					propsMap[prop.UID] = prop.MQL
 				}
+
+				// Merge check config with asset config
+				evalConfig := make(map[string]string)
+				for k, v := range asset.Config {
+					evalConfig[k] = v
+				}
+				for k, v := range check.Config {
+					evalConfig[k] = v
+				}
+
+				// Evaluate the query
+				passed, err := evaluator.Evaluate(
+					check.Query,
+					resource,
+					evalConfig,
+					propsMap,
+					asset,
+				)
+
+				status := "skipped"
+				var details string
+
+				if err != nil {
+					// Check if it's a compilation error (MQL syntax not supported by CEL)
+					errStr := err.Error()
+					if strings.Contains(errStr, "compile error") ||
+						strings.Contains(errStr, "Syntax error") ||
+						strings.Contains(errStr, "undeclared reference") {
+						status = "skipped"
+						details = "Query uses syntax not supported by CEL evaluator"
+					} else {
+						status = "failed"
+						details = fmt.Sprintf("Evaluation error: %s", errStr)
+					}
+				} else if passed {
+					status = "passed"
+					details = ""
+				} else {
+					status = "failed"
+					details = check.Remediation
+				}
+
+				// Use severity from check (default to medium if not specified)
+				severity := check.Severity
+				if severity == "" {
+					severity = "medium"
+				}
+
+				// Get check ID
+				checkID := check.UID
+				if checkID == "" {
+					checkID = check.ID
+				}
+
+				results = append(results, common.CheckResult{
+					ID:       checkID,
+					Group:    group.Title,
+					Name:     check.Title,
+					Status:   status,
+					Severity: severity,
+					Details:  details,
+					Docs:     check.Docs,
+					Audit:    check.Audit,
+				})
 			}
-
-			errStr := ""
-			if len(errorMsgs) > 0 {
-				errStr = strings.Join(errorMsgs, "; ")
-			} else if finalStatus == ui.StatusFailed {
-				errStr = "Check failed"
-			}
-
-			p.Send(ui.CheckResultMsg{
-				ID:       check.ID,
-				Status:   finalStatus,
-				ErrorMsg: errStr,
-			})
-
-			cancel()
 		}
-	}()
-
-	if _, err := p.Run(); err != nil {
-		return fmt.Errorf("UI error: %w", err)
 	}
 
-	return nil
+	return results
 }
