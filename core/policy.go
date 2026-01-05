@@ -2,17 +2,31 @@ package core
 
 // Policy represents a collection of checks and groups.
 type Policy struct {
-	APIVersion string   `yaml:"apiVersion,omitempty"`
-	Kind       string   `yaml:"kind,omitempty"`
-	Metadata   Metadata `yaml:"metadata,omitempty"`
-	Groups     []Group  `yaml:"groups,omitempty"`
-	Queries    []Check  `yaml:"queries,omitempty"`
+	APIVersion     string            `yaml:"apiVersion,omitempty"`
+	Kind           string            `yaml:"kind,omitempty"`
+	Metadata       Metadata          `yaml:"metadata,omitempty"`
+	Groups         []Group           `yaml:"groups,omitempty"`
+	Queries        []Check           `yaml:"queries,omitempty"`
+	Require        []Requirement     `yaml:"require,omitempty"`
+	Authors        []Author          `yaml:"authors,omitempty"`
+	ScoringSystem  string            `yaml:"scoring_system,omitempty"`
 }
 
 type Metadata struct {
-	Name    string `yaml:"name"`
-	Version string `yaml:"version,omitempty"`
-	Title   string `yaml:"title,omitempty"`
+	Name    string            `yaml:"name"`
+	Version string            `yaml:"version,omitempty"`
+	Title   string            `yaml:"title,omitempty"`
+	License string            `yaml:"license,omitempty"`
+	Tags    map[string]string `yaml:"tags,omitempty"`
+}
+
+type Requirement struct {
+	Provider string `yaml:"provider"`
+}
+
+type Author struct {
+	Name  string `yaml:"name"`
+	Email string `yaml:"email,omitempty"`
 }
 
 type Group struct {

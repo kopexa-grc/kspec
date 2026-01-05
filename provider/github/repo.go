@@ -59,5 +59,28 @@ func (r *RepoResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Reso
 		resourceMap["collaborators"] = collabList
 	}
 
+	// Fetch repository file tree (for file-based checks like Dependabot)
+	// Get the default branch tree
+	defaultBranch := repo.GetDefaultBranch()
+	tree, _, err := r.client.Git.GetTree(ctx, owner, repoName, defaultBranch, true)
+	if err == nil && tree != nil {
+		var files []map[string]interface{}
+		for _, entry := range tree.Entries {
+			// Only include files, not trees (directories)
+			if entry.GetType() == "blob" {
+				files = append(files, map[string]interface{}{
+					"path": entry.GetPath(),
+					"type": entry.GetType(),
+					"size": entry.GetSize(),
+					"sha":  entry.GetSHA(),
+				})
+			}
+		}
+		resourceMap["files"] = files
+	} else {
+		// If we can't fetch the tree, set empty array
+		resourceMap["files"] = []map[string]interface{}{}
+	}
+
 	return []core.Resource{resourceMap}, nil
 }

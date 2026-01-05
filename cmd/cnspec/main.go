@@ -39,47 +39,96 @@ func runScan(args []string) {
 	scanCmd := flag.NewFlagSet("scan", flag.ExitOnError)
 	policyPath := scanCmd.String("f", "", "Path to policy YAML file")
 	policyDir := scanCmd.String("d", "", "Path to policy directory")
+	
+	// Credential flags
+	token := scanCmd.String("token", "", "GitHub token (or use GITHUB_TOKEN env var)")
+	credentialType := scanCmd.String("credential-type", "", "Credential type (bearer, env, password)")
+	envVar := scanCmd.String("env-var", "GITHUB_TOKEN", "Environment variable name for token")
 
 	var target string
+	var assetType string
 	var parseArgs []string
+	var owner, repo string
 
-	// Parse "host <target>" or "local"
+	// Parse scan target type
 	if len(args) > 0 {
-		if args[0] == "local" {
+		switch args[0] {
+		case "local":
+			assetType = "local"
+			target = "localhost"
 			parseArgs = args[1:]
-		} else if args[0] == "host" {
+		case "host":
 			if len(args) < 2 {
 				log.Fatal("Usage: cnspec scan host <target> -f ...")
 			}
+			assetType = "host"
 			target = args[1]
 			parseArgs = args[2:]
-		} else {
-			// Default or unknown, pass all to flags to see if it works or fails
+		case "github":
+			if len(args) < 2 {
+				log.Fatal("Usage: cnspec scan github <org|repo> <target> -f ...")
+			}
+			subCmd := args[1]
+			if subCmd == "org" {
+				if len(args) < 3 {
+					log.Fatal("Usage: cnspec scan github org <org-name> -f ...")
+				}
+				assetType = "github-org"
+				owner = args[2]
+				target = owner
+				parseArgs = args[3:]
+			} else if subCmd == "repo" {
+				if len(args) < 3 {
+					log.Fatal("Usage: cnspec scan github repo <owner/repo> -f ...")
+				}
+				repoPath := args[2]
+				parts := strings.Split(repoPath, "/")
+				if len(parts) != 2 {
+					log.Fatal("Repository must be in format: owner/repo")
+				}
+				assetType = "github-repo"
+				owner = parts[0]
+				repo = parts[1]
+				target = repoPath
+				parseArgs = args[3:]
+			} else {
+				log.Fatalf("Unknown github subcommand: %s (use 'org' or 'repo')", subCmd)
+			}
+		default:
+			// Try parsing as flags
+			assetType = "local"
+			target = "localhost"
 			parseArgs = args
 		}
 	} else {
+		assetType = "local"
+		target = "localhost"
 		parseArgs = args
-	}
-
-	// Asset Context
-	asset := core.Asset{
-		Type:   "local",
-		Name:   "localhost",
-		Config: make(map[string]string),
-	}
-	if target != "" {
-		asset.Type = "host"
-		asset.Name = target
-		asset.FQDN = target
-		asset.Config["target"] = target
-	} else {
-		// Local
 	}
 
 	scanCmd.Parse(parseArgs)
 
 	if *policyPath == "" && *policyDir == "" {
 		log.Fatal("Policy file (-f) or directory (-d) is required")
+	}
+
+	// Build Asset
+	asset := core.Asset{
+		Type:   assetType,
+		Name:   target,
+		Config: make(map[string]string),
+	}
+
+	// Configure asset based on type
+	switch assetType {
+	case "host":
+		asset.FQDN = target
+		asset.Config["target"] = target
+	case "github-org":
+		asset.Config["owner"] = owner
+	case "github-repo":
+		asset.Config["owner"] = owner
+		asset.Config["repo"] = repo
 	}
 
 	// 1. Load Policies
@@ -117,11 +166,27 @@ func runScan(args []string) {
 		}
 	}
 
-	// 2. Init Registry
-	// Populate config for providers (e.g. from env, or CLI args)
-	// For now we pass empty, or maybe GH token if we had flag
+	// 2. Setup Provider Config with Credentials
 	providerConfig := make(map[string]string)
-	// Example: providerConfig["token"] = os.Getenv("GITHUB_TOKEN")
+	
+	// Configure credentials for GitHub provider
+	if assetType == "github-org" || assetType == "github-repo" {
+		if *token != "" {
+			// Explicit token provided
+			providerConfig["credential_type"] = "bearer"
+			providerConfig["secret"] = *token
+		} else if *credentialType != "" {
+			// Credential type specified
+			providerConfig["credential_type"] = *credentialType
+			if *credentialType == "env" {
+				providerConfig["env_var"] = *envVar
+			}
+		} else {
+			// Default: try environment variable
+			providerConfig["credential_type"] = "env"
+			providerConfig["env_var"] = "GITHUB_TOKEN"
+		}
+	}
 
 	registry, err := provider.InitProviders(context.Background(), providerConfig)
 	if err != nil {
