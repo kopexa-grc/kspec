@@ -24,7 +24,7 @@ groups:
       - uid: kopexa-github-organization-security-default-permission-level
 
   - title: GitHub Repository Security
-    filter: asset.type == "github-repo"
+    # Run for both org scans (scan all repos) and single repo scans
     checks:
       - uid: kopexa-github-repository-security-default-branch-protection
       - uid: kopexa-github-repository-security-release-branch-protection

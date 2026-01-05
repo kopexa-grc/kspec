@@ -26,7 +26,7 @@ type AzureConnection struct {
 
 func (p *AzureProvider) Connect(ctx context.Context, config map[string]string) (core.Connection, error) {
 	// Get subscription ID from config
-	subscriptionID, ok := config["subscription_id"]
+	subscriptionID, ok := config["subscription-id"]
 	if !ok {
 		subscriptionID = "" // Will use default subscription
 	}

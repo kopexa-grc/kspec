@@ -13,6 +13,14 @@ type RepoResource struct {
 	client *github.Client
 }
 
+// SubResources implements core.SubResourceProvider
+// Returns branch resources as sub-resources of repos
+func (r *RepoResource) SubResources() []core.ResourceSpec {
+	return []core.ResourceSpec{
+		&BranchResource{client: r.client},
+	}
+}
+
 func (r *RepoResource) Name() string {
 	return "github_repo"
 }
@@ -23,16 +31,67 @@ func (r *RepoResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Reso
 	if !ok {
 		return nil, fmt.Errorf("missing 'owner' in config")
 	}
-	repoName, ok := config["repo"]
-	if !ok {
-		return nil, fmt.Errorf("missing 'repo' in config")
+
+	// Check if this is a single repo scan or an org scan
+	repoName, hasRepo := config["repo"]
+
+	if hasRepo {
+		// Single repo scan
+		return r.fetchSingleRepo(ctx, owner, repoName)
 	}
 
+	// Org scan - fetch all repos in the organization
+	return r.fetchOrgRepos(ctx, owner)
+}
+
+func (r *RepoResource) fetchSingleRepo(ctx context.Context, owner, repoName string) ([]core.Resource, error) {
 	// Fetch Repository details
 	repo, _, err := r.client.Repositories.Get(ctx, owner, repoName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch repo %s/%s: %w", owner, repoName, err)
 	}
+
+	resourceMap, err := r.repoToResource(ctx, owner, repo)
+	if err != nil {
+		return nil, err
+	}
+
+	return []core.Resource{resourceMap}, nil
+}
+
+func (r *RepoResource) fetchOrgRepos(ctx context.Context, orgName string) ([]core.Resource, error) {
+	var resources []core.Resource
+
+	opts := &github.RepositoryListByOrgOptions{
+		ListOptions: github.ListOptions{PerPage: 100},
+	}
+
+	for {
+		repos, resp, err := r.client.Repositories.ListByOrg(ctx, orgName, opts)
+		if err != nil {
+			return nil, fmt.Errorf("failed to list repos for org %s: %w", orgName, err)
+		}
+
+		for _, repo := range repos {
+			resourceMap, err := r.repoToResource(ctx, orgName, repo)
+			if err != nil {
+				// Log but continue with other repos
+				continue
+			}
+			resources = append(resources, resourceMap)
+		}
+
+		if resp.NextPage == 0 {
+			break
+		}
+		opts.Page = resp.NextPage
+	}
+
+	return resources, nil
+}
+
+func (r *RepoResource) repoToResource(ctx context.Context, owner string, repo *github.Repository) (core.Resource, error) {
+	repoName := repo.GetName()
 
 	// Convert structs to map[string]interface{}.
 	data, err := json.Marshal(repo)
@@ -82,5 +141,40 @@ func (r *RepoResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Reso
 		resourceMap["files"] = []map[string]interface{}{}
 	}
 
-	return []core.Resource{resourceMap}, nil
+	return resourceMap, nil
+}
+
+// Discover implements core.DiscoveryResource
+// Scans the repository and discovers what resource types are present
+func (r *RepoResource) Discover(ctx context.Context, asset core.Asset) (map[string]int, error) {
+	// Only discover for github-repo asset type
+	if asset.Type != "github-repo" {
+		return nil, nil
+	}
+
+	config := asset.Config
+	owner, ok := config["owner"]
+	if !ok {
+		return nil, fmt.Errorf("missing 'owner' in config for repo discovery")
+	}
+	repoName, ok := config["repo"]
+	if !ok {
+		return nil, fmt.Errorf("missing 'repo' in config for repo discovery")
+	}
+
+	discovered := make(map[string]int)
+
+	// Discover repository (always 1 for repo scan)
+	_, _, err := r.client.Repositories.Get(ctx, owner, repoName)
+	if err == nil {
+		discovered["github_repo"] = 1
+	}
+
+	// Discover branches
+	branches, _, err := r.client.Repositories.ListBranches(ctx, owner, repoName, nil)
+	if err == nil && len(branches) > 0 {
+		discovered["github_branch"] = len(branches)
+	}
+
+	return discovered, nil
 }
