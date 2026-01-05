@@ -124,8 +124,8 @@ release:
 
     **Full Changelog**: https://github.com/kopexa-grc/kspec/compare/{{ .PreviousTag }}...{{ .Tag }}
 
-    > ⚠️ **License**: This software is licensed under the PolyForm Noncommercial License 1.0.0.
-    > Commercial use requires a separate license.
+    > **License**: This software is licensed under the Elastic License 2.0 (ELv2).
+    > You may not provide this software as a hosted or managed service.
 
 # Disable features we don't need
 brews: []

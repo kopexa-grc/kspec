@@ -5,7 +5,7 @@
 
   **The Enterprise-Grade Policy-as-Code Engine.**
 
-  [![License](https://img.shields.io/badge/License-PolyForm%20Noncommercial-blue.svg)](LICENSE)
+  [![License](https://img.shields.io/badge/License-Elastic%202.0-blue.svg)](LICENSE)
   [![Go Report Card](https://goreportcard.com/badge/github.com/kopexa-grc/kspec)](https://goreportcard.com/report/github.com/kopexa-grc/kspec)
 
   <p align="center">
@@ -211,20 +211,29 @@ jobs:
 
 ## Contributing
 
-Contributions are welcome for non-commercial purposes. Please read the license terms before contributing.
+Contributions are welcome! Please read the license terms before contributing.
 
 ## License
 
-This project is licensed under the **PolyForm Noncommercial License 1.0.0**.
+This project is licensed under the **Elastic License 2.0 (ELv2)**.
 
-- **Non-commercial use**: You are free to use, modify, and distribute this software for non-commercial purposes including personal use, research, education, and non-profit organizations.
-- **Commercial use**: Commercial use is strictly prohibited without a separate commercial license. Contact us for commercial licensing options.
+- **Commercial use**: You are free to use this software commercially, including for auditing, consulting, and security assessments
+- **Managed Service**: You may **not** provide this software as a hosted or managed service to third parties
+- **Modifications**: You may modify and distribute the software, subject to the license terms
 
 See [LICENSE](LICENSE) for the full license text.
 
-### Attribution
+### What's Allowed
 
-If you use this software in your project (where permitted), please include a reference to this repository.
+- Using kspec internally at your company
+- Using kspec to audit or assess client infrastructure (consultants, auditors)
+- Modifying kspec for your own use
+- Distributing kspec with your modifications (with license notices)
+
+### What's Not Allowed
+
+- Offering kspec as a hosted/managed service (SaaS)
+- Removing or circumventing license functionality
 
 ---
 

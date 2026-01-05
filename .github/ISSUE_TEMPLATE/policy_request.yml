@@ -1,0 +1,97 @@
+name: Policy Request
+description: Request a new security check or policy
+title: "[Policy]: "
+labels: ["type: enhancement", "component: policies", "status: triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Request a new security check or policy to be added to kspec.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Policy Description
+      description: What security check would you like to see?
+      placeholder: Check that ensures...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: provider
+    attributes:
+      label: Provider
+      description: Which provider should this policy apply to?
+      options:
+        - Azure
+        - Microsoft 365
+        - GitHub
+        - Network
+        - Local/OS
+        - Multiple Providers
+    validations:
+      required: true
+
+  - type: input
+    id: resource
+    attributes:
+      label: Resource Type
+      description: What resource type should be checked?
+      placeholder: "e.g., azure_storage_account, ms365_user, github_repo"
+    validations:
+      required: true
+
+  - type: textarea
+    id: rationale
+    attributes:
+      label: Security Rationale
+      description: Why is this check important? What risk does it address?
+      placeholder: |
+        This check helps prevent...
+        According to [compliance framework], this is required because...
+    validations:
+      required: true
+
+  - type: textarea
+    id: compliance
+    attributes:
+      label: Compliance Frameworks
+      description: Does this relate to any compliance frameworks?
+      placeholder: |
+        - CIS Benchmark X.Y.Z
+        - ISO 27001 A.X.X
+        - NIST 800-53 XX-X
+        - SOC 2 CC X.X
+
+  - type: textarea
+    id: remediation
+    attributes:
+      label: Remediation Steps
+      description: How should users fix this if the check fails?
+      placeholder: |
+        1. Navigate to...
+        2. Change setting...
+        3. Verify...
+
+  - type: textarea
+    id: example
+    attributes:
+      label: Example Policy (Optional)
+      description: If you have a draft of the CEL query, share it here.
+      render: yaml
+      placeholder: |
+        - uid: my-policy-check
+          title: Ensure X is configured
+          resource: resource_type
+          query: |
+            resource.setting == true
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution
+      options:
+        - label: I would be willing to help implement this policy
+          required: false
