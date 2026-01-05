@@ -1,0 +1,418 @@
+name: Kopexa Microsoft Azure Security
+version: 2.0.3
+license: BUSL-1.1
+tags:
+  kopexa.com/category: security
+  kopexa.com/platform: azure,cloud
+require:
+  - provider: azure
+  - provider: terraform
+authors:
+  - name: Kopexa GmbH
+    email: security@kopexa.com
+docs:
+  desc: |
+    The Kopexa Azure Security policy is designed to identify critical misconfigurations that could leave your Azure infrastructure vulnerable to attackers. This policy helps organizations detect and remediate security risks before they can be exploited, reducing the likelihood of unauthorized access, data breaches, privilege escalation, and operational disruptions.
+
+    Based on 's Azure Security Policy with adaptations for kspec.
+
+groups:
+  - title: Azure Storage
+    checks:
+      - uid: kopexa-azure-security-public-access-level-private-blob-containers
+      - uid: kopexa-azure-security-trusted-microsoft-services-enabled-for-storage-account-access
+      - uid: kopexa-azure-security-secure-transfer-required-enabled
+      - uid: kopexa-azure-security-default-network-access-rule-storage-accounts-deny
+
+  - title: Azure SQL
+    checks:
+      - uid: kopexa-azure-security-sql-server-audit-on
+      - uid: kopexa-azure-security-sql-server-tde-on
+      - uid: kopexa-azure-security-ensure-that-ssl-enabled-latest-version-mysql
+      - uid: kopexa-azure-security-ensure-that-ssl-enabled-postgresql
+      - uid: kopexa-azure-security-no-sql-databases-allow-ingress-0-0-0-0-0
+      - uid: kopexa-azure-security-ensure-disabled-public-access-sql
+
+  - title: Azure Key Vault
+    checks:
+      - uid: kopexa-azure-security-ensure-the-expiration-date-is-set-for-all-keys-and-secrets-in-kv
+      - uid: kopexa-azure-security-ensure-the-kv-is-recoverable
+      - uid: kopexa-azure-security-ensure-logging-enabled-kv
+      - uid: kopexa-azure-security-keyvault-public-access-disabled
+
+  - title: Azure Compute
+    checks:
+      - uid: kopexa-azure-security-rdp-access-restricted-from-internet
+      - uid: kopexa-azure-security-ssh-access-restricted-from-internet
+      - uid: kopexa-azure-security-vnc-access-restricted-from-internet
+      - uid: kopexa-azure-security-disable-udp-virtualmachines
+      - uid: kopexa-azure-security-ensure-os-disk-are-encrypted
+      - uid: kopexa-azure-security-ensure-activity-log-alert-exists-for-create-update-delete-network-security-group
+
+  - title: Azure Core
+    filter: asset.type == "azure"
+    checks:
+      - uid: kopexa-azure-security-diagnostic-settings-essential-categories
+      - uid: kopexa-azure-security-diagnostic-settings-exist
+      - uid: kopexa-azure-security-ensure-auditing-retention-greater-than-30-days
+      - uid: kopexa-azure-security-ensure-register-with-ad-is-enabled-on-app-service
+      - uid: kopexa-azure-security-ensure-that-notify-about-alerts-with-high-severity-is-on
+      - uid: kopexa-azure-security-ensure-web-app-is-using-the-latest-tls
+
+scoring_system: highest impact
+
+queries:
+  # Storage Security Checks
+  - uid: kopexa-azure-security-public-access-level-private-blob-containers
+    title: Ensure that anonymous access to blob containers and public access on storage accounts are disabled
+    impact: 80
+    resource: azure_storage_account
+    query: |
+      has(resource.properties) && has(resource.properties.allowBlobPublicAccess) && resource.properties.allowBlobPublicAccess == false
+    severity: critical
+    docs:
+      desc: |
+        Anonymous access to blob containers can lead to unauthorized data exposure. This check ensures that public blob access is disabled on storage accounts.
+      audit: |
+        **Azure Portal:**
+        1. Go to Storage Accounts
+        2. For each storage account, check Networking settings
+        3. Verify 'Public Network Access' is set to 'Disabled'
+        4. Under Configuration, verify 'Allow Blob Anonymous Access' is 'Disabled'
+      remediation: |
+        Disable public blob access in storage account configuration settings.
+
+  - uid: kopexa-azure-security-trusted-microsoft-services-enabled-for-storage-account-access
+    title: Ensure "Trusted Microsoft Services" have access to azure storage accounts
+    impact: 80
+    resource: azure_storage_account
+    query: |
+      has(resource.properties) && has(resource.properties.networkAcls) &&
+      has(resource.properties.networkAcls.bypass) && resource.properties.networkAcls.bypass.contains("AzureServices") &&
+      resource.properties.networkAcls.defaultAction == "Deny"
+    severity: high
+    docs:
+      desc: |
+        Allowing trusted Microsoft services ensures operational functionality while maintaining security.
+
+  - uid: kopexa-azure-security-secure-transfer-required-enabled
+    title: Mandate HTTPS for Secure Data Transfer to azure storage accounts
+    impact: 80
+    resource: azure_storage_account
+    query: |
+      has(resource.properties) && has(resource.properties.supportsHttpsTrafficOnly) && resource.properties.supportsHttpsTrafficOnly == true
+    severity: critical
+    docs:
+      desc: |
+        Enforces HTTPS for all data operations to prevent data interception.
+
+  - uid: kopexa-azure-security-default-network-access-rule-storage-accounts-deny
+    title: Enforce Deny as Default Network Access for Azure Storage Accounts
+    impact: 80
+    resource: azure_storage_account
+    query: |
+      has(resource.properties) && has(resource.properties.networkAcls) &&
+      resource.properties.networkAcls.defaultAction == "Deny"
+    severity: critical
+    docs:
+      desc: |
+        Setting default network access to "Deny" ensures only explicitly allowed networks can access storage.
+
+  # SQL Security Checks
+  - uid: kopexa-azure-security-sql-server-audit-on
+    title: Ensure that all activities on SQL server are audited
+    impact: 60
+    resource: azure_sql_server
+    query: |
+      resource.auditingPolicy.state == "Enabled"
+    severity: high
+    docs:
+      desc: |
+        Auditing SQL server activities helps detect unauthorized access and suspicious behavior.
+
+  - uid: kopexa-azure-security-sql-server-tde-on
+    title: Ensure that transparent data encryption is enabled for SQL Server databases
+    impact: 60
+    resource: azure_sql_database
+    query: |
+      resource.name != "master" && resource.transparentDataEncryption.state == "Enabled"
+    severity: high
+    docs:
+      desc: |
+        TDE encrypts data at rest, protecting sensitive information from unauthorized access.
+
+  - uid: kopexa-azure-security-ensure-that-ssl-enabled-latest-version-mysql
+    title: Ensure SSL connection enabled for MySQL Database Server with the latest version
+    impact: 80
+    resource: azure_mysql_server
+    query: |
+      resource.properties.sslEnforcement == "Enabled" &&
+      resource.properties.minimalTlsVersion == "TLS1_2"
+    severity: critical
+    docs:
+      desc: |
+        Enforces SSL/TLS connections and ensures the latest TLS version is used for MySQL servers.
+
+  - uid: kopexa-azure-security-ensure-that-ssl-enabled-postgresql
+    title: Ensure SSL connection enabled for PostgreSQL database servers
+    impact: 80
+    resource: azure_postgresql_server
+    query: |
+      resource.properties.sslEnforcement == "Enabled"
+    severity: critical
+    docs:
+      desc: |
+        Enforces SSL/TLS for all PostgreSQL connections to protect data in transit.
+
+  - uid: kopexa-azure-security-no-sql-databases-allow-ingress-0-0-0-0-0
+    title: Ensure no SQL Databases allow ingress 0.0.0.0/0 (ANY IP)
+    impact: 80
+    resource: azure_sql_server
+    query: |
+      resource.firewallRules.all(startIpAddress != "0.0.0.0")
+    severity: critical
+    docs:
+      desc: |
+        Prevents unrestricted network access to SQL databases from any IP address.
+
+  - uid: kopexa-azure-security-ensure-disabled-public-access-sql
+    title: Ensure public network access for SQL server is blocked or Limited to Use Selected Networks
+    impact: 80
+    resource: azure_sql_server
+    query: |
+      resource.properties.publicNetworkAccess == "Disabled" ||
+      resource.virtualNetworkRules != empty ||
+      resource.firewallRules != empty
+    severity: critical
+    docs:
+      desc: |
+        Limits public network access to SQL servers to reduce exposure to attacks.
+
+  # Key Vault Security Checks
+  - uid: kopexa-azure-security-ensure-the-expiration-date-is-set-for-all-keys-and-secrets-in-kv
+    title: Ensure that the expiration date is set for all keys and secrets in key vaults
+    impact: 80
+    resource: azure_keyvault_vault
+    query: |
+      resource.keys.where(enabled == true).all(expires != empty) &&
+      resource.secrets.where(enabled == true).all(expires != empty)
+    severity: high
+    docs:
+      desc: |
+        Setting expiration dates enforces key rotation and prevents indefinite use of cryptographic materials.
+
+  - uid: kopexa-azure-security-ensure-the-kv-is-recoverable
+    title: Ensure Key Vaults are configured with Recovery features
+    impact: 80
+    resource: azure_keyvault_vault
+    query: |
+      has(resource.properties) && has(resource.properties.enablePurgeProtection) &&
+      resource.properties.enablePurgeProtection == true
+    severity: critical
+    docs:
+      desc: |
+        Purge protection prevents accidental or malicious permanent deletion of key vaults.
+
+  - uid: kopexa-azure-security-ensure-logging-enabled-kv
+    title: Ensure all operations in Azure Key Vault are logged
+    impact: 80
+    resource: azure_keyvault_vault
+    query: |
+      resource.diagnosticSettings.any(properties.logs.where(categoryGroup == "audit").any(enabled == true)) ||
+      resource.diagnosticSettings.any(properties.logs.where(categoryGroup == "allLogs").any(enabled == true))
+    severity: high
+    docs:
+      desc: |
+        Logging all Key Vault operations provides an audit trail for security and compliance.
+
+  - uid: kopexa-azure-security-keyvault-public-access-disabled
+    title: Ensure default public network access for Azure Key Vault is disabled
+    impact: 80
+    resource: azure_keyvault_vault
+    query: |
+      resource.properties.all(publicNetworkAccess == "Disabled") ||
+      resource.properties.networkAcls.ipRules != empty ||
+      resource.properties.networkAcls.virtualNetworkRules != empty
+    severity: critical
+    docs:
+      desc: |
+        Restricting public network access to Key Vault minimizes exposure to potential attacks.
+
+  # Compute Security Checks
+  - uid: kopexa-azure-security-ensure-os-disk-are-encrypted
+    title: Ensure OS Disks in azure virtual machines are encrypted with Customer Managed Keys
+    impact: 80
+    resource: azure_virtual_machine
+    query: |
+      resource.osDisk.properties.encryption.type == "EncryptionAtRestWithCustomerKey"
+    severity: critical
+    docs:
+      desc: |
+        Encrypting OS disks with CMK provides enhanced control over encryption and decryption processes.
+
+  - uid: kopexa-azure-security-ssh-access-restricted-from-internet
+    title: Ensure that SSH access is restricted from the internet
+    impact: 80
+    resource: azure_network_security_group
+    query: |
+      resource.securityRules.where(
+        properties.access == "Allow" &&
+        direction == "Inbound" &&
+        properties.protocol == /TCP|\*/i &&
+        properties.sourceAddressPrefix == /\*|0\.0\.0\.0|<nw>\/0|\/0|internet|any/
+      ).all(properties.destinationPortRange != "*" && 
+        destinationPortRange.none(fromPort <= 22 && toPort >= 22))
+    severity: critical
+    docs:
+      desc: |
+        Restricting SSH access from the internet prevents unauthorized remote access attempts.
+
+  - uid: kopexa-azure-security-rdp-access-restricted-from-internet
+    title: Ensure that RDP access is restricted from the internet
+    impact: 80
+    resource: azure_network_security_group
+    query: |
+      resource.securityRules.where(
+        properties.access == "Allow" &&
+        direction == "Inbound" &&
+        properties.protocol == /TCP|\*/i &&
+        properties.sourceAddressPrefix == /\*|0\.0\.0\.0|<nw>\/0|\/0|internet|any/
+      ).all(properties.destinationPortRange != "*" &&
+        destinationPortRange.none(fromPort <= 3389 && toPort >= 3389))
+    severity: critical
+    docs:
+      desc: |
+        Restricting RDP access from the internet prevents brute force and unauthorized access attempts.
+
+  - uid: kopexa-azure-security-vnc-access-restricted-from-internet
+    title: Ensure that VNC access is restricted from the internet
+    impact: 80
+    resource: azure_network_security_group
+    query: |
+      resource.securityRules.where(
+        properties.access == "Allow" &&
+        direction == "Inbound" &&
+        properties.protocol == /TCP|\*/i &&
+        properties.sourceAddressPrefix == /\*|0\.0\.0\.0|<nw>\/0|\/0|internet|any/
+      ).all(properties.destinationPortRange != "*" &&
+        destinationPortRange.none(fromPort <= 5900 && toPort >= 5900))
+    severity: high
+    docs:
+      desc: |
+        Restricting VNC access from the internet prevents unauthorized remote desktop access.
+
+  - uid: kopexa-azure-security-disable-udp-virtualmachines
+    title: Ensure direct UDP access to Resources from the internet is restricted
+    impact: 80
+    resource: azure_network_security_group
+    query: |
+      resource.securityRules.where(
+        properties.access == "Allow" &&
+        direction == "Inbound" &&
+        properties.protocol == /UDP|\*/i &&
+        properties.sourceAddressPrefix == /\*|0\.0\.0\.0|<nw>\/0|\/0|internet|any/
+      ).all(properties.destinationPortRange != "*" &&
+        destinationPortRange.none(fromPort <= 53 && toPort >= 53) &&
+        destinationPortRange.none(fromPort <= 123 && toPort >= 123) &&
+        destinationPortRange.none(fromPort <= 161 && toPort >= 161) &&
+        destinationPortRange.none(fromPort <= 389 && toPort >= 389) &&
+        destinationPortRange.none(fromPort <= 1900 && toPort >= 1900))
+    severity: high
+    docs:
+      desc: |
+        Restricting UDP access prevents reflection amplification attacks and unauthorized access.
+
+  - uid: kopexa-azure-security-ensure-activity-log-alert-exists-for-create-update-delete-network-security-group
+    title: Ensure activity log alerts exist for Create/Update/Delete Network Security Group
+    impact: 80
+    resource: azure_subscription
+    query: |
+      resource.monitor.activityLog.alerts.where(actions != empty).any(
+        conditions.any(equals == "Microsoft.Network/networkSecurityGroups/write" && fieldName == "operationName")
+      ) &&
+      resource.monitor.activityLog.alerts.where(actions != empty).any(
+        conditions.any(equals == "Microsoft.Network/networkSecurityGroups/delete" && fieldName == "operationName")
+      )
+    severity: high
+    docs:
+      desc: |
+        Monitoring NSG changes helps detect unauthorized modifications to network security.
+
+  # Core Security Checks
+  - uid: kopexa-azure-security-diagnostic-settings-essential-categories
+    title: Ensure that diagnostic settings collect essential security categories
+    impact: 80
+    resource: azure_subscription
+    query: |
+      size(resource.monitor.diagnosticSettings) > 0 &&
+      resource.monitor.diagnosticSettings.all(ds,
+        ds.properties.logs.exists(l, l.category == "Administrative" && l.enabled == true) &&
+        ds.properties.logs.exists(l, l.category == "Security" && l.enabled == true) &&
+        ds.properties.logs.exists(l, l.category == "Alert" && l.enabled == true) &&
+        ds.properties.logs.exists(l, l.category == "Policy" && l.enabled == true)
+      )
+    severity: high
+    docs:
+      desc: |
+        Collecting essential log categories provides comprehensive monitoring and security insights.
+
+  - uid: kopexa-azure-security-diagnostic-settings-exist
+    title: Ensure that diagnostic settings exist for the subscription
+    impact: 80
+    resource: azure_subscription
+    query: |
+      size(resource.monitor.diagnosticSettings) > 0
+    severity: high
+    docs:
+      desc: |
+        Diagnostic settings enable effective monitoring and security analysis of Azure resources.
+
+  - uid: kopexa-azure-security-ensure-auditing-retention-greater-than-30-days
+    title: Ensure minimum 30-Day retention for SQL server Audit Logs
+    impact: 80
+    resource: azure_sql_server
+    query: |
+      resource.auditingPolicy.state == "Enabled" &&
+      (resource.auditingPolicy.retentionDays >= 30 || resource.auditingPolicy.retentionDays == 0)
+    severity: high
+    docs:
+      desc: |
+        Maintaining audit logs for at least 30 days ensures sufficient data for security analysis.
+
+  - uid: kopexa-azure-security-ensure-register-with-ad-is-enabled-on-app-service
+    title: Enable Managed Identities for App services to Authenticate via Microsoft Entra ID
+    impact: 80
+    resource: azure_app_service
+    query: |
+      resource.identity.type == "SystemAssigned" &&
+      resource.identity.principalId != empty
+    severity: high
+    docs:
+      desc: |
+        Managed Identities eliminate the need to store credentials and enhance security.
+
+  - uid: kopexa-azure-security-ensure-that-notify-about-alerts-with-high-severity-is-on
+    title: Ensure that "Notify about alerts with high severity" is enabled
+    impact: 80
+    resource: azure_subscription
+    query: |
+      resource.cloudDefender.securityContacts.all(contact,
+        has(contact.notificationSources) &&
+        has(contact.notificationSources.Alert) &&
+        contact.notificationSources.Alert.state == "On"
+      )
+    severity: high
+    docs:
+      desc: |
+        Alert notifications ensure administrators are promptly informed of security issues.
+
+  - uid: kopexa-azure-security-ensure-web-app-is-using-the-latest-tls
+    title: Ensure that Web Apps use the latest available version of TLS encryption
+    impact: 80
+    resource: azure_app_service
+    query: |
+      resource.configuration.properties.minTlsVersion == "1.2"
+    severity: high
+    docs:
+      desc: |
+        Using the latest TLS version ensures strong encryption and mitigates known vulnerabilities.
