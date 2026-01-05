@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/juliankoehn/kspec/cli/components/common"
-	"github.com/juliankoehn/kspec/core"
-	"github.com/juliankoehn/kspec/provider"
+	"github.com/kopexa-grc/kspec/cli/components/common"
+	"github.com/kopexa-grc/kspec/core"
+	"github.com/kopexa-grc/kspec/provider"
 )
 
 // Scanner handles resource discovery and policy evaluation

@@ -3,7 +3,7 @@ package network
 import (
 	"context"
 
-	"github.com/juliankoehn/kspec/core"
+	"github.com/kopexa-grc/kspec/core"
 )
 
 type NetworkProvider struct{}

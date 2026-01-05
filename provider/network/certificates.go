@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/juliankoehn/kspec/core"
+	"github.com/kopexa-grc/kspec/core"
 )
 
 type CertificatesResource struct{}

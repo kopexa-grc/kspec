@@ -7,7 +7,7 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/sql/armsql"
-	"github.com/juliankoehn/kspec/core"
+	"github.com/kopexa-grc/kspec/core"
 )
 
 type SqlServerResource struct {

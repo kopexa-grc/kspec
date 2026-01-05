@@ -8,7 +8,7 @@ import (
 	msgraphsdk "github.com/microsoftgraph/msgraph-sdk-go"
 	"github.com/microsoftgraph/msgraph-sdk-go/users"
 
-	"github.com/juliankoehn/kspec/core"
+	"github.com/kopexa-grc/kspec/core"
 )
 
 type UserResource struct {

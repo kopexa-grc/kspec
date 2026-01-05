@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/juliankoehn/kspec/core"
+	"github.com/kopexa-grc/kspec/core"
 )
 
 func TestCertificatesFetch(t *testing.T) {

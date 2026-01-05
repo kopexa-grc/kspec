@@ -6,7 +6,12 @@
       "Bash(go vet:*)",
       "Bash(go mod tidy:*)",
       "Bash(go run:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(./kspec:*)",
+      "Bash(goreleaser check:*)",
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "WebFetch(domain:github.com)"
     ]
   }
 }

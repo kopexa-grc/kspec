@@ -6,7 +6,7 @@
   **The Enterprise-Grade Policy-as-Code Engine.**
 
   [![License](https://img.shields.io/badge/License-PolyForm%20Noncommercial-blue.svg)](LICENSE)
-  [![Go Report Card](https://goreportcard.com/badge/github.com/juliankoehn/kspec)](https://goreportcard.com/report/github.com/juliankoehn/kspec)
+  [![Go Report Card](https://goreportcard.com/badge/github.com/kopexa-grc/kspec)](https://goreportcard.com/report/github.com/kopexa-grc/kspec)
 
   <p align="center">
     <b>Validate. Secure. Comply.</b><br />
@@ -47,7 +47,7 @@ Whether you are auditing cloud configurations, verifying GitHub repository secur
 
 ```bash
 # Clone the repository
-git clone https://github.com/juliankoehn/kspec.git
+git clone https://github.com/kopexa-grc/kspec.git
 cd kspec
 
 # Build
@@ -229,5 +229,5 @@ If you use this software in your project (where permitted), please include a ref
 ---
 
 <div align="center">
-  <p>Built with care by <a href="https://github.com/juliankoehn">Julian Koehn</a></p>
+  <p>Built with care by <a href="https://github.com/kopexa-grc">Kopexa GRC</a></p>
 </div>

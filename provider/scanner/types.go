@@ -1,8 +1,8 @@
 package scanner
 
 import (
-	"github.com/juliankoehn/kspec/cli/components/common"
-	"github.com/juliankoehn/kspec/core"
+	"github.com/kopexa-grc/kspec/cli/components/common"
+	"github.com/kopexa-grc/kspec/core"
 )
 
 // ScanConfig holds the configuration for a scan
