@@ -1,0 +1,142 @@
+# golangci-lint configuration for kspec
+# https://golangci-lint.run/usage/configuration/
+version: "2"
+
+run:
+  timeout: 5m
+  modules-download-mode: readonly
+  go: "1.21"
+
+output:
+  print-issued-lines: true
+  print-linter-name: true
+  sort-results: true
+
+formatters:
+  enable:
+    - goimports        # Check import order
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/kopexa-grc/kspec
+
+linters:
+  default: standard
+  enable:
+    # Additional linters
+    - bodyclose        # Check HTTP response body is closed
+    - dogsled          # Check for excessive blank identifiers
+    - dupl             # Code clone detection
+    - errname          # Check error naming conventions
+    - errorlint        # Find problems with error wrapping
+    - exhaustive       # Check exhaustiveness of enum switch statements
+    - goconst          # Find repeated strings that could be constants
+    - gocritic         # Various checks
+    - goprintffuncname # Check printf-like function names
+    - gosec            # Security checks
+    - misspell         # Spell checker
+    - nakedret         # Check for naked returns
+    - nilerr           # Find code returning nil error with non-nil
+    - noctx            # Check for http requests without context
+    - nolintlint       # Check nolint directives
+    - prealloc         # Check for slice preallocation
+    - predeclared      # Check for shadowing predeclared identifiers
+    - revive           # Fast, extensible linter
+    - tparallel        # Check for t.Parallel() in tests
+
+  settings:
+    errcheck:
+      check-type-assertions: true
+      check-blank: true
+      exclude-functions:
+        - io.Copy
+        - (io.Closer).Close
+        - (net/http.ResponseWriter).Write
+
+    govet:
+      disable:
+        - fieldalignment # Too noisy
+
+    dupl:
+      threshold: 150
+
+    goconst:
+      min-len: 3
+      min-occurrences: 3
+
+    gocritic:
+      enabled-tags:
+        - diagnostic
+        - performance
+        - style
+      disabled-checks:
+        - hugeParam       # Too noisy for struct parameters
+        - rangeValCopy    # Too noisy
+
+    gosec:
+      excludes:
+        - G104 # Audit errors not checked - too noisy
+        - G304 # File path provided as taint input - false positives
+
+    misspell:
+      locale: US
+
+    nakedret:
+      max-func-lines: 30
+
+    revive:
+      rules:
+        - name: blank-imports
+        - name: context-as-argument
+        - name: context-keys-type
+        - name: dot-imports
+        - name: error-return
+        - name: error-naming
+        - name: exported
+        - name: if-return
+        - name: increment-decrement
+        - name: var-declaration
+        - name: package-comments
+        - name: range
+        - name: receiver-naming
+        - name: time-naming
+        - name: unexported-return
+        - name: indent-error-flow
+        - name: errorf
+        - name: empty-block
+        - name: superfluous-else
+        - name: unused-parameter
+          disabled: true # Too noisy
+        - name: unreachable-code
+
+issues:
+  max-issues-per-linter: 50
+  max-same-issues: 10
+
+  exclude-rules:
+    # Exclude some linters from running on tests files
+    - path: _test\.go
+      linters:
+        - dupl
+        - gosec
+        - errcheck
+        - goconst
+
+    # Exclude some linters from running on generated files
+    - path: generated
+      linters:
+        - all
+
+    # Allow fmt.Print in main and cmd packages
+    - path: (cmd|main)\.go
+      linters:
+        - forbidigo
+
+    # Test files can have longer functions
+    - path: _test\.go
+      linters:
+        - funlen
+
+severity:
+  default: warning
+  case-sensitive: false

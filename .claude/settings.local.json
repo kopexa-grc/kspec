@@ -11,7 +11,9 @@
       "Bash(goreleaser check:*)",
       "Bash(find:*)",
       "Bash(grep:*)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(golangci-lint run:*)",
+      "Bash(golangci-lint:*)"
     ]
   }
 }
