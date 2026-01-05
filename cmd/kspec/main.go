@@ -20,9 +20,9 @@ import (
 )
 
 func main() {
-	// cnspec scan local -f policy.yaml
+	// kspec scan local -f policy.yaml
 	if len(os.Args) < 2 {
-		log.Fatal("Usage: cnspec <command> [args]")
+		log.Fatal("Usage: kspec <command> [args]")
 	}
 
 	command := os.Args[1]
@@ -39,7 +39,7 @@ func runScan(args []string) {
 	scanCmd := flag.NewFlagSet("scan", flag.ExitOnError)
 	policyPath := scanCmd.String("f", "", "Path to policy YAML file")
 	policyDir := scanCmd.String("d", "", "Path to policy directory")
-	
+
 	// Credential flags
 	token := scanCmd.String("token", "", "GitHub token (or use GITHUB_TOKEN env var)")
 	credentialType := scanCmd.String("credential-type", "", "Credential type (bearer, env, password)")
@@ -59,19 +59,19 @@ func runScan(args []string) {
 			parseArgs = args[1:]
 		case "host":
 			if len(args) < 2 {
-				log.Fatal("Usage: cnspec scan host <target> -f ...")
+				log.Fatal("Usage: kspec scan host <target> -f ...")
 			}
 			assetType = "host"
 			target = args[1]
 			parseArgs = args[2:]
 		case "github":
 			if len(args) < 2 {
-				log.Fatal("Usage: cnspec scan github <org|repo> <target> -f ...")
+				log.Fatal("Usage: kspec scan github <org|repo> <target> -f ...")
 			}
 			subCmd := args[1]
 			if subCmd == "org" {
 				if len(args) < 3 {
-					log.Fatal("Usage: cnspec scan github org <org-name> -f ...")
+					log.Fatal("Usage: kspec scan github org <org-name> -f ...")
 				}
 				assetType = "github-org"
 				owner = args[2]
@@ -79,7 +79,7 @@ func runScan(args []string) {
 				parseArgs = args[3:]
 			} else if subCmd == "repo" {
 				if len(args) < 3 {
-					log.Fatal("Usage: cnspec scan github repo <owner/repo> -f ...")
+					log.Fatal("Usage: kspec scan github repo <owner/repo> -f ...")
 				}
 				repoPath := args[2]
 				parts := strings.Split(repoPath, "/")
@@ -168,7 +168,7 @@ func runScan(args []string) {
 
 	// 2. Setup Provider Config with Credentials
 	providerConfig := make(map[string]string)
-	
+
 	// Configure credentials for GitHub provider
 	if assetType == "github-org" || assetType == "github-repo" {
 		if *token != "" {

@@ -37,7 +37,7 @@ Validate a target host against a specific policy file:
 
 ```bash
 # Check Google for Email Security Compliance (SPF, DMARC)
-go run ./cmd/cnspec scan host google.com -f policies/email-security.policy.yaml
+go run ./cmd/kspec scan host google.com -f policies/email-security.policy.yaml
 ```
 
 ### Protocol Validation
@@ -45,7 +45,7 @@ Ensure your web servers meet modern TLS standards:
 
 ```bash
 # Check TLS configuration
-go run ./cmd/cnspec scan host example.com -f policies/tls_security.yaml
+go run ./cmd/kspec scan host example.com -f policies/tls_security.yaml
 ```
 
 ## 📦 Policy Library
