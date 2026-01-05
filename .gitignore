@@ -2,6 +2,7 @@
 /cnspec
 /cnquery
 kspec-engine
+/kspec
 *.exe
 *.test
 
