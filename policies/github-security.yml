@@ -2,21 +2,228 @@ apiVersion: kopexa.io/v1alpha1
 kind: Policy
 metadata:
   name: kopexa-github-security
-  title: kopexa GitHub Security
+  title: Kopexa GitHub Security
   version: 1.0.0
+  license: BUSL-1.1
+  tags:
+    kopexa.io/category: security
+    kopexa.io/platform: github
+require:
+  - provider: github
+
+authors:
+  - name: Kopexa, Inc
+    email: hello@kopexa.io
+
 groups:
   - title: GitHub Organization Security
-    filter: asset.platform == "github-org"
+    filter: asset.type == "github-org"
     checks:
+      - uid: kopexa-github-organization-security-two-factor-auth
+      - uid: kopexa-github-organization-security-verified-domain
       - uid: kopexa-github-organization-security-default-permission-level
 
   - title: GitHub Repository Security
-    filter: asset.platform == "github-repo"
+    filter: asset.type == "github-repo"
     checks:
-      - uid: kopexa-github-repository-security-default-permission-level
+      - uid: kopexa-github-repository-security-default-branch-protection
+      - uid: kopexa-github-repository-security-release-branch-protection
+      - uid: kopexa-github-repository-security-prevent-force-pushes-default
+      - uid: kopexa-github-repository-security-prevent-force-pushes-release
+      - uid: kopexa-github-repository-security-conversation-resolution
+      - uid: kopexa-github-repository-security-status-checks
+      - uid: kopexa-github-repository-security-signed-commits
+      - uid: kopexa-github-repository-security-enforce-admins
+      - uid: kopexa-github-repository-security-dependabot
+
+scoring_system: highest impact
 
 queries:
+  # Organization Checks
+  - uid: kopexa-github-organization-security-two-factor-auth
+    title: Enable Two-factor authentication for all users in the organization
+    resource: github_organization
+    query: resource.two_factor_requirement_enabled == true
+    severity: critical
+    docs: >
+      This check ensures that GitHub Organizations are configured to require all users to enable 
+      two-factor authentication (2FA), providing an additional layer of security for user accounts.
+      Two-factor authentication significantly reduces the risk of unauthorized access.
+    remediation: >
+      1. Navigate to your organization on GitHub
+      2. Go to Settings > Security > Authentication security
+      3. Enable "Require two-factor authentication for all members"
+      4. Save changes
+
+  - uid: kopexa-github-organization-security-verified-domain
+    title: Organization should have a verified domain attached
+    resource: github_organization
+    query: resource.is_verified == true
+    severity: high
+    docs: >
+      Verifying your organization's domain with GitHub provides identity confirmation and 
+      adds a "Verified" badge to the organization's profile, enhancing trust and credibility.
+    remediation: >
+      1. Navigate to your organization on GitHub
+      2. Go to Settings > Verified & approved domains
+      3. Add and verify your domain
+      4. Complete the DNS verification process
+
   - uid: kopexa-github-organization-security-default-permission-level
-    title: Ensure default permission level is set to 'read'
-    resource: github-organization-security
-    query: resource.default_permission_level == 'read'
+    title: Ensure GitHub Organization has base permissions configured to 'read'
+    resource: github_organization
+    query: resource.default_repository_permission == "read"
+    severity: medium
+    docs: >
+      Configuring base permissions to 'read' ensures that access is appropriately restricted,
+      adhering to the principle of least privilege. This prevents unauthorized or excessive 
+      access to sensitive repositories.
+    remediation: >
+      1. Navigate to your organization on GitHub
+      2. Go to Settings > Member privileges
+      3. Under "Base permissions", select "Read"
+      4. Save changes
+
+  # Repository Checks
+  - uid: kopexa-github-repository-security-default-branch-protection
+    title: Ensure GitHub repository default branch is protected
+    resource: github_branch
+    query: |
+      resource.is_default == false || resource.protected == true
+    severity: critical
+    docs: >
+      Branch protection ensures that only authorized changes are merged into the default branch,
+      maintaining code integrity and reducing the risk of unauthorized modifications.
+    remediation: >
+      1. Navigate to your repository on GitHub
+      2. Go to Settings > Branches
+      3. Add a branch protection rule for your default branch
+      4. Enable "Protect matching branches"
+      5. Configure required protection options
+
+  - uid: kopexa-github-repository-security-release-branch-protection
+    title: Ensure GitHub repository release branches are protected
+    resource: github_branch
+    query: |
+      !resource.name.startsWith("release") || resource.protected == true
+    severity: critical
+    docs: >
+      Release branches should have branch protection enabled to ensure that only verified 
+      changes are included in production releases, reducing the risk of bugs or vulnerabilities.
+    remediation: >
+      1. Navigate to your repository on GitHub
+      2. Go to Settings > Branches
+      3. Add a branch protection rule for release branches (e.g., release/*)
+      4. Enable "Protect matching branches"
+      5. Configure required protection options
+
+  - uid: kopexa-github-repository-security-prevent-force-pushes-default
+    title: Ensure repository does not allow force pushes to the default branch
+    resource: github_branch
+    query: |
+      !resource.is_default || !resource.protected || (has(resource.allow_force_pushes) && resource.allow_force_pushes.enabled == false)
+    severity: high
+    docs: >
+      Force pushes can overwrite commits that other collaborators have based their work on,
+      leading to merge conflicts or data loss. Disabling force pushes maintains repository integrity.
+    remediation: >
+      1. Navigate to your repository on GitHub
+      2. Go to Settings > Branches
+      3. Edit the branch protection rule for your default branch
+      4. Ensure "Allow force pushes" is NOT enabled
+      5. Save changes
+
+  - uid: kopexa-github-repository-security-prevent-force-pushes-release
+    title: Ensure repository does not allow force pushes to release branches
+    resource: github_branch
+    query: |
+      !resource.name.startsWith("release") || !resource.protected || (has(resource.allow_force_pushes) && resource.allow_force_pushes.enabled == false)
+    severity: high
+    docs: >
+      Release branches should not allow force pushes to maintain release integrity and 
+      prevent unauthorized changes to production code.
+    remediation: >
+      1. Navigate to your repository on GitHub
+      2. Go to Settings > Branches
+      3. Edit the branch protection rule for release branches
+      4. Ensure "Allow force pushes" is NOT enabled
+      5. Save changes
+
+  - uid: kopexa-github-repository-security-conversation-resolution
+    title: Ensure branch protection requires conversation resolution before merging
+    resource: github_branch
+    query: |
+      !resource.is_default || !resource.protected || (has(resource.required_conversation_resolution) && resource.required_conversation_resolution.enabled == true)
+    severity: medium
+    docs: >
+      Requiring conversation resolution ensures that all comments and feedback are addressed
+      before merging, promoting better code quality and collaboration.
+    remediation: >
+      1. Navigate to your repository on GitHub
+      2. Go to Settings > Branches
+      3. Edit the branch protection rule for your default branch
+      4. Enable "Require conversation resolution before merging"
+      5. Save changes
+
+  - uid: kopexa-github-repository-security-status-checks
+    title: Ensure status checks are passing before merging PRs on the default branch
+    resource: github_branch
+    query: |
+      !resource.is_default || !resource.protected || (has(resource.required_status_checks) && size(resource.required_status_checks) > 0)
+    severity: high
+    docs: >
+      Requiring status checks ensures that all CI tests pass before merging, reducing the
+      risk of introducing bugs or vulnerabilities into the codebase.
+    remediation: >
+      1. Navigate to your repository on GitHub
+      2. Go to Settings > Branches
+      3. Edit the branch protection rule for your default branch
+      4. Enable "Require status checks to pass before merging"
+      5. Select the required status checks
+      6. Save changes
+
+  - uid: kopexa-github-repository-security-signed-commits
+    title: Ensure repository branch protection requires signed commits
+    resource: github_branch
+    query: |
+      !resource.is_default || !resource.protected || (has(resource.required_signatures) && resource.required_signatures == true)
+    severity: high
+    docs: >
+      Signed commits provide cryptographic verification of commit authorship, enhancing 
+      trust and accountability in the codebase.
+    remediation: >
+      1. Navigate to your repository on GitHub
+      2. Go to Settings > Branches
+      3. Edit the branch protection rule for your default branch
+      4. Enable "Require signed commits"
+      5. Save changes
+
+  - uid: kopexa-github-repository-security-enforce-admins
+    title: Ensure repository does not allow bypassing branch protection rules
+    resource: github_branch
+    query: |
+      !resource.is_default || !resource.protected || (has(resource.enforce_admins) && resource.enforce_admins.enabled == true)
+    severity: high
+    docs: >
+      Enforcing branch protection rules for all users, including administrators, ensures
+      that security policies are consistently applied across the repository.
+    remediation: >
+      1. Navigate to your repository on GitHub
+      2. Go to Settings > Branches
+      3. Edit the branch protection rule for your default branch
+      4. Enable "Do not allow bypassing the above settings"
+      5. Save changes
+
+  - uid: kopexa-github-repository-security-dependabot
+    title: Ensure a GitHub Actions workflow exists for Dependabot
+    resource: github_repo
+    query: >
+      resource.files.exists(f, f.path == ".github/dependabot.yml" || f.path == ".github/dependabot.yaml")
+    severity: medium
+    docs: >
+      Dependabot automatically creates pull requests to keep dependencies up to date,
+      reducing the risk of vulnerabilities in outdated packages.
+    remediation: >
+      1. Create a .github/dependabot.yml file in your repository
+      2. Configure Dependabot for your package ecosystems
+      3. Commit and push the configuration file
