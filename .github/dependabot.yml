@@ -1,0 +1,66 @@
+# Dependabot configuration for kspec
+# https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
+version: 2
+updates:
+  # Go modules
+  - package-ecosystem: "gomod"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/Berlin"
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "go"
+    reviewers:
+      - "juliankoehn"
+    groups:
+      azure-sdk:
+        patterns:
+          - "github.com/Azure/*"
+        update-types:
+          - "minor"
+          - "patch"
+      microsoft-graph:
+        patterns:
+          - "github.com/microsoftgraph/*"
+          - "github.com/microsoft/*"
+        update-types:
+          - "minor"
+          - "patch"
+      google:
+        patterns:
+          - "github.com/google/*"
+        update-types:
+          - "minor"
+          - "patch"
+      charmbracelet:
+        patterns:
+          - "github.com/charmbracelet/*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/Berlin"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    reviewers:
+      - "juliankoehn"
