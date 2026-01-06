@@ -1,0 +1,1181 @@
+apiVersion: kopexa.io/v1alpha1
+kind: Policy
+metadata:
+  name: kopexa-aws-security
+  title: Kopexa AWS Security Best Practices
+  version: 1.0.0
+
+require:
+  - provider: aws
+
+authors:
+  - name: Kopexa GmbH
+    email: security@kopexa.com
+
+groups:
+  - title: AWS IAM Security
+    checks:
+      - uid: aws-iam-root-account-no-access-keys
+      - uid: aws-iam-root-account-mfa-enabled
+      - uid: aws-iam-users-mfa-enabled
+      - uid: aws-iam-users-no-inline-policies
+      - uid: aws-iam-access-keys-rotated
+      - uid: aws-iam-no-admin-privileges
+      - uid: aws-iam-unused-credentials-disabled
+
+  - title: AWS S3 Security
+    checks:
+      - uid: aws-s3-bucket-no-public-access
+      - uid: aws-s3-bucket-encryption-enabled
+      - uid: aws-s3-bucket-versioning-enabled
+      - uid: aws-s3-bucket-logging-enabled
+      - uid: aws-s3-bucket-ssl-requests-only
+      - uid: aws-s3-bucket-public-access-block
+      - uid: aws-s3-bucket-no-public-acl
+
+  - title: AWS EC2 Security
+    checks:
+      - uid: aws-ec2-ebs-encryption-enabled
+      - uid: aws-ec2-imdsv2-required
+      - uid: aws-ec2-no-public-ip
+      - uid: aws-ec2-detailed-monitoring
+      - uid: aws-ec2-security-group-no-ssh-from-internet
+      - uid: aws-ec2-security-group-no-rdp-from-internet
+      - uid: aws-ec2-security-group-no-unrestricted-ingress
+
+  - title: AWS VPC Security
+    checks:
+      - uid: aws-vpc-flow-logs-enabled
+      - uid: aws-vpc-no-default-vpc
+      - uid: aws-vpc-endpoint-enabled
+
+  - title: AWS KMS Security
+    checks:
+      - uid: aws-kms-key-rotation-enabled
+      - uid: aws-kms-key-not-public
+
+  - title: AWS CloudTrail Security
+    checks:
+      - uid: aws-cloudtrail-enabled
+      - uid: aws-cloudtrail-multi-region
+      - uid: aws-cloudtrail-log-validation
+      - uid: aws-cloudtrail-encryption-enabled
+      - uid: aws-cloudtrail-cloudwatch-logs
+
+  - title: AWS RDS Security
+    checks:
+      - uid: aws-rds-encryption-enabled
+      - uid: aws-rds-not-public
+      - uid: aws-rds-multi-az-enabled
+      - uid: aws-rds-deletion-protection
+      - uid: aws-rds-iam-authentication
+      - uid: aws-rds-backup-enabled
+      - uid: aws-rds-auto-minor-upgrade
+
+  - title: AWS Lambda Security
+    checks:
+      - uid: aws-lambda-in-vpc
+      - uid: aws-lambda-no-public-url
+      - uid: aws-lambda-no-deprecated-runtime
+      - uid: aws-lambda-dlq-configured
+
+  - title: AWS EKS Security
+    checks:
+      - uid: aws-eks-secrets-encryption
+      - uid: aws-eks-logging-enabled
+      - uid: aws-eks-no-public-endpoint
+
+  - title: AWS ECS Security
+    checks:
+      - uid: aws-ecs-container-insights
+      - uid: aws-ecs-service-no-public-ip
+
+  - title: AWS DynamoDB Security
+    checks:
+      - uid: aws-dynamodb-encryption-enabled
+      - uid: aws-dynamodb-pitr-enabled
+      - uid: aws-dynamodb-deletion-protection
+
+  - title: AWS ELB Security
+    checks:
+      - uid: aws-elb-deletion-protection
+      - uid: aws-elb-access-logs
+      - uid: aws-elb-https-listener
+      - uid: aws-elb-modern-tls
+
+  - title: AWS CloudWatch Security
+    checks:
+      - uid: aws-cloudwatch-loggroup-retention
+      - uid: aws-cloudwatch-loggroup-encryption
+
+  - title: AWS Config Security
+    checks:
+      - uid: aws-config-enabled
+      - uid: aws-config-all-resources
+
+  - title: AWS GuardDuty Security
+    checks:
+      - uid: aws-guardduty-enabled
+
+  - title: AWS Security Hub
+    checks:
+      - uid: aws-securityhub-enabled
+      - uid: aws-securityhub-standards-enabled
+
+  - title: AWS Secrets Manager
+    checks:
+      - uid: aws-secretsmanager-rotation-enabled
+      - uid: aws-secretsmanager-cmk-encryption
+
+  - title: AWS SNS Security
+    checks:
+      - uid: aws-sns-encryption-enabled
+      - uid: aws-sns-no-public-access
+
+  - title: AWS SQS Security
+    checks:
+      - uid: aws-sqs-encryption-enabled
+      - uid: aws-sqs-no-public-access
+      - uid: aws-sqs-dlq-configured
+
+  - title: AWS ECR Security
+    checks:
+      - uid: aws-ecr-immutable-tags
+      - uid: aws-ecr-scan-on-push
+      - uid: aws-ecr-lifecycle-policy
+      - uid: aws-ecr-no-public-access
+
+  - title: AWS WAF Security
+    checks:
+      - uid: aws-waf-webacl-logging
+      - uid: aws-waf-webacl-rules
+
+  - title: AWS ACM Security
+    checks:
+      - uid: aws-acm-certificate-expiry
+      - uid: aws-acm-certificate-renewal
+
+  - title: AWS ElastiCache Security
+    checks:
+      - uid: aws-elasticache-encryption-at-rest
+      - uid: aws-elasticache-encryption-in-transit
+      - uid: aws-elasticache-auth-enabled
+
+  - title: AWS CloudFront Security
+    checks:
+      - uid: aws-cloudfront-https-only
+      - uid: aws-cloudfront-waf-enabled
+      - uid: aws-cloudfront-logging
+      - uid: aws-cloudfront-modern-tls
+
+  - title: AWS API Gateway Security
+    checks:
+      - uid: aws-apigateway-logging-enabled
+      - uid: aws-apigateway-waf-enabled
+
+  - title: AWS SSM Security
+    checks:
+      - uid: aws-ssm-parameter-encryption
+
+  - title: AWS Auto Scaling Security
+    checks:
+      - uid: aws-autoscaling-launch-config-imdsv2
+      - uid: aws-autoscaling-ebs-encryption
+
+scoring_system: highest impact
+
+queries:
+  # IAM Security Checks
+  - uid: aws-iam-root-account-no-access-keys
+    title: Ensure no root account access keys exist
+    resource: aws_account
+    severity: critical
+    query: |
+      resource.root_access_keys_active == 0
+    docs: |
+      The root account is the most privileged user in an AWS account. Access keys for the root user should never be created.
+    remediation: |
+      Delete any access keys associated with the root account.
+
+  - uid: aws-iam-root-account-mfa-enabled
+    title: Ensure MFA is enabled for the root account
+    resource: aws_account
+    severity: critical
+    query: |
+      resource.root_mfa_enabled == true
+    docs: |
+      Multi-factor authentication provides an additional layer of security for the root account.
+    remediation: |
+      Enable MFA for the root account in the IAM console.
+
+  - uid: aws-iam-users-mfa-enabled
+    title: Ensure MFA is enabled for all IAM users with console access
+    resource: aws_iam_user
+    severity: high
+    query: |
+      !resource.has_console_access || resource.has_mfa
+    docs: |
+      MFA adds an extra layer of protection for users who can log into the AWS console.
+    remediation: |
+      Enable MFA for all IAM users with console access.
+
+  - uid: aws-iam-users-no-inline-policies
+    title: Ensure IAM users do not have inline policies
+    resource: aws_iam_user
+    severity: medium
+    query: |
+      resource.inline_policy_count == 0
+    docs: |
+      Inline policies are harder to manage and audit. Use managed policies instead.
+    remediation: |
+      Convert inline policies to managed policies and attach them to groups.
+
+  - uid: aws-iam-access-keys-rotated
+    title: Ensure IAM access keys are rotated within 90 days
+    resource: aws_iam_user
+    severity: high
+    query: |
+      !resource.has_access_keys || resource.access_key_age_days <= 90
+    docs: |
+      Regular rotation of access keys reduces the risk of compromised credentials.
+    remediation: |
+      Rotate access keys that are older than 90 days.
+
+  - uid: aws-iam-no-admin-privileges
+    title: Ensure IAM policies do not allow full administrative privileges
+    resource: aws_iam_policy
+    severity: high
+    query: |
+      !resource.is_admin_policy
+    docs: |
+      Full administrative privileges should be restricted to avoid privilege escalation.
+    remediation: |
+      Apply the principle of least privilege to IAM policies.
+
+  - uid: aws-iam-unused-credentials-disabled
+    title: Ensure unused credentials are disabled
+    resource: aws_iam_user
+    severity: medium
+    query: |
+      resource.last_activity_days <= 90
+    docs: |
+      Unused credentials increase the attack surface and should be disabled.
+    remediation: |
+      Disable or remove IAM user credentials that have not been used in the last 90 days.
+
+  # S3 Security Checks
+  - uid: aws-s3-bucket-no-public-access
+    title: Ensure S3 buckets are not publicly accessible
+    resource: aws_s3_bucket
+    severity: critical
+    query: |
+      !resource.is_public
+    docs: |
+      Public S3 buckets can expose sensitive data to the internet.
+    remediation: |
+      Block public access on all S3 buckets and review bucket policies.
+
+  - uid: aws-s3-bucket-encryption-enabled
+    title: Ensure S3 bucket encryption is enabled
+    resource: aws_s3_bucket
+    severity: high
+    query: |
+      resource.has_encryption
+    docs: |
+      Server-side encryption protects data at rest in S3 buckets.
+    remediation: |
+      Enable default encryption on S3 buckets using SSE-S3 or SSE-KMS.
+
+  - uid: aws-s3-bucket-versioning-enabled
+    title: Ensure S3 bucket versioning is enabled
+    resource: aws_s3_bucket
+    severity: medium
+    query: |
+      resource.has_versioning
+    docs: |
+      Versioning protects against accidental deletion and allows recovery of objects.
+    remediation: |
+      Enable versioning on S3 buckets.
+
+  - uid: aws-s3-bucket-logging-enabled
+    title: Ensure S3 bucket logging is enabled
+    resource: aws_s3_bucket
+    severity: medium
+    query: |
+      resource.has_logging
+    docs: |
+      Access logging provides audit trails for bucket access.
+    remediation: |
+      Enable server access logging on S3 buckets.
+
+  - uid: aws-s3-bucket-ssl-requests-only
+    title: Ensure S3 buckets enforce SSL/TLS for data transfer
+    resource: aws_s3_bucket
+    severity: high
+    query: |
+      resource.has_secure_transport_policy
+    docs: |
+      Enforcing SSL/TLS ensures data is encrypted in transit.
+    remediation: |
+      Add a bucket policy requiring secure transport (aws:SecureTransport).
+
+  - uid: aws-s3-bucket-public-access-block
+    title: Ensure S3 bucket public access block is enabled
+    resource: aws_s3_bucket
+    severity: critical
+    query: |
+      resource.public_access_block_enabled
+    docs: |
+      Public access block provides an additional layer of protection against public access.
+    remediation: |
+      Enable all public access block settings on S3 buckets.
+
+  - uid: aws-s3-bucket-no-public-acl
+    title: Ensure S3 buckets do not have public ACLs
+    resource: aws_s3_bucket
+    severity: critical
+    query: |
+      !resource.has_public_acl
+    docs: |
+      Public ACLs can inadvertently expose bucket contents.
+    remediation: |
+      Remove public ACLs from S3 buckets.
+
+  # EC2 Security Checks
+  - uid: aws-ec2-ebs-encryption-enabled
+    title: Ensure EBS volumes are encrypted
+    resource: aws_ec2_volume
+    severity: high
+    query: |
+      resource.is_encrypted
+    docs: |
+      EBS encryption protects data at rest on EC2 instances.
+    remediation: |
+      Enable EBS encryption by default and encrypt existing volumes.
+
+  - uid: aws-ec2-imdsv2-required
+    title: Ensure EC2 instances use IMDSv2
+    resource: aws_ec2_instance
+    severity: high
+    query: |
+      resource.has_imdsv2
+    docs: |
+      IMDSv2 provides protection against SSRF attacks targeting metadata.
+    remediation: |
+      Configure EC2 instances to require IMDSv2.
+
+  - uid: aws-ec2-no-public-ip
+    title: Ensure EC2 instances do not have public IPs unless required
+    resource: aws_ec2_instance
+    severity: medium
+    query: |
+      !resource.is_public
+    docs: |
+      Public IPs increase the attack surface. Use load balancers or bastion hosts instead.
+    remediation: |
+      Remove public IPs from EC2 instances and use private subnets with NAT.
+
+  - uid: aws-ec2-detailed-monitoring
+    title: Ensure detailed monitoring is enabled for EC2 instances
+    resource: aws_ec2_instance
+    severity: low
+    query: |
+      resource.has_detailed_monitoring
+    docs: |
+      Detailed monitoring provides 1-minute interval metrics for better visibility.
+    remediation: |
+      Enable detailed monitoring on EC2 instances.
+
+  - uid: aws-ec2-security-group-no-ssh-from-internet
+    title: Ensure no security groups allow SSH from 0.0.0.0/0
+    resource: aws_ec2_securitygroup
+    severity: critical
+    query: |
+      !resource.allows_ssh_from_internet
+    docs: |
+      SSH access from the internet exposes instances to brute force attacks.
+    remediation: |
+      Restrict SSH access to specific IP ranges or use Systems Manager Session Manager.
+
+  - uid: aws-ec2-security-group-no-rdp-from-internet
+    title: Ensure no security groups allow RDP from 0.0.0.0/0
+    resource: aws_ec2_securitygroup
+    severity: critical
+    query: |
+      !resource.allows_rdp_from_internet
+    docs: |
+      RDP access from the internet exposes Windows instances to attacks.
+    remediation: |
+      Restrict RDP access to specific IP ranges.
+
+  - uid: aws-ec2-security-group-no-unrestricted-ingress
+    title: Ensure security groups do not allow unrestricted ingress
+    resource: aws_ec2_securitygroup
+    severity: high
+    query: |
+      !resource.has_unrestricted_ingress
+    docs: |
+      Unrestricted ingress rules expose resources to the internet.
+    remediation: |
+      Restrict security group ingress rules to specific IP ranges and ports.
+
+  # VPC Security Checks
+  - uid: aws-vpc-flow-logs-enabled
+    title: Ensure VPC flow logs are enabled
+    resource: aws_vpc
+    severity: high
+    query: |
+      resource.has_flow_logs
+    docs: |
+      VPC flow logs provide visibility into network traffic for security analysis.
+    remediation: |
+      Enable VPC flow logs on all VPCs.
+
+  - uid: aws-vpc-no-default-vpc
+    title: Ensure the default VPC is not used
+    resource: aws_vpc
+    severity: medium
+    query: |
+      !resource.is_default
+    docs: |
+      The default VPC has less restrictive settings and should not be used for production.
+    remediation: |
+      Create custom VPCs for workloads and avoid using the default VPC.
+
+  - uid: aws-vpc-endpoint-enabled
+    title: Ensure VPC endpoints are used for AWS services
+    resource: aws_vpc
+    severity: medium
+    query: |
+      resource.endpoint_count > 0
+    docs: |
+      VPC endpoints allow private connectivity to AWS services without internet access.
+    remediation: |
+      Create VPC endpoints for frequently used AWS services.
+
+  # KMS Security Checks
+  - uid: aws-kms-key-rotation-enabled
+    title: Ensure KMS key rotation is enabled
+    resource: aws_kms_key
+    severity: high
+    query: |
+      resource.is_aws_managed || resource.key_rotation_enabled
+    docs: |
+      Automatic key rotation reduces the risk of key compromise.
+    remediation: |
+      Enable automatic key rotation for customer-managed KMS keys.
+
+  - uid: aws-kms-key-not-public
+    title: Ensure KMS keys are not publicly accessible
+    resource: aws_kms_key
+    severity: critical
+    query: |
+      !resource.has_public_access
+    docs: |
+      Public KMS keys can be used by anyone to encrypt data.
+    remediation: |
+      Review and restrict KMS key policies to specific principals.
+
+  # CloudTrail Security Checks
+  - uid: aws-cloudtrail-enabled
+    title: Ensure CloudTrail is enabled
+    resource: aws_cloudtrail
+    severity: critical
+    query: |
+      resource.is_logging
+    docs: |
+      CloudTrail provides audit logs for AWS API calls and security events.
+    remediation: |
+      Enable CloudTrail in all regions.
+
+  - uid: aws-cloudtrail-multi-region
+    title: Ensure CloudTrail is enabled in all regions
+    resource: aws_cloudtrail
+    severity: high
+    query: |
+      resource.is_multi_region_trail
+    docs: |
+      Multi-region trails capture events from all AWS regions.
+    remediation: |
+      Configure CloudTrail as a multi-region trail.
+
+  - uid: aws-cloudtrail-log-validation
+    title: Ensure CloudTrail log file validation is enabled
+    resource: aws_cloudtrail
+    severity: high
+    query: |
+      resource.log_file_validation_enabled
+    docs: |
+      Log file validation ensures logs have not been tampered with.
+    remediation: |
+      Enable log file validation on CloudTrail trails.
+
+  - uid: aws-cloudtrail-encryption-enabled
+    title: Ensure CloudTrail logs are encrypted with KMS
+    resource: aws_cloudtrail
+    severity: high
+    query: |
+      resource.has_kms_encryption
+    docs: |
+      KMS encryption protects CloudTrail logs at rest.
+    remediation: |
+      Configure CloudTrail to use KMS encryption.
+
+  - uid: aws-cloudtrail-cloudwatch-logs
+    title: Ensure CloudTrail is integrated with CloudWatch Logs
+    resource: aws_cloudtrail
+    severity: medium
+    query: |
+      resource.has_cloudwatch_logs
+    docs: |
+      CloudWatch integration enables real-time monitoring and alerting.
+    remediation: |
+      Configure CloudTrail to send logs to CloudWatch Logs.
+
+  # RDS Security Checks
+  - uid: aws-rds-encryption-enabled
+    title: Ensure RDS instances have encryption enabled
+    resource: aws_rds_instance
+    severity: high
+    query: |
+      resource.is_encrypted
+    docs: |
+      RDS encryption protects data at rest in database instances.
+    remediation: |
+      Enable encryption when creating RDS instances (cannot be enabled after creation).
+
+  - uid: aws-rds-not-public
+    title: Ensure RDS instances are not publicly accessible
+    resource: aws_rds_instance
+    severity: critical
+    query: |
+      !resource.is_public
+    docs: |
+      Publicly accessible RDS instances are exposed to internet attacks.
+    remediation: |
+      Disable public accessibility on RDS instances.
+
+  - uid: aws-rds-multi-az-enabled
+    title: Ensure RDS instances have Multi-AZ enabled for high availability
+    resource: aws_rds_instance
+    severity: medium
+    query: |
+      resource.has_multi_az
+    docs: |
+      Multi-AZ provides automatic failover for production workloads.
+    remediation: |
+      Enable Multi-AZ on RDS instances used for production.
+
+  - uid: aws-rds-deletion-protection
+    title: Ensure RDS instances have deletion protection enabled
+    resource: aws_rds_instance
+    severity: medium
+    query: |
+      resource.has_deletion_protection
+    docs: |
+      Deletion protection prevents accidental deletion of databases.
+    remediation: |
+      Enable deletion protection on RDS instances.
+
+  - uid: aws-rds-iam-authentication
+    title: Ensure RDS instances use IAM authentication
+    resource: aws_rds_instance
+    severity: medium
+    query: |
+      resource.has_iam_auth
+    docs: |
+      IAM authentication provides centralized access management.
+    remediation: |
+      Enable IAM database authentication on RDS instances.
+
+  - uid: aws-rds-backup-enabled
+    title: Ensure RDS instances have automated backups enabled
+    resource: aws_rds_instance
+    severity: high
+    query: |
+      resource.has_backups
+    docs: |
+      Automated backups enable point-in-time recovery.
+    remediation: |
+      Configure automated backups with appropriate retention period.
+
+  - uid: aws-rds-auto-minor-upgrade
+    title: Ensure RDS instances have auto minor version upgrade enabled
+    resource: aws_rds_instance
+    severity: low
+    query: |
+      resource.has_auto_minor_upgrade
+    docs: |
+      Auto minor version upgrade ensures security patches are applied.
+    remediation: |
+      Enable auto minor version upgrade on RDS instances.
+
+  # Lambda Security Checks
+  - uid: aws-lambda-in-vpc
+    title: Ensure Lambda functions are deployed in a VPC
+    resource: aws_lambda_function
+    severity: medium
+    query: |
+      resource.in_vpc
+    docs: |
+      VPC deployment provides network isolation for Lambda functions.
+    remediation: |
+      Configure Lambda functions to run in a VPC with appropriate security groups.
+
+  - uid: aws-lambda-no-public-url
+    title: Ensure Lambda functions do not have publicly accessible URLs without authentication
+    resource: aws_lambda_function
+    severity: critical
+    query: |
+      !resource.function_url_is_public
+    docs: |
+      Public Lambda URLs without authentication expose functions to the internet.
+    remediation: |
+      Configure IAM authentication for Lambda function URLs.
+
+  - uid: aws-lambda-no-deprecated-runtime
+    title: Ensure Lambda functions do not use deprecated runtimes
+    resource: aws_lambda_function
+    severity: high
+    query: |
+      !resource.has_deprecated_runtime
+    docs: |
+      Deprecated runtimes may have security vulnerabilities.
+    remediation: |
+      Update Lambda functions to use supported runtimes.
+
+  - uid: aws-lambda-dlq-configured
+    title: Ensure Lambda functions have dead letter queues configured
+    resource: aws_lambda_function
+    severity: low
+    query: |
+      resource.has_dead_letter_config
+    docs: |
+      Dead letter queues capture failed invocations for troubleshooting.
+    remediation: |
+      Configure a dead letter queue (SQS or SNS) for Lambda functions.
+
+  # EKS Security Checks
+  - uid: aws-eks-secrets-encryption
+    title: Ensure EKS cluster secrets are encrypted
+    resource: aws_eks_cluster
+    severity: high
+    query: |
+      resource.has_secrets_encryption
+    docs: |
+      Secrets encryption protects sensitive data stored in Kubernetes secrets.
+    remediation: |
+      Enable secrets encryption using a KMS key.
+
+  - uid: aws-eks-logging-enabled
+    title: Ensure EKS cluster logging is enabled
+    resource: aws_eks_cluster
+    severity: medium
+    query: |
+      resource.has_logging
+    docs: |
+      Control plane logging provides audit trails for EKS clusters.
+    remediation: |
+      Enable all control plane log types for EKS clusters.
+
+  - uid: aws-eks-no-public-endpoint
+    title: Ensure EKS cluster endpoint is not publicly accessible
+    resource: aws_eks_cluster
+    severity: high
+    query: |
+      !resource.has_unrestricted_public_access
+    docs: |
+      Public endpoints expose the Kubernetes API to the internet.
+    remediation: |
+      Restrict public endpoint access or disable it and use private endpoint only.
+
+  # ECS Security Checks
+  - uid: aws-ecs-container-insights
+    title: Ensure ECS clusters have Container Insights enabled
+    resource: aws_ecs_cluster
+    severity: low
+    query: |
+      resource.has_container_insights
+    docs: |
+      Container Insights provides detailed monitoring for ECS clusters.
+    remediation: |
+      Enable Container Insights on ECS clusters.
+
+  - uid: aws-ecs-service-no-public-ip
+    title: Ensure ECS services do not have public IPs
+    resource: aws_ecs_service
+    severity: medium
+    query: |
+      !resource.has_public_ip
+    docs: |
+      Public IPs expose containers directly to the internet.
+    remediation: |
+      Use private subnets and load balancers instead of public IPs.
+
+  # DynamoDB Security Checks
+  - uid: aws-dynamodb-encryption-enabled
+    title: Ensure DynamoDB tables have encryption enabled
+    resource: aws_dynamodb_table
+    severity: high
+    query: |
+      resource.has_encryption
+    docs: |
+      Encryption protects data at rest in DynamoDB tables.
+    remediation: |
+      DynamoDB tables are encrypted by default with AWS-owned keys.
+
+  - uid: aws-dynamodb-pitr-enabled
+    title: Ensure DynamoDB tables have point-in-time recovery enabled
+    resource: aws_dynamodb_table
+    severity: medium
+    query: |
+      resource.has_point_in_time_recovery
+    docs: |
+      Point-in-time recovery enables data restoration to any point in time.
+    remediation: |
+      Enable point-in-time recovery on DynamoDB tables.
+
+  - uid: aws-dynamodb-deletion-protection
+    title: Ensure DynamoDB tables have deletion protection enabled
+    resource: aws_dynamodb_table
+    severity: medium
+    query: |
+      resource.has_deletion_protection
+    docs: |
+      Deletion protection prevents accidental table deletion.
+    remediation: |
+      Enable deletion protection on DynamoDB tables.
+
+  # ELB Security Checks
+  - uid: aws-elb-deletion-protection
+    title: Ensure load balancers have deletion protection enabled
+    resource: aws_elb_loadbalancer
+    severity: medium
+    query: |
+      resource.has_deletion_protection
+    docs: |
+      Deletion protection prevents accidental deletion of load balancers.
+    remediation: |
+      Enable deletion protection on load balancers.
+
+  - uid: aws-elb-access-logs
+    title: Ensure load balancers have access logging enabled
+    resource: aws_elb_loadbalancer
+    severity: medium
+    query: |
+      resource.has_access_logs
+    docs: |
+      Access logs provide detailed request information for security analysis.
+    remediation: |
+      Enable access logging on load balancers.
+
+  - uid: aws-elb-https-listener
+    title: Ensure load balancers use HTTPS listeners
+    resource: aws_elb_loadbalancer
+    severity: high
+    query: |
+      !resource.has_http_listener || resource.has_https_listener
+    docs: |
+      HTTPS ensures data is encrypted in transit.
+    remediation: |
+      Configure HTTPS listeners and redirect HTTP to HTTPS.
+
+  - uid: aws-elb-modern-tls
+    title: Ensure load balancers use modern TLS policies
+    resource: aws_elb_listener
+    severity: high
+    query: |
+      !resource.is_https || resource.has_secure_ssl_policy
+    docs: |
+      Modern TLS policies disable weak ciphers and protocols.
+    remediation: |
+      Use TLS 1.2 or higher security policies on listeners.
+
+  # CloudWatch Security Checks
+  - uid: aws-cloudwatch-loggroup-retention
+    title: Ensure CloudWatch log groups have retention configured
+    resource: aws_cloudwatch_loggroup
+    severity: low
+    query: |
+      resource.has_retention
+    docs: |
+      Log retention prevents unlimited log storage and associated costs.
+    remediation: |
+      Configure appropriate retention periods for CloudWatch log groups.
+
+  - uid: aws-cloudwatch-loggroup-encryption
+    title: Ensure CloudWatch log groups are encrypted with KMS
+    resource: aws_cloudwatch_loggroup
+    severity: medium
+    query: |
+      resource.has_encryption
+    docs: |
+      KMS encryption protects sensitive log data at rest.
+    remediation: |
+      Configure KMS encryption on CloudWatch log groups.
+
+  # Config Security Checks
+  - uid: aws-config-enabled
+    title: Ensure AWS Config is enabled
+    resource: aws_config_recorder
+    severity: high
+    query: |
+      resource.is_recording
+    docs: |
+      AWS Config tracks resource configuration changes for compliance.
+    remediation: |
+      Enable AWS Config recording in all regions.
+
+  - uid: aws-config-all-resources
+    title: Ensure AWS Config records all resources
+    resource: aws_config_recorder
+    severity: medium
+    query: |
+      resource.records_all_resources
+    docs: |
+      Recording all resources ensures comprehensive configuration tracking.
+    remediation: |
+      Configure AWS Config to record all supported resource types.
+
+  # GuardDuty Security Checks
+  - uid: aws-guardduty-enabled
+    title: Ensure GuardDuty is enabled
+    resource: aws_guardduty_detector
+    severity: high
+    query: |
+      resource.is_enabled
+    docs: |
+      GuardDuty provides threat detection for AWS accounts.
+    remediation: |
+      Enable GuardDuty in all regions.
+
+  # Security Hub Security Checks
+  - uid: aws-securityhub-enabled
+    title: Ensure Security Hub is enabled
+    resource: aws_securityhub
+    severity: high
+    query: |
+      resource.is_enabled
+    docs: |
+      Security Hub aggregates security findings from multiple AWS services.
+    remediation: |
+      Enable Security Hub in all regions.
+
+  - uid: aws-securityhub-standards-enabled
+    title: Ensure Security Hub has security standards enabled
+    resource: aws_securityhub
+    severity: medium
+    query: |
+      resource.enabled_standards_count > 0
+    docs: |
+      Security standards provide automated compliance checks.
+    remediation: |
+      Enable AWS Foundational Security Best Practices and CIS benchmarks.
+
+  # Secrets Manager Security Checks
+  - uid: aws-secretsmanager-rotation-enabled
+    title: Ensure Secrets Manager secrets have rotation enabled
+    resource: aws_secretsmanager_secret
+    severity: medium
+    query: |
+      resource.has_rotation
+    docs: |
+      Automatic rotation reduces the risk of compromised credentials.
+    remediation: |
+      Configure automatic rotation for Secrets Manager secrets.
+
+  - uid: aws-secretsmanager-cmk-encryption
+    title: Ensure Secrets Manager secrets use CMK encryption
+    resource: aws_secretsmanager_secret
+    severity: medium
+    query: |
+      resource.has_cmk_encryption
+    docs: |
+      Customer-managed keys provide additional control over encryption.
+    remediation: |
+      Configure Secrets Manager secrets to use customer-managed KMS keys.
+
+  # SNS Security Checks
+  - uid: aws-sns-encryption-enabled
+    title: Ensure SNS topics have encryption enabled
+    resource: aws_sns_topic
+    severity: medium
+    query: |
+      resource.has_encryption
+    docs: |
+      Server-side encryption protects messages at rest.
+    remediation: |
+      Enable KMS encryption on SNS topics.
+
+  - uid: aws-sns-no-public-access
+    title: Ensure SNS topics are not publicly accessible
+    resource: aws_sns_topic
+    severity: high
+    query: |
+      !resource.is_public
+    docs: |
+      Public SNS topics can be published to by anyone.
+    remediation: |
+      Review and restrict SNS topic access policies.
+
+  # SQS Security Checks
+  - uid: aws-sqs-encryption-enabled
+    title: Ensure SQS queues have encryption enabled
+    resource: aws_sqs_queue
+    severity: medium
+    query: |
+      resource.has_sse
+    docs: |
+      Server-side encryption protects messages at rest.
+    remediation: |
+      Enable SSE-SQS or SSE-KMS encryption on SQS queues.
+
+  - uid: aws-sqs-no-public-access
+    title: Ensure SQS queues are not publicly accessible
+    resource: aws_sqs_queue
+    severity: high
+    query: |
+      !resource.is_public
+    docs: |
+      Public SQS queues can be accessed by anyone.
+    remediation: |
+      Review and restrict SQS queue access policies.
+
+  - uid: aws-sqs-dlq-configured
+    title: Ensure SQS queues have dead letter queues configured
+    resource: aws_sqs_queue
+    severity: low
+    query: |
+      resource.has_dlq
+    docs: |
+      Dead letter queues capture failed messages for troubleshooting.
+    remediation: |
+      Configure a dead letter queue for SQS queues.
+
+  # ECR Security Checks
+  - uid: aws-ecr-immutable-tags
+    title: Ensure ECR repositories have immutable image tags
+    resource: aws_ecr_repository
+    severity: medium
+    query: |
+      resource.is_immutable
+    docs: |
+      Immutable tags prevent image overwrites and ensure deployment consistency.
+    remediation: |
+      Enable immutable image tags on ECR repositories.
+
+  - uid: aws-ecr-scan-on-push
+    title: Ensure ECR repositories have scan on push enabled
+    resource: aws_ecr_repository
+    severity: high
+    query: |
+      resource.has_scan_on_push
+    docs: |
+      Automated scanning detects vulnerabilities in container images.
+    remediation: |
+      Enable scan on push for ECR repositories.
+
+  - uid: aws-ecr-lifecycle-policy
+    title: Ensure ECR repositories have lifecycle policies
+    resource: aws_ecr_repository
+    severity: low
+    query: |
+      resource.has_lifecycle_policy
+    docs: |
+      Lifecycle policies help manage image retention and reduce costs.
+    remediation: |
+      Configure lifecycle policies on ECR repositories.
+
+  - uid: aws-ecr-no-public-access
+    title: Ensure ECR repositories are not publicly accessible
+    resource: aws_ecr_repository
+    severity: critical
+    query: |
+      !resource.is_public
+    docs: |
+      Public repositories expose container images to the internet.
+    remediation: |
+      Review and restrict ECR repository policies.
+
+  # WAF Security Checks
+  - uid: aws-waf-webacl-logging
+    title: Ensure WAF web ACLs have logging enabled
+    resource: aws_waf_webacl
+    severity: medium
+    query: |
+      resource.has_logging
+    docs: |
+      WAF logging provides visibility into blocked and allowed requests.
+    remediation: |
+      Enable logging on WAF web ACLs.
+
+  - uid: aws-waf-webacl-rules
+    title: Ensure WAF web ACLs have rules configured
+    resource: aws_waf_webacl
+    severity: high
+    query: |
+      resource.has_rules
+    docs: |
+      WAF rules protect applications from common web exploits.
+    remediation: |
+      Add managed rule groups or custom rules to WAF web ACLs.
+
+  # ACM Security Checks
+  - uid: aws-acm-certificate-expiry
+    title: Ensure ACM certificates are not expiring within 30 days
+    resource: aws_acm_certificate
+    severity: high
+    query: |
+      !resource.expires_in_30_days
+    docs: |
+      Expired certificates cause service disruptions.
+    remediation: |
+      Renew certificates before expiration or enable auto-renewal.
+
+  - uid: aws-acm-certificate-renewal
+    title: Ensure ACM certificates are eligible for renewal
+    resource: aws_acm_certificate
+    severity: medium
+    query: |
+      !resource.is_imported || resource.is_eligible_for_renewal
+    docs: |
+      Certificates should be eligible for automatic renewal.
+    remediation: |
+      Use ACM-issued certificates for automatic renewal capability.
+
+  # ElastiCache Security Checks
+  - uid: aws-elasticache-encryption-at-rest
+    title: Ensure ElastiCache clusters have encryption at rest enabled
+    resource: aws_elasticache_cluster
+    severity: high
+    query: |
+      resource.has_encryption_at_rest
+    docs: |
+      Encryption at rest protects cached data on disk.
+    remediation: |
+      Enable encryption at rest when creating ElastiCache clusters.
+
+  - uid: aws-elasticache-encryption-in-transit
+    title: Ensure ElastiCache clusters have encryption in transit enabled
+    resource: aws_elasticache_cluster
+    severity: high
+    query: |
+      resource.has_encryption_in_transit
+    docs: |
+      Encryption in transit protects data between clients and cache.
+    remediation: |
+      Enable encryption in transit when creating ElastiCache clusters.
+
+  - uid: aws-elasticache-auth-enabled
+    title: Ensure ElastiCache Redis clusters have AUTH enabled
+    resource: aws_elasticache_cluster
+    severity: high
+    query: |
+      !resource.is_redis || resource.has_auth_token
+    docs: |
+      AUTH provides authentication for Redis clusters.
+    remediation: |
+      Enable AUTH token when creating Redis ElastiCache clusters.
+
+  # CloudFront Security Checks
+  - uid: aws-cloudfront-https-only
+    title: Ensure CloudFront distributions enforce HTTPS
+    resource: aws_cloudfront_distribution
+    severity: high
+    query: |
+      resource.enforces_https
+    docs: |
+      HTTPS enforcement ensures all traffic is encrypted.
+    remediation: |
+      Set viewer protocol policy to HTTPS-only or redirect HTTP to HTTPS.
+
+  - uid: aws-cloudfront-waf-enabled
+    title: Ensure CloudFront distributions have WAF enabled
+    resource: aws_cloudfront_distribution
+    severity: medium
+    query: |
+      resource.has_waf
+    docs: |
+      WAF provides protection against web exploits.
+    remediation: |
+      Associate a WAF web ACL with CloudFront distributions.
+
+  - uid: aws-cloudfront-logging
+    title: Ensure CloudFront distributions have logging enabled
+    resource: aws_cloudfront_distribution
+    severity: medium
+    query: |
+      resource.has_logging
+    docs: |
+      Access logging provides audit trails for CloudFront requests.
+    remediation: |
+      Enable standard logging on CloudFront distributions.
+
+  - uid: aws-cloudfront-modern-tls
+    title: Ensure CloudFront distributions use modern TLS
+    resource: aws_cloudfront_distribution
+    severity: high
+    query: |
+      resource.has_modern_tls
+    docs: |
+      Modern TLS policies disable weak ciphers and protocols.
+    remediation: |
+      Configure TLSv1.2_2021 or higher security policy.
+
+  # API Gateway Security Checks
+  - uid: aws-apigateway-logging-enabled
+    title: Ensure API Gateway has access logging enabled
+    resource: aws_apigateway_stage
+    severity: medium
+    query: |
+      resource.has_access_logging
+    docs: |
+      Access logging provides visibility into API requests.
+    remediation: |
+      Enable access logging on API Gateway stages.
+
+  - uid: aws-apigateway-waf-enabled
+    title: Ensure API Gateway has WAF enabled
+    resource: aws_apigateway_stage
+    severity: medium
+    query: |
+      resource.has_waf
+    docs: |
+      WAF protects APIs from common web exploits.
+    remediation: |
+      Associate a WAF web ACL with API Gateway stages.
+
+  # SSM Security Checks
+  - uid: aws-ssm-parameter-encryption
+    title: Ensure SSM SecureString parameters use CMK encryption
+    resource: aws_ssm_parameter
+    severity: medium
+    query: |
+      !resource.is_secure_string || resource.has_custom_kms
+    docs: |
+      Customer-managed keys provide additional control over parameter encryption.
+    remediation: |
+      Use customer-managed KMS keys for SecureString parameters.
+
+  # Auto Scaling Security Checks
+  - uid: aws-autoscaling-launch-config-imdsv2
+    title: Ensure Auto Scaling launch configurations require IMDSv2
+    resource: aws_autoscaling_launchconfig
+    severity: high
+    query: |
+      resource.requires_imdsv2
+    docs: |
+      IMDSv2 provides protection against SSRF attacks.
+    remediation: |
+      Configure launch configurations to require IMDSv2.
+
+  - uid: aws-autoscaling-ebs-encryption
+    title: Ensure Auto Scaling launch configurations have encrypted EBS volumes
+    resource: aws_autoscaling_launchconfig
+    severity: high
+    query: |
+      resource.has_encrypted_volumes
+    docs: |
+      EBS encryption protects data at rest on launched instances.
+    remediation: |
+      Configure launch configurations with encrypted EBS volumes.

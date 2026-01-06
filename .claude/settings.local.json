@@ -33,7 +33,11 @@
       "Bash(go clean:*)",
       "Bash(go list:*)",
       "Bash(git stash:*)",
-      "Bash(git pull:*)"
+      "Bash(git pull:*)",
+      "WebFetch(domain:apidoc.factorialhr.com)",
+      "Bash(head:*)",
+      "Bash(git checkout:*)",
+      "Bash(xxd:*)"
     ]
   }
 }

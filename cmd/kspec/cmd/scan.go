@@ -17,6 +17,7 @@ import (
 const (
 	ProviderHost       = "host"
 	ProviderGitHub     = "github"
+	ProviderAWS        = "aws"
 	ProviderAzure      = "azure"
 	ProviderMS365      = "ms365"
 	ProviderCloudflare = "cloudflare"
@@ -48,6 +49,10 @@ Examples:
   kspec scan host example.com -f policy.yml
   kspec scan github org kopexa-grc -f policy.yml
   kspec scan github repo owner/repo -f policy.yml
+  kspec scan aws account -f policy.yml
+  kspec scan aws account --profile production -f policy.yml
+  kspec scan aws account --region us-west-2 --regions us-east-1,eu-west-1 -f policy.yml
+  kspec scan aws account --role-arn arn:aws:iam::123456789:role/SecurityAudit -f policy.yml
   kspec scan azure subscription <sub-id> -f policy.yml
   kspec scan ms365 tenant <tenant-id> --client-id <id> --client-secret <secret> -f policy.yml
   kspec scan cloudflare account -f policy.yml
@@ -102,6 +107,16 @@ func init() {
 	// Factorial-specific flags
 	scanCmd.Flags().String("factorial-api-key", "", "Factorial HR API key")
 	scanCmd.Flags().String("access-token", "", "Factorial HR OAuth access token")
+
+	// AWS-specific flags
+	scanCmd.Flags().String("profile", "", "AWS profile name from ~/.aws/credentials")
+	scanCmd.Flags().String("region", "", "AWS region (default: us-east-1)")
+	scanCmd.Flags().StringSlice("regions", nil, "Multiple AWS regions for multi-region scanning")
+	scanCmd.Flags().String("access-key-id", "", "AWS access key ID")
+	scanCmd.Flags().String("secret-access-key", "", "AWS secret access key")
+	scanCmd.Flags().String("session-token", "", "AWS session token")
+	scanCmd.Flags().String("role-arn", "", "IAM role ARN to assume for cross-account access")
+	scanCmd.Flags().String("external-id", "", "External ID for assume role")
 }
 
 func runScan(cmd *cobra.Command, args []string) error {
@@ -220,6 +235,57 @@ func parseScanArgs(cmd *cobra.Command, args []string) (scanner.ScanConfig, strin
 
 		default:
 			return scanner.ScanConfig{}, "", fmt.Errorf("unknown github resource type: %s (use 'org' or 'repo')", resourceType)
+		}
+
+	case ProviderAWS, "amazon", "ec2", "s3":
+		providerName = ProviderAWS
+		assetType = "aws-account"
+
+		// Check resource type
+		if len(args) >= 2 {
+			resourceType := args[1]
+			switch resourceType {
+			case "account":
+				assetName = AssetTypeDefault
+			default:
+				return scanner.ScanConfig{}, "", fmt.Errorf("unknown aws resource type: %s (use 'account')", resourceType)
+			}
+		} else {
+			assetName = AssetTypeDefault
+		}
+
+		// Get profile from flag
+		if profile, _ := cmd.Flags().GetString("profile"); profile != "" { //nolint:errcheck // Flag is defined
+			assetConfig["profile"] = profile
+		}
+
+		// Get region from flag
+		if region, _ := cmd.Flags().GetString("region"); region != "" { //nolint:errcheck // Flag is defined
+			assetConfig["region"] = region
+		}
+
+		// Get regions from flag
+		if regions, _ := cmd.Flags().GetStringSlice("regions"); len(regions) > 0 { //nolint:errcheck // Flag is defined
+			assetConfig["regions"] = strings.Join(regions, ",")
+		}
+
+		// Get credentials from flags
+		if accessKeyID, _ := cmd.Flags().GetString("access-key-id"); accessKeyID != "" { //nolint:errcheck // Flag is defined
+			assetConfig["access_key"] = accessKeyID
+		}
+		if secretAccessKey, _ := cmd.Flags().GetString("secret-access-key"); secretAccessKey != "" { //nolint:errcheck // Flag is defined
+			assetConfig["secret_key"] = secretAccessKey
+		}
+		if sessionToken, _ := cmd.Flags().GetString("session-token"); sessionToken != "" { //nolint:errcheck // Flag is defined
+			assetConfig["session_token"] = sessionToken
+		}
+
+		// Get assume role config
+		if roleArn, _ := cmd.Flags().GetString("role-arn"); roleArn != "" { //nolint:errcheck // Flag is defined
+			assetConfig["role_arn"] = roleArn
+		}
+		if externalID, _ := cmd.Flags().GetString("external-id"); externalID != "" { //nolint:errcheck // Flag is defined
+			assetConfig["external_id"] = externalID
 		}
 
 	case ProviderAzure:
@@ -548,6 +614,46 @@ func buildProviderConfig(cmd *cobra.Command, providerName string, assetConfig ma
 		default:
 			providerConfig["credential_type"] = CredentialTypeEnv
 			providerConfig["env_var"] = "GITHUB_TOKEN"
+		}
+
+	case ProviderAWS:
+		// Copy asset config to provider config
+		for k, v := range assetConfig {
+			providerConfig[k] = v
+		}
+
+		// Get profile from flag
+		if profile, _ := cmd.Flags().GetString("profile"); profile != "" { //nolint:errcheck // Flag is defined
+			providerConfig["profile"] = profile
+		}
+
+		// Get region from flag
+		if region, _ := cmd.Flags().GetString("region"); region != "" { //nolint:errcheck // Flag is defined
+			providerConfig["region"] = region
+		}
+
+		// Get regions from flag
+		if regions, _ := cmd.Flags().GetStringSlice("regions"); len(regions) > 0 { //nolint:errcheck // Flag is defined
+			providerConfig["regions"] = strings.Join(regions, ",")
+		}
+
+		// Get credentials from flags
+		if accessKeyID, _ := cmd.Flags().GetString("access-key-id"); accessKeyID != "" { //nolint:errcheck // Flag is defined
+			providerConfig["access_key"] = accessKeyID
+		}
+		if secretAccessKey, _ := cmd.Flags().GetString("secret-access-key"); secretAccessKey != "" { //nolint:errcheck // Flag is defined
+			providerConfig["secret_key"] = secretAccessKey
+		}
+		if sessionToken, _ := cmd.Flags().GetString("session-token"); sessionToken != "" { //nolint:errcheck // Flag is defined
+			providerConfig["session_token"] = sessionToken
+		}
+
+		// Get assume role config
+		if roleArn, _ := cmd.Flags().GetString("role-arn"); roleArn != "" { //nolint:errcheck // Flag is defined
+			providerConfig["role_arn"] = roleArn
+		}
+		if externalID, _ := cmd.Flags().GetString("external-id"); externalID != "" { //nolint:errcheck // Flag is defined
+			providerConfig["external_id"] = externalID
 		}
 
 	case ProviderAzure:

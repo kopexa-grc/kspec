@@ -7,6 +7,7 @@ import (
 
 	"github.com/kopexa-grc/kspec/core"
 	"github.com/kopexa-grc/kspec/provider/atlassian"
+	"github.com/kopexa-grc/kspec/provider/aws"
 	"github.com/kopexa-grc/kspec/provider/azure"
 	"github.com/kopexa-grc/kspec/provider/cloudflare"
 	"github.com/kopexa-grc/kspec/provider/factorial"
@@ -24,6 +25,7 @@ func GetProviders() []core.Provider {
 		os.New(),
 		network.NewProvider(),
 		github.NewProvider(),
+		aws.NewProvider(),
 		azure.NewProvider(),
 		ms365.NewProvider(),
 		cloudflare.NewProvider(),
@@ -43,6 +45,8 @@ func GetProviderByName(name string) (core.Provider, error) {
 		return network.NewProvider(), nil
 	case "github":
 		return github.NewProvider(), nil
+	case "aws", "amazon", "ec2", "s3":
+		return aws.NewProvider(), nil
 	case "azure":
 		return azure.NewProvider(), nil
 	case "ms365", "microsoft365", "m365":

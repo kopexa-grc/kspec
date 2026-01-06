@@ -1,0 +1,25 @@
+package aws
+
+// Common AWS string constants used across resource fetchers.
+const (
+	// Tag keys
+	tagKeyName = "Name"
+
+	// Status values
+	statusActive    = "ACTIVE"
+	statusAvailable = "available"
+	statusEnabled   = "ENABLED"
+	valueEnabled    = "enabled"
+	valueTrue       = "true"
+	valueNone       = "NONE"
+
+	// IAM policy effect
+	policyEffectAllow = "Allow"
+
+	// CloudTrail read/write type
+	readWriteTypeAll = "All"
+
+	// CIDR blocks for public access
+	cidrAllIPv4 = "0.0.0.0/0"
+	cidrAllIPv6 = "::/0"
+)
