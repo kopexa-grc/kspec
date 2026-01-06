@@ -5,8 +5,11 @@
 
   **The Enterprise-Grade Policy-as-Code Engine.**
 
-  [![License](https://img.shields.io/badge/License-Elastic%202.0-blue.svg)](LICENSE)
+  [![CI](https://github.com/kopexa-grc/kspec/actions/workflows/ci.yml/badge.svg)](https://github.com/kopexa-grc/kspec/actions/workflows/ci.yml)
+  [![CodeQL](https://github.com/kopexa-grc/kspec/actions/workflows/codeql.yml/badge.svg)](https://github.com/kopexa-grc/kspec/actions/workflows/codeql.yml)
   [![Go Report Card](https://goreportcard.com/badge/github.com/kopexa-grc/kspec)](https://goreportcard.com/report/github.com/kopexa-grc/kspec)
+  [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/kopexa-grc/kspec/badge)](https://scorecard.dev/viewer/?uri=github.com/kopexa-grc/kspec)
+  [![License](https://img.shields.io/badge/License-Elastic%202.0-blue.svg)](LICENSE)
 
   <p align="center">
     <b>Validate. Secure. Comply.</b><br />

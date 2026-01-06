@@ -167,12 +167,19 @@ jobs:
           find . -type f \( -name "*.tar.gz" -o -name "*.zip" \) -exec sha256sum {} \; | sed 's|./||' > checksums.txt
           cat checksums.txt
 
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          format: spdx-json
+          output-file: archives/sbom.spdx.json
+
       - name: Upload to release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TAG="${{ needs.release-please.outputs.tag_name }}"
 
-          # Upload all archive files and checksums
+          # Upload all archive files, checksums, and SBOM
           find archives -type f \( -name "*.tar.gz" -o -name "*.zip" \) -exec gh release upload "${TAG}" {} --clobber \;
           gh release upload "${TAG}" archives/checksums.txt --clobber
+          gh release upload "${TAG}" archives/sbom.spdx.json --clobber
