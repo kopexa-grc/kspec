@@ -8,7 +8,6 @@ project_name: kspec
 before:
   hooks:
     - go mod tidy
-    - go generate ./...
 
 builds:
   - id: kspec
@@ -49,6 +48,7 @@ archives:
       - LICENSE
       - README.md
       - policies/*.yml
+      - policies/*.yaml
 
 checksum:
   name_template: "checksums.txt"
