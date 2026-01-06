@@ -1,0 +1,386 @@
+# Writing Policies
+
+Policies in kspec define security expectations for your infrastructure. This guide covers how to write effective security policies.
+
+## Policy Structure
+
+A policy file is a YAML document with the following sections:
+
+```yaml
+# Metadata
+name: My Security Policy
+version: 1.0.0
+license: Apache-2.0
+
+# Provider requirements
+require:
+  - provider: azure
+
+# Author information
+authors:
+  - name: Security Team
+    email: security@example.com
+
+# Documentation
+docs:
+  desc: |
+    Description of what this policy checks.
+
+# Check groups
+groups:
+  - title: Storage Security
+    checks:
+      - uid: storage-https-required
+
+# Scoring configuration
+scoring_system: highest impact
+
+# Query definitions
+queries:
+  - uid: storage-https-required
+    title: Storage accounts require HTTPS
+    resource: azure_storage_account
+    severity: critical
+    query: |
+      resource.properties.supportsHttpsTrafficOnly == true
+```
+
+## Metadata
+
+### Required Fields
+
+| Field | Description |
+|-------|-------------|
+| `name` | Policy name |
+| `version` | Semantic version |
+
+### Optional Fields
+
+| Field | Description |
+|-------|-------------|
+| `license` | License identifier (e.g., `Apache-2.0`, `BUSL-1.1`) |
+| `tags` | Key-value metadata tags |
+| `authors` | List of author objects |
+| `docs.desc` | Policy description |
+
+## Provider Requirements
+
+Specify which providers are needed:
+
+```yaml
+require:
+  - provider: azure
+  - provider: github
+```
+
+## Groups
+
+Groups organize checks into logical sections:
+
+```yaml
+groups:
+  - title: Storage Security
+    filter: asset.type == "azure-subscription"  # Optional filter
+    checks:
+      - uid: check-1
+      - uid: check-2
+
+  - title: Network Security
+    checks:
+      - uid: check-3
+```
+
+### Group Filters
+
+Filter which assets a group applies to:
+
+```yaml
+groups:
+  - title: Organization Checks
+    filter: asset.type == "github-org"
+    checks:
+      - uid: org-2fa-required
+
+  - title: Repository Checks
+    filter: asset.type == "github-repo"
+    checks:
+      - uid: branch-protection
+```
+
+## Queries
+
+Queries define individual security checks:
+
+```yaml
+queries:
+  - uid: storage-https-required
+    title: Storage accounts require HTTPS
+    resource: azure_storage_account
+    severity: critical
+    impact: 90
+    query: |
+      resource.properties.supportsHttpsTrafficOnly == true
+    docs: |
+      HTTPS ensures data is encrypted in transit.
+    audit: |
+      1. Go to Azure Portal
+      2. Navigate to Storage Accounts
+      3. Check "Secure transfer required" setting
+    remediation: |
+      Enable "Secure transfer required" in storage account settings.
+```
+
+### Query Fields
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `uid` | Yes | Unique identifier |
+| `title` | Yes | Human-readable title |
+| `resource` | Yes | Resource type to check |
+| `query` | Yes | CEL expression |
+| `severity` | No | `critical`, `high`, `medium`, `low` |
+| `impact` | No | Numeric score (0-100) |
+| `docs` | No | Documentation text |
+| `audit` | No | Manual audit steps |
+| `remediation` | No | Fix instructions |
+
+## Severity Levels
+
+| Level | Description | Use Case |
+|-------|-------------|----------|
+| `critical` | Immediate risk | Public exposure, missing encryption |
+| `high` | Significant risk | Missing access controls |
+| `medium` | Moderate risk | Best practice violations |
+| `low` | Minor risk | Informational findings |
+
+## CEL Expressions
+
+Queries use [CEL (Common Expression Language)](concepts/cel-expressions.md) for evaluation.
+
+### Basic Comparisons
+
+```yaml
+# Equality
+query: resource.status == "active"
+
+# Inequality
+query: resource.public_access != true
+
+# Numeric comparison
+query: resource.min_tls_version >= "1.2"
+```
+
+### Boolean Logic
+
+```yaml
+# AND
+query: |
+  resource.encrypted == true &&
+  resource.public_access == false
+
+# OR
+query: |
+  resource.type == "private" ||
+  resource.restricted == true
+
+# NOT
+query: "!resource.public_access"
+```
+
+### Field Existence
+
+```yaml
+# Check field exists
+query: has(resource.encryption)
+
+# Check field exists and has value
+query: |
+  has(resource.tags) &&
+  has(resource.tags.environment)
+```
+
+### Collections
+
+```yaml
+# Check all items match
+query: |
+  resource.rules.all(r, r.action == "deny")
+
+# Check any item matches
+query: |
+  resource.rules.exists(r, r.port == 22)
+
+# Check size
+query: size(resource.members) >= 2
+```
+
+### String Operations
+
+```yaml
+# Contains
+query: resource.name.contains("prod")
+
+# Starts with
+query: resource.name.startsWith("app-")
+
+# Regex match
+query: resource.name.matches("^prod-.*-[0-9]+$")
+```
+
+## Common Patterns
+
+### Check for Non-Default Values
+
+```yaml
+query: |
+  resource.name != "Default Permission Scheme"
+```
+
+### Check for Protected Resources
+
+```yaml
+# Only check default branch
+query: |
+  resource.is_default == false || resource.protected == true
+```
+
+### Check for Missing Configuration
+
+```yaml
+# Pass if field missing OR field has correct value
+query: |
+  !has(resource.public_access) ||
+  resource.public_access == false
+```
+
+### Check Lists for Security Issues
+
+```yaml
+# No rule allows all inbound traffic
+query: |
+  !resource.rules.exists(r,
+    r.direction == "inbound" &&
+    r.source == "0.0.0.0/0"
+  )
+```
+
+### Check for Specific Files
+
+```yaml
+# Repository has Dependabot config
+query: |
+  resource.files.exists(f,
+    f.path == ".github/dependabot.yml" ||
+    f.path == ".github/dependabot.yaml"
+  )
+```
+
+## Scoring System
+
+Configure how overall scores are calculated:
+
+```yaml
+# Use highest impact score from failed checks
+scoring_system: highest impact
+
+# Alternative: average of all impacts
+scoring_system: average
+```
+
+## Complete Example
+
+```yaml
+name: GitHub Security Policy
+version: 1.0.0
+license: Apache-2.0
+
+require:
+  - provider: github
+
+authors:
+  - name: Security Team
+    email: security@example.com
+
+docs:
+  desc: |
+    Security policy for GitHub organizations and repositories.
+
+groups:
+  - title: Organization Security
+    filter: asset.type == "github-org"
+    checks:
+      - uid: org-2fa-required
+      - uid: org-verified-domain
+
+  - title: Repository Security
+    checks:
+      - uid: repo-branch-protection
+      - uid: repo-dependabot
+
+scoring_system: highest impact
+
+queries:
+  - uid: org-2fa-required
+    title: Two-factor authentication required
+    resource: github_organization
+    severity: critical
+    impact: 100
+    query: resource.two_factor_requirement_enabled == true
+    docs: |
+      Organizations should require 2FA for all members.
+    remediation: |
+      Enable 2FA requirement in organization security settings.
+
+  - uid: org-verified-domain
+    title: Organization has verified domain
+    resource: github_organization
+    severity: high
+    impact: 70
+    query: resource.is_verified == true
+    docs: |
+      Verified domains provide identity confirmation.
+    remediation: |
+      Verify your domain in organization settings.
+
+  - uid: repo-branch-protection
+    title: Default branch is protected
+    resource: github_branch
+    severity: critical
+    impact: 90
+    query: |
+      resource.is_default == false || resource.protected == true
+    docs: |
+      Branch protection prevents unauthorized changes.
+    remediation: |
+      Enable branch protection for the default branch.
+
+  - uid: repo-dependabot
+    title: Dependabot is configured
+    resource: github_repo
+    severity: medium
+    impact: 50
+    query: |
+      resource.files.exists(f,
+        f.path == ".github/dependabot.yml" ||
+        f.path == ".github/dependabot.yaml"
+      )
+    docs: |
+      Dependabot keeps dependencies up to date.
+    remediation: |
+      Create a .github/dependabot.yml configuration file.
+```
+
+## Best Practices
+
+1. **Use Descriptive UIDs**: Make UIDs readable and unique
+2. **Set Appropriate Severity**: Match severity to actual risk
+3. **Include Documentation**: Help users understand findings
+4. **Provide Remediation**: Give clear fix instructions
+5. **Test Policies**: Verify queries work as expected
+6. **Version Policies**: Track changes over time
+
+## Next Steps
+
+- [CEL Expressions](concepts/cel-expressions.md) - Deep dive into query language
+- [Policy Schema](reference/policy-schema.md) - Full schema reference
+- [Provider Guides](README.md#provider-guides) - Available resources per provider

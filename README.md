@@ -40,12 +40,13 @@ Whether you are auditing cloud configurations, verifying GitHub repository secur
 
 | Provider | Description | Documentation |
 |----------|-------------|---------------|
-| **Azure** | Scan Azure subscriptions for security compliance | [Setup Guide](docs/azure-setup.md) |
-| **Microsoft 365** | Scan M365 tenants for identity and security settings | [Setup Guide](docs/ms365-setup.md) |
-| **GitHub** | Scan organizations and repositories for security best practices | [Setup Guide](docs/github-setup.md) |
-| **Hetzner Cloud** | Scan Hetzner Cloud projects for infrastructure security | [Setup Guide](docs/hetzner-setup.md) |
-| **Network** | Validate TLS, DNS, and HTTP security configurations | - |
-| **Local** | Scan local system configurations | - |
+| **Azure** | Scan Azure subscriptions for security compliance | [Provider Guide](docs/providers/azure.md) |
+| **Microsoft 365** | Scan M365 tenants for identity and security settings | [Provider Guide](docs/providers/ms365.md) |
+| **GitHub** | Scan organizations and repositories for security best practices | [Provider Guide](docs/providers/github.md) |
+| **Hetzner Cloud** | Scan Hetzner Cloud projects for infrastructure security | [Provider Guide](docs/providers/hetzner.md) |
+| **Cloudflare** | Scan DNS, WAF, Zero Trust, and security settings | [Provider Guide](docs/providers/cloudflare.md) |
+| **Atlassian** | Scan Jira, Confluence, and admin settings | [Provider Guide](docs/providers/atlassian.md) |
+| **Network** | Validate TLS, DNS, and HTTP security configurations | [Provider Guide](docs/providers/network.md) |
 
 ## Installation
 
@@ -187,13 +188,12 @@ kspec operates on a **Provider-Resource-Policy** model:
 
 ## Documentation
 
+- **[Documentation Index](docs/README.md)** - Complete documentation
 - **[Quickstart Guide](docs/QUICKSTART.md)** - Scan a host in 5 minutes
-- [Azure Setup Guide](docs/azure-setup.md) - Configure Azure provider and credentials
-- [Microsoft 365 Setup Guide](docs/ms365-setup.md) - Configure MS365 provider and app registration
-- [GitHub Setup Guide](docs/github-setup.md) - Configure GitHub provider and tokens
-- [Hetzner Cloud Setup Guide](docs/hetzner-setup.md) - Configure Hetzner Cloud provider and API tokens
-- [Discovery & Scanning](docs/discovery-scan.md) - How resource discovery works
-- [Sub-Resources](docs/sub-resources.md) - Understanding resource hierarchies
+- **[Installation](docs/installation.md)** - Installation instructions
+- **[Writing Policies](docs/policies.md)** - Create custom security policies
+- **[CLI Reference](docs/reference/cli.md)** - Command line options
+- **[CEL Expressions](docs/concepts/cel-expressions.md)** - Writing policy queries
 
 ## CI/CD Integration
 

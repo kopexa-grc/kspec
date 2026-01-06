@@ -32,14 +32,7 @@ kspec supports multiple providers for scanning different platforms:
 
 - **[CLI Reference](reference/cli.md)** - Command line options
 - **[Policy Schema](reference/policy-schema.md)** - Policy file format
-- **[Resource Types](reference/resources.md)** - All available resources
-
-## Integration
-
-- **[CI/CD Integration](integration/cicd.md)** - GitHub Actions, GitLab CI, etc.
-- **[API Usage](integration/api.md)** - Using kspec as a library
 
 ## Security
 
 - **[Security Policy](../SECURITY.md)** - Reporting vulnerabilities
-- **[Supply Chain](security/supply-chain.md)** - SBOM, signatures, provenance
