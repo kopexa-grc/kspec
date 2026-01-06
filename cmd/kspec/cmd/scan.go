@@ -31,7 +31,9 @@ Examples:
   kspec scan atlassian site yoursite.atlassian.net -f policy.yml
   kspec scan atlassian org <org-id> --site yoursite.atlassian.net -f policy.yml
   kspec scan sbom file ./sbom.json -f policy.yml
-  kspec scan sbom dir ./sboms/ -f policy.yml`,
+  kspec scan sbom dir ./sboms/ -f policy.yml
+  kspec scan hetzner project -f policy.yml
+  kspec scan hcloud project my-project --api-token <token> -f policy.yml`,
 	Args: cobra.MinimumNArgs(1),
 	RunE: runScan,
 }
@@ -66,6 +68,10 @@ func init() {
 
 	// SBOM-specific flags
 	scanCmd.Flags().String("sbom-path", "", "Path to SBOM file or directory")
+
+	// Hetzner-specific flags
+	scanCmd.Flags().String("hcloud-token", "", "Hetzner Cloud API token")
+	scanCmd.Flags().String("project", "", "Hetzner Cloud project name (for identification)")
 }
 
 func runScan(cmd *cobra.Command, args []string) error {
@@ -384,6 +390,52 @@ func parseScanArgs(cmd *cobra.Command, args []string) (scanner.ScanConfig, strin
 			assetConfig["sbom_path"] = sbomPath
 		}
 
+	case "hetzner", "hcloud":
+		providerName = "hetzner"
+		assetType = "hetzner-project"
+
+		// Check if project name is provided
+		if len(args) >= 2 {
+			resourceType := args[1]
+			switch resourceType {
+			case "project":
+				if len(args) >= 3 {
+					assetName = args[2]
+					assetConfig["project"] = args[2]
+				} else {
+					// Get project from flag or default
+					project, _ := cmd.Flags().GetString("project")
+					if project != "" {
+						assetName = project
+						assetConfig["project"] = project
+					} else {
+						assetName = "default"
+						assetConfig["project"] = "default"
+					}
+				}
+			default:
+				return scanner.ScanConfig{}, "", fmt.Errorf("unknown hetzner resource type: %s (use 'project')", resourceType)
+			}
+		} else {
+			// Default to project scan
+			project, _ := cmd.Flags().GetString("project")
+			if project != "" {
+				assetName = project
+				assetConfig["project"] = project
+			} else {
+				assetName = "default"
+				assetConfig["project"] = "default"
+			}
+		}
+
+		// Get API token from flag
+		if apiToken, _ := cmd.Flags().GetString("hcloud-token"); apiToken != "" {
+			assetConfig["api_token"] = apiToken
+		}
+		if apiToken, _ := cmd.Flags().GetString("api-token"); apiToken != "" {
+			assetConfig["api_token"] = apiToken
+		}
+
 	default:
 		return scanner.ScanConfig{}, "", fmt.Errorf("unknown provider: %s", providerArg)
 	}
@@ -537,6 +589,28 @@ func buildProviderConfig(cmd *cobra.Command, providerName string, assetConfig ma
 		sbomPath, _ := cmd.Flags().GetString("sbom-path")
 		if sbomPath != "" {
 			providerConfig["sbom_path"] = sbomPath
+		}
+
+	case "hetzner":
+		// Copy asset config to provider config
+		for k, v := range assetConfig {
+			providerConfig[k] = v
+		}
+
+		// Get API token from flag
+		hcloudToken, _ := cmd.Flags().GetString("hcloud-token")
+		if hcloudToken != "" {
+			providerConfig["api_token"] = hcloudToken
+		}
+		apiToken, _ := cmd.Flags().GetString("api-token")
+		if apiToken != "" {
+			providerConfig["api_token"] = apiToken
+		}
+
+		// Get project from flag
+		project, _ := cmd.Flags().GetString("project")
+		if project != "" {
+			providerConfig["project"] = project
 		}
 	}
 

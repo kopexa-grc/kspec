@@ -9,6 +9,7 @@ import (
 	"github.com/kopexa-grc/kspec/provider/azure"
 	"github.com/kopexa-grc/kspec/provider/cloudflare"
 	"github.com/kopexa-grc/kspec/provider/github"
+	"github.com/kopexa-grc/kspec/provider/hetzner"
 	"github.com/kopexa-grc/kspec/provider/ms365"
 	"github.com/kopexa-grc/kspec/provider/network"
 	"github.com/kopexa-grc/kspec/provider/os"
@@ -26,6 +27,7 @@ func GetProviders() []core.Provider {
 		cloudflare.NewCloudflareProvider(),
 		atlassian.NewAtlassianProvider(),
 		sbom.NewSBOMProvider(),
+		hetzner.NewProvider(),
 	}
 }
 
@@ -48,6 +50,8 @@ func GetProviderByName(name string) (core.Provider, error) {
 		return atlassian.NewAtlassianProvider(), nil
 	case "sbom", "bom", "cyclonedx", "spdx":
 		return sbom.NewSBOMProvider(), nil
+	case "hetzner", "hcloud":
+		return hetzner.NewProvider(), nil
 	default:
 		return nil, fmt.Errorf("unknown provider: %s", name)
 	}

@@ -38,6 +38,7 @@ Whether you are auditing cloud configurations, verifying GitHub repository secur
 | **Azure** | Scan Azure subscriptions for security compliance | [Setup Guide](docs/azure-setup.md) |
 | **Microsoft 365** | Scan M365 tenants for identity and security settings | [Setup Guide](docs/ms365-setup.md) |
 | **GitHub** | Scan organizations and repositories for security best practices | [Setup Guide](docs/github-setup.md) |
+| **Hetzner Cloud** | Scan Hetzner Cloud projects for infrastructure security | [Setup Guide](docs/hetzner-setup.md) |
 | **Network** | Validate TLS, DNS, and HTTP security configurations | - |
 | **Local** | Scan local system configurations | - |
 
@@ -98,6 +99,16 @@ kspec scan ms365 tenant <tenant-id> \
 kspec scan host example.com -f policies/tls-security.yml
 ```
 
+### Scan Hetzner Cloud Project
+
+```bash
+# Set your Hetzner Cloud API token
+export HCLOUD_TOKEN="your-api-token"
+
+# Scan all resources in a project
+kspec scan hetzner project -f policies/hetzner-security.yml
+```
+
 ## Policy Library
 
 The repository includes pre-built security policies:
@@ -107,6 +118,7 @@ The repository includes pre-built security policies:
 | [Azure Security](policies/azure-security.yml) | Azure | Storage encryption, SQL auditing, Key Vault protection, NSG rules |
 | [MS365 Security](policies/ms365-security.yml) | MS365 | MFA enforcement, Conditional Access, identity protection, Teams security |
 | [GitHub Security](policies/github-security.yml) | GitHub | Branch protection, 2FA, repository security settings |
+| [Hetzner Security](policies/hetzner-security.yml) | Hetzner | Server protection, firewall rules, SSH key security, network isolation |
 | [TLS Security](policies/tls-security.yml) | Network | Protocol versions, cipher suites, certificate validation |
 | [Email Security](policies/email-security.yml) | Network | SPF records, DMARC enforcement, DNS hygiene |
 
@@ -170,6 +182,7 @@ kspec operates on a **Provider-Resource-Policy** model:
 - [Azure Setup Guide](docs/azure-setup.md) - Configure Azure provider and credentials
 - [Microsoft 365 Setup Guide](docs/ms365-setup.md) - Configure MS365 provider and app registration
 - [GitHub Setup Guide](docs/github-setup.md) - Configure GitHub provider and tokens
+- [Hetzner Cloud Setup Guide](docs/hetzner-setup.md) - Configure Hetzner Cloud provider and API tokens
 - [Discovery & Scanning](docs/discovery-scan.md) - How resource discovery works
 - [Sub-Resources](docs/sub-resources.md) - Understanding resource hierarchies
 
