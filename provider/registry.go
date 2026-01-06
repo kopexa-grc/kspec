@@ -6,6 +6,7 @@ import (
 
 	"github.com/kopexa-grc/kspec/core"
 	"github.com/kopexa-grc/kspec/provider/azure"
+	"github.com/kopexa-grc/kspec/provider/cloudflare"
 	"github.com/kopexa-grc/kspec/provider/github"
 	"github.com/kopexa-grc/kspec/provider/ms365"
 	"github.com/kopexa-grc/kspec/provider/network"
@@ -20,6 +21,7 @@ func GetProviders() []core.Provider {
 		github.NewGithubProvider(),
 		azure.NewAzureProvider(),
 		ms365.NewMS365Provider(),
+		cloudflare.NewCloudflareProvider(),
 	}
 }
 
@@ -36,6 +38,8 @@ func GetProviderByName(name string) (core.Provider, error) {
 		return azure.NewAzureProvider(), nil
 	case "ms365", "microsoft365", "m365":
 		return ms365.NewMS365Provider(), nil
+	case "cloudflare", "cf":
+		return cloudflare.NewCloudflareProvider(), nil
 	default:
 		return nil, fmt.Errorf("unknown provider: %s", name)
 	}

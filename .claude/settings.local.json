@@ -14,7 +14,10 @@
       "WebFetch(domain:github.com)",
       "Bash(golangci-lint run:*)",
       "Bash(golangci-lint:*)",
-      "Bash(git log:*)"
+      "Bash(git log:*)",
+      "WebSearch",
+      "Bash(go get:*)",
+      "Bash(go doc:*)"
     ]
   }
 }

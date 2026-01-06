@@ -25,7 +25,9 @@ Examples:
   kspec scan github org kopexa-grc -f policy.yml
   kspec scan github repo owner/repo -f policy.yml
   kspec scan azure subscription <sub-id> -f policy.yml
-  kspec scan ms365 tenant <tenant-id> --client-id <id> --client-secret <secret> -f policy.yml`,
+  kspec scan ms365 tenant <tenant-id> --client-id <id> --client-secret <secret> -f policy.yml
+  kspec scan cloudflare account -f policy.yml
+  kspec scan cloudflare zone <zone-id> --api-token <token> -f policy.yml`,
 	Args: cobra.MinimumNArgs(1),
 	RunE: runScan,
 }
@@ -47,6 +49,12 @@ func init() {
 
 	// MS365-specific flags
 	scanCmd.Flags().String("client-secret", "", "MS365 Client Secret (Service Principal)")
+
+	// Cloudflare-specific flags
+	scanCmd.Flags().String("api-token", "", "Cloudflare API Token")
+	scanCmd.Flags().String("api-key", "", "Cloudflare API Key (legacy)")
+	scanCmd.Flags().String("email", "", "Cloudflare account email (for API Key auth)")
+	scanCmd.Flags().String("account-id", "", "Cloudflare Account ID")
 }
 
 func runScan(cmd *cobra.Command, args []string) error {
@@ -218,6 +226,51 @@ func parseScanArgs(cmd *cobra.Command, args []string) (scanner.ScanConfig, strin
 			assetConfig["client_secret"] = clientSecret
 		}
 
+	case "cloudflare", "cf":
+		providerName = "cloudflare"
+
+		// Check resource type
+		if len(args) >= 2 {
+			resourceType := args[1]
+			switch resourceType {
+			case "account":
+				assetType = "cloudflare-account"
+				if len(args) >= 3 {
+					assetName = args[2]
+					assetConfig["account_id"] = args[2]
+				} else {
+					assetName = "all"
+				}
+			case "zone":
+				if len(args) < 3 {
+					return scanner.ScanConfig{}, "", fmt.Errorf("usage: kspec scan cloudflare zone <zone-id> -f policy.yml")
+				}
+				assetType = "cloudflare-zone"
+				assetName = args[2]
+				assetConfig["zone_id"] = args[2]
+			default:
+				return scanner.ScanConfig{}, "", fmt.Errorf("unknown cloudflare resource type: %s (use 'account' or 'zone')", resourceType)
+			}
+		} else {
+			// Default to account scan
+			assetType = "cloudflare-account"
+			assetName = "all"
+		}
+
+		// Get credentials from flags
+		if apiToken, _ := cmd.Flags().GetString("api-token"); apiToken != "" {
+			assetConfig["api_token"] = apiToken
+		}
+		if apiKey, _ := cmd.Flags().GetString("api-key"); apiKey != "" {
+			assetConfig["api_key"] = apiKey
+		}
+		if email, _ := cmd.Flags().GetString("email"); email != "" {
+			assetConfig["email"] = email
+		}
+		if accountID, _ := cmd.Flags().GetString("account-id"); accountID != "" {
+			assetConfig["account_id"] = accountID
+		}
+
 	default:
 		return scanner.ScanConfig{}, "", fmt.Errorf("unknown provider: %s", providerArg)
 	}
@@ -301,6 +354,34 @@ func buildProviderConfig(cmd *cobra.Command, providerName string, assetConfig ma
 			providerConfig["credential_type"] = credentialType
 		} else {
 			providerConfig["credential_type"] = "client_credentials"
+		}
+
+	case "cloudflare":
+		// Copy asset config to provider config
+		for k, v := range assetConfig {
+			providerConfig[k] = v
+		}
+
+		// Get API token from flag
+		apiToken, _ := cmd.Flags().GetString("api-token")
+		if apiToken != "" {
+			providerConfig["api_token"] = apiToken
+		}
+
+		// Get API key and email from flags (legacy auth)
+		apiKey, _ := cmd.Flags().GetString("api-key")
+		if apiKey != "" {
+			providerConfig["api_key"] = apiKey
+		}
+		email, _ := cmd.Flags().GetString("email")
+		if email != "" {
+			providerConfig["email"] = email
+		}
+
+		// Get account ID from flag
+		accountID, _ := cmd.Flags().GetString("account-id")
+		if accountID != "" {
+			providerConfig["account_id"] = accountID
 		}
 	}
 
