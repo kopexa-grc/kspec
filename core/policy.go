@@ -40,9 +40,7 @@ type Check struct {
 	ID    string `yaml:"id,omitempty"`
 	Title string `yaml:"title,omitempty"`
 	// Resource type to query against. e.g. "package", "service"
-	// In Mondoo MQL, the resource is often implicit or part of the query.
-	// In our CEL implementation, we need to know WHICH resource to fetch.
-	// We can add a 'resource' field to the YAML check.
+	// In CEL, we need to know WHICH resource to fetch.
 	Resource string `yaml:"resource,omitempty"`
 	// Config for the resource fetch, e.g. name=foo
 	Config map[string]string `yaml:"config,omitempty"`

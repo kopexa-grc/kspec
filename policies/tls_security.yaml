@@ -77,10 +77,7 @@ queries:
   - uid: kopexa-tls-security-cert-not-self-signed
     title: Do not use a self-signed certificate
     resource: tls
-    # Checking if Root is CA? "last.isCA" implies checking root.
-    # Actually, a self-signed cert IS a CA usually, but it's not trusted? 
-    # Mondoo logic: tls.certificates.last.isCA ? 
-    # Wait, if it self-signed, it is its own Issuer.
+    # A self-signed cert has Subject == Issuer.
     # Simplified check: we generally trust `isCA` field from Go. 
     # But for "Not self signed", we usually check if Subject == Issuer for the only cert, OR if it's not in trust store.
     # But our `Dial` with InsecureSkipVerify might hide validation errors?
