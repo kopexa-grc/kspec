@@ -115,7 +115,7 @@ func (c *Connection) Resources() []core.ResourceSpec {
 func (c *Connection) doRequest(ctx context.Context, method, path string) ([]byte, error) {
 	url := fmt.Sprintf("%s/api/%s/%s", c.baseURL, c.apiVersion, path)
 
-	req, err := http.NewRequestWithContext(ctx, method, url, nil)
+	req, err := http.NewRequestWithContext(ctx, method, url, http.NoBody)
 	if err != nil {
 		return nil, fmt.Errorf("factorial: failed to create request: %w", err)
 	}

@@ -25,11 +25,13 @@ func (r *EmployeeResource) Fetch(ctx context.Context, asset core.Asset) ([]core.
 	}
 
 	// Fetch teams to check team membership
-	teamMembers, _ := r.conn.fetchPaginated(ctx, "resources/teams/team_memberships")
+	teamMembers, err := r.conn.fetchPaginated(ctx, "resources/teams/team_memberships")
 	employeeTeams := make(map[float64]bool)
-	for _, tm := range teamMembers {
-		if empID, ok := tm["employee_id"].(float64); ok {
-			employeeTeams[empID] = true
+	if err == nil {
+		for _, tm := range teamMembers {
+			if empID, ok := tm["employee_id"].(float64); ok {
+				employeeTeams[empID] = true
+			}
 		}
 	}
 
@@ -45,8 +47,13 @@ func (r *EmployeeResource) Fetch(ctx context.Context, asset core.Asset) ([]core.
 		resource["first_name"] = emp["first_name"]
 		resource["last_name"] = emp["last_name"]
 
-		firstName, _ := emp["first_name"].(string)
-		lastName, _ := emp["last_name"].(string)
+		var firstName, lastName string
+		if v, ok := emp["first_name"].(string); ok {
+			firstName = v
+		}
+		if v, ok := emp["last_name"].(string); ok {
+			lastName = v
+		}
 		resource["full_name"] = firstName + " " + lastName
 
 		resource["email"] = emp["email"]
@@ -97,7 +104,10 @@ func (r *EmployeeResource) Fetch(ctx context.Context, asset core.Asset) ([]core.
 		resource["updated_at"] = emp["updated_at"]
 
 		// Computed security/compliance fields
-		email, _ := emp["email"].(string)
+		var email string
+		if v, ok := emp["email"].(string); ok {
+			email = v
+		}
 		resource["has_email"] = email != ""
 
 		managerID, hasManager := emp["manager_id"].(float64)
@@ -115,7 +125,10 @@ func (r *EmployeeResource) Fetch(ctx context.Context, asset core.Asset) ([]core.
 		resource["is_active"] = isActive
 
 		// Check team membership
-		empID, _ := emp["id"].(float64)
+		var empID float64
+		if v, ok := emp["id"].(float64); ok {
+			empID = v
+		}
 		resource["has_team"] = employeeTeams[empID]
 
 		// Calculate employment days
@@ -126,7 +139,10 @@ func (r *EmployeeResource) Fetch(ctx context.Context, asset core.Asset) ([]core.
 		}
 
 		// Check if invitation is pending
-		invitationPending, _ := emp["invitation_pending"].(bool)
+		var invitationPending bool
+		if v, ok := emp["invitation_pending"].(bool); ok {
+			invitationPending = v
+		}
 		resource["has_pending_invitation"] = invitationPending
 
 		// Has labels/custom fields

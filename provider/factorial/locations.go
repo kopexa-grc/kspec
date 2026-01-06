@@ -24,11 +24,13 @@ func (r *LocationResource) Fetch(ctx context.Context, asset core.Asset) ([]core.
 	}
 
 	// Count employees per location
-	employees, _ := r.conn.fetchPaginated(ctx, "resources/employees/employees")
+	employees, err := r.conn.fetchPaginated(ctx, "resources/employees/employees")
 	locationEmployeeCounts := make(map[float64]int)
-	for _, emp := range employees {
-		if locationID, ok := emp["location_id"].(float64); ok {
-			locationEmployeeCounts[locationID]++
+	if err == nil {
+		for _, emp := range employees {
+			if locationID, ok := emp["location_id"].(float64); ok {
+				locationEmployeeCounts[locationID]++
+			}
 		}
 	}
 
@@ -67,16 +69,28 @@ func (r *LocationResource) Fetch(ctx context.Context, asset core.Asset) ([]core.
 		resource["updated_at"] = location["updated_at"]
 
 		// Computed fields for policy evaluation
-		name, _ := location["name"].(string)
-		resource["has_name"] = name != ""
+		var locName string
+		if v, ok := location["name"].(string); ok {
+			locName = v
+		}
+		resource["has_name"] = locName != ""
 
-		country, _ := location["country"].(string)
+		var country string
+		if v, ok := location["country"].(string); ok {
+			country = v
+		}
 		resource["has_country"] = country != ""
 
-		address, _ := location["address_line_1"].(string)
+		var address string
+		if v, ok := location["address_line_1"].(string); ok {
+			address = v
+		}
 		resource["has_address"] = address != ""
 
-		timezone, _ := location["timezone"].(string)
+		var timezone string
+		if v, ok := location["timezone"].(string); ok {
+			timezone = v
+		}
 		resource["has_timezone"] = timezone != ""
 
 		// Employee count
@@ -84,7 +98,10 @@ func (r *LocationResource) Fetch(ctx context.Context, asset core.Asset) ([]core.
 		resource["has_employees"] = locationEmployeeCounts[locationID] > 0
 
 		// Check if main office
-		isMain, _ := location["is_main"].(bool)
+		var isMain bool
+		if v, ok := location["is_main"].(bool); ok {
+			isMain = v
+		}
 		resource["is_main_location"] = isMain
 
 		resources = append(resources, resource)

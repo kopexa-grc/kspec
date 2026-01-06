@@ -72,7 +72,10 @@ func (r *ContractResource) Fetch(ctx context.Context, asset core.Asset) ([]core.
 		resource["updated_at"] = contract["updated_at"]
 
 		// Computed fields for policy evaluation
-		jobTitle, _ := contract["job_title"].(string)
+		var jobTitle string
+		if v, ok := contract["job_title"].(string); ok {
+			jobTitle = v
+		}
 		resource["has_job_title"] = jobTitle != ""
 
 		// Check if contract is active (no end date or end date in future)

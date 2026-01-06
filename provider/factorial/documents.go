@@ -60,19 +60,30 @@ func (r *DocumentResource) Fetch(ctx context.Context, asset core.Asset) ([]core.
 		resource["updated_at"] = doc["updated_at"]
 
 		// Computed fields for policy evaluation
-		isSigned, _ := doc["signed"].(bool)
-		isPending, _ := doc["pending_signature"].(bool)
+		var isSigned, isPending bool
+		if v, ok := doc["signed"].(bool); ok {
+			isSigned = v
+		}
+		if v, ok := doc["pending_signature"].(bool); ok {
+			isPending = v
+		}
 
 		resource["is_signed"] = isSigned
 		resource["is_pending"] = isPending
 		resource["needs_signature"] = !isSigned && isPending
 
 		// Check if public document
-		isPublic, _ := doc["public"].(bool)
+		var isPublic bool
+		if v, ok := doc["public"].(bool); ok {
+			isPublic = v
+		}
 		resource["is_public"] = isPublic
 
 		// Check document name for common compliance documents
-		name, _ := doc["name"].(string)
+		var name string
+		if v, ok := doc["name"].(string); ok {
+			name = v
+		}
 		nameLower := strings.ToLower(name)
 		resource["is_nda"] = strings.Contains(nameLower, "nda") || strings.Contains(nameLower, "non-disclosure") || strings.Contains(nameLower, "confidentiality")
 		resource["is_contract"] = strings.Contains(nameLower, "contract") || strings.Contains(nameLower, "agreement")
@@ -80,7 +91,10 @@ func (r *DocumentResource) Fetch(ctx context.Context, asset core.Asset) ([]core.
 		resource["is_training"] = strings.Contains(nameLower, "training") || strings.Contains(nameLower, "certification")
 
 		// Check visibility
-		isVisible, _ := doc["is_visible"].(bool)
+		var isVisible bool
+		if v, ok := doc["is_visible"].(bool); ok {
+			isVisible = v
+		}
 		resource["is_visible_to_employee"] = isVisible
 
 		resources = append(resources, resource)
@@ -107,11 +121,13 @@ func (r *FolderResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Re
 	}
 
 	// Count documents per folder
-	documents, _ := r.conn.fetchPaginated(ctx, "resources/documents/documents")
+	documents, err := r.conn.fetchPaginated(ctx, "resources/documents/documents")
 	folderDocCounts := make(map[float64]int)
-	for _, doc := range documents {
-		if folderID, ok := doc["folder_id"].(float64); ok {
-			folderDocCounts[folderID]++
+	if err == nil {
+		for _, doc := range documents {
+			if folderID, ok := doc["folder_id"].(float64); ok {
+				folderDocCounts[folderID]++
+			}
 		}
 	}
 
@@ -138,10 +154,16 @@ func (r *FolderResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Re
 		resource["updated_at"] = folder["updated_at"]
 
 		// Computed fields for policy evaluation
-		name, _ := folder["name"].(string)
-		resource["has_name"] = name != ""
+		var folderName string
+		if v, ok := folder["name"].(string); ok {
+			folderName = v
+		}
+		resource["has_name"] = folderName != ""
 
-		isActive, _ := folder["active"].(bool)
+		var isActive bool
+		if v, ok := folder["active"].(bool); ok {
+			isActive = v
+		}
 		resource["is_active"] = isActive
 
 		resource["document_count"] = folderDocCounts[folderID]

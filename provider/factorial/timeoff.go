@@ -61,8 +61,13 @@ func (r *LeaveResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Res
 		resource["updated_at"] = leave["updated_at"]
 
 		// Computed fields for policy evaluation
-		status, _ := leave["status"].(string)
-		approvalStatus, _ := leave["approval_status"].(string)
+		var status, approvalStatus string
+		if v, ok := leave["status"].(string); ok {
+			status = v
+		}
+		if v, ok := leave["approval_status"].(string); ok {
+			approvalStatus = v
+		}
 
 		resource["is_approved"] = status == "approved" || approvalStatus == "approved"
 		resource["is_rejected"] = status == "rejected" || approvalStatus == "rejected"

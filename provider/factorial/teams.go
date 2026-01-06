@@ -24,14 +24,16 @@ func (r *TeamResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Reso
 	}
 
 	// Fetch team memberships to count members and identify leads
-	memberships, _ := r.conn.fetchPaginated(ctx, "resources/teams/team_memberships")
+	memberships, err := r.conn.fetchPaginated(ctx, "resources/teams/team_memberships")
 	teamMemberCounts := make(map[float64]int)
 	teamLeads := make(map[float64]bool)
-	for _, m := range memberships {
-		if teamID, ok := m["team_id"].(float64); ok {
-			teamMemberCounts[teamID]++
-			if isLead, ok := m["is_lead"].(bool); ok && isLead {
-				teamLeads[teamID] = true
+	if err == nil {
+		for _, m := range memberships {
+			if teamID, ok := m["team_id"].(float64); ok {
+				teamMemberCounts[teamID]++
+				if isLead, ok := m["is_lead"].(bool); ok && isLead {
+					teamLeads[teamID] = true
+				}
 			}
 		}
 	}
@@ -79,13 +81,23 @@ func (r *TeamResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Reso
 		resource["updated_at"] = team["updated_at"]
 
 		// Computed fields for policy evaluation
-		resource["has_members"] = teamMemberCounts[teamID] > 0 || resource["member_count"].(int) > 0
+		var memberCount int
+		if v, ok := resource["member_count"].(int); ok {
+			memberCount = v
+		}
+		resource["has_members"] = teamMemberCounts[teamID] > 0 || memberCount > 0
 		resource["has_lead"] = teamLeads[teamID] || team["lead_id"] != nil
 
-		name, _ := team["name"].(string)
-		resource["has_name"] = name != ""
+		var teamName string
+		if v, ok := team["name"].(string); ok {
+			teamName = v
+		}
+		resource["has_name"] = teamName != ""
 
-		description, _ := team["description"].(string)
+		var description string
+		if v, ok := team["description"].(string); ok {
+			description = v
+		}
 		resource["has_description"] = description != ""
 
 		resources = append(resources, resource)
