@@ -79,7 +79,7 @@ func (r *ManagedDeviceResource) Fetch(ctx context.Context, asset core.Asset) ([]
 	result, err := r.client.DeviceManagement().ManagedDevices().Get(ctx, nil)
 	if err != nil {
 		// Intune may not be enabled
-		return resources, nil
+		return resources, err
 	}
 
 	if result.GetValue() == nil {

@@ -54,7 +54,7 @@ func init() {
 	// Persistent flags (available to all subcommands)
 	rootCmd.PersistentFlags().StringVarP(&policyFile, "policy", "f", "", "Path to policy YAML file")
 	rootCmd.PersistentFlags().StringVarP(&policyDir, "policy-dir", "d", "", "Path to policy directory")
-	
+
 	// Credential flags
 	rootCmd.PersistentFlags().StringVar(&token, "token", "", "Authentication token (e.g., GitHub token)")
 	rootCmd.PersistentFlags().StringVar(&credentialType, "credential-type", "env", "Credential type (bearer, env, password)")

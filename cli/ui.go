@@ -2,6 +2,7 @@ package cli
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
+
 	"github.com/kopexa-grc/kspec/cli/components/browser"
 	"github.com/kopexa-grc/kspec/cli/components/common"
 )
@@ -80,9 +81,9 @@ type AddCheckResultMsg struct {
 
 // UpdateNodeStateMsg updates a node's state
 type UpdateNodeStateMsg struct {
-	NodeID       string
-	State        common.AssetState
-	ChecksPassed int
-	ChecksFailed int
+	NodeID        string
+	State         common.AssetState
+	ChecksPassed  int
+	ChecksFailed  int
 	ChecksSkipped int
 }

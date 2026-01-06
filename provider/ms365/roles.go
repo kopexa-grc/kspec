@@ -62,16 +62,16 @@ func (r *DirectoryRoleResource) Fetch(ctx context.Context, asset core.Asset) ([]
 
 		// Check for privileged roles
 		privilegedRoles := map[string]bool{
-			"Global Administrator":           true,
-			"Privileged Role Administrator":  true,
-			"Security Administrator":         true,
-			"User Administrator":             true,
-			"Exchange Administrator":         true,
-			"SharePoint Administrator":       true,
-			"Teams Administrator":            true,
-			"Application Administrator":      true,
-			"Cloud Application Administrator": true,
-			"Authentication Administrator":   true,
+			"Global Administrator":             true,
+			"Privileged Role Administrator":    true,
+			"Security Administrator":           true,
+			"User Administrator":               true,
+			"Exchange Administrator":           true,
+			"SharePoint Administrator":         true,
+			"Teams Administrator":              true,
+			"Application Administrator":        true,
+			"Cloud Application Administrator":  true,
+			"Authentication Administrator":     true,
 			"Conditional Access Administrator": true,
 		}
 		resourceMap["isPrivilegedRole"] = privilegedRoles[*role.GetDisplayName()]
@@ -97,7 +97,7 @@ func (r *RoleAssignmentResource) Fetch(ctx context.Context, asset core.Asset) ([
 	result, err := r.client.RoleManagement().Directory().RoleAssignments().Get(ctx, nil)
 	if err != nil {
 		// Role management might not be available
-		return resources, nil
+		return resources, err
 	}
 
 	if result.GetValue() == nil {

@@ -42,19 +42,26 @@ func (r *CertificatesResource) Fetch(ctx context.Context, asset core.Asset) ([]c
 
 	// Dial to get certificates
 	conf := &tls.Config{
-		InsecureSkipVerify: true, // We want to inspect the cert even if invalid
+		InsecureSkipVerify: true, //nolint:gosec // Intentional: security scanner needs to inspect certs even if invalid
 		ServerName:         domainName,
 	}
-	dialer := &net.Dialer{
-		Timeout: 10 * time.Second,
+	dialer := &tls.Dialer{
+		NetDialer: &net.Dialer{
+			Timeout: 10 * time.Second,
+		},
+		Config: conf,
 	}
-	conn, err := tls.DialWithDialer(dialer, "tcp", target, conf)
+	conn, err := dialer.DialContext(ctx, "tcp", target)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to %s: %w", target, err)
 	}
 	defer conn.Close()
 
-	state := conn.ConnectionState()
+	tlsConn, ok := conn.(*tls.Conn)
+	if !ok {
+		return nil, fmt.Errorf("connection is not a TLS connection")
+	}
+	state := tlsConn.ConnectionState()
 	certs := state.PeerCertificates
 
 	var resources []core.Resource

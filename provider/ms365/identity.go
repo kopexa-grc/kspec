@@ -95,10 +95,10 @@ func (r *ConditionalAccessPolicyResource) Fetch(ctx context.Context, asset core.
 		if policy.GetGrantControls() != nil {
 			grant := policy.GetGrantControls()
 			grantMap := map[string]interface{}{
-				"operator":              grant.GetOperator(),
-				"builtInControls":       grant.GetBuiltInControls(),
+				"operator":                    grant.GetOperator(),
+				"builtInControls":             grant.GetBuiltInControls(),
 				"customAuthenticationFactors": grant.GetCustomAuthenticationFactors(),
-				"termsOfUse":            grant.GetTermsOfUse(),
+				"termsOfUse":                  grant.GetTermsOfUse(),
 			}
 			resourceMap["grantControls"] = grantMap
 
@@ -121,9 +121,9 @@ func (r *ConditionalAccessPolicyResource) Fetch(ctx context.Context, asset core.
 
 			if session.GetSignInFrequency() != nil {
 				sessionMap["signInFrequency"] = map[string]interface{}{
-					"value":           session.GetSignInFrequency().GetValue(),
-					"type":            session.GetSignInFrequency().GetTypeEscaped(),
-					"isEnabled":       session.GetSignInFrequency().GetIsEnabled(),
+					"value":     session.GetSignInFrequency().GetValue(),
+					"type":      session.GetSignInFrequency().GetTypeEscaped(),
+					"isEnabled": session.GetSignInFrequency().GetIsEnabled(),
 				}
 			}
 

@@ -8,8 +8,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/kopexa-grc/kspec/core"
 	"github.com/miekg/dns"
+
+	"github.com/kopexa-grc/kspec/core"
 )
 
 type DNSResource struct{}

@@ -100,9 +100,9 @@ func (r *TeamResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Reso
 			var channelList []map[string]interface{}
 			for _, channel := range channels.GetValue() {
 				channelList = append(channelList, map[string]interface{}{
-					"id":           channel.GetId(),
-					"displayName":  channel.GetDisplayName(),
-					"description":  channel.GetDescription(),
+					"id":             channel.GetId(),
+					"displayName":    channel.GetDisplayName(),
+					"description":    channel.GetDescription(),
 					"membershipType": channel.GetMembershipType(),
 				})
 			}
@@ -150,7 +150,7 @@ func (r *TeamSettingsResource) Fetch(ctx context.Context, asset core.Asset) ([]c
 	// This is obtained through teamwork settings
 	result, err := r.client.Teamwork().Get(ctx, nil)
 	if err != nil {
-		return resources, nil
+		return resources, err
 	}
 
 	resourceMap := make(map[string]interface{})

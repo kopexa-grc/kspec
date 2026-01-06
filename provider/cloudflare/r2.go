@@ -7,6 +7,7 @@ import (
 
 	"github.com/cloudflare/cloudflare-go/v4"
 	"github.com/cloudflare/cloudflare-go/v4/r2"
+
 	"github.com/kopexa-grc/kspec/core"
 )
 
@@ -39,7 +40,7 @@ func (r *R2BucketResource) Fetch(ctx context.Context, asset core.Asset) ([]core.
 	})
 	if err != nil {
 		// R2 might not be enabled for this account
-		return resources, nil
+		return resources, err
 	}
 
 	for _, bucket := range result.Buckets {

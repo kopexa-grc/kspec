@@ -15,6 +15,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/postgresql/armpostgresql"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/sql/armsql"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
+
 	"github.com/kopexa-grc/kspec/core"
 )
 
@@ -42,7 +43,7 @@ func (r *SubscriptionResource) Fetch(ctx context.Context, asset core.Asset) ([]c
 	if err == nil {
 		resourceURI := fmt.Sprintf("/subscriptions/%s", r.subscriptionID)
 		pager := diagnosticClient.NewListPager(resourceURI, nil)
-		
+
 		var diagnosticSettings []map[string]interface{}
 		for pager.More() {
 			page, err := pager.NextPage(ctx)
@@ -62,7 +63,7 @@ func (r *SubscriptionResource) Fetch(ctx context.Context, asset core.Asset) ([]c
 				diagnosticSettings = append(diagnosticSettings, settingMap)
 			}
 		}
-		
+
 		// Create monitor object with diagnostic settings
 		monitorData := map[string]interface{}{
 			"diagnosticSettings": diagnosticSettings,
@@ -74,7 +75,7 @@ func (r *SubscriptionResource) Fetch(ctx context.Context, asset core.Asset) ([]c
 	alertClient, err := armmonitor.NewActivityLogAlertsClient(r.subscriptionID, r.credential, nil)
 	if err == nil {
 		pager := alertClient.NewListBySubscriptionIDPager(nil)
-		
+
 		var activityAlerts []map[string]interface{}
 		for pager.More() {
 			page, err := pager.NextPage(ctx)
@@ -94,7 +95,7 @@ func (r *SubscriptionResource) Fetch(ctx context.Context, asset core.Asset) ([]c
 				activityAlerts = append(activityAlerts, alertMap)
 			}
 		}
-		
+
 		// Add to monitor object
 		if monitor, ok := resourceMap["monitor"].(map[string]interface{}); ok {
 			activityLog := map[string]interface{}{

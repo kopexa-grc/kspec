@@ -7,6 +7,7 @@ import (
 
 	"github.com/cloudflare/cloudflare-go/v4"
 	"github.com/cloudflare/cloudflare-go/v4/pages"
+
 	"github.com/kopexa-grc/kspec/core"
 )
 
@@ -38,7 +39,7 @@ func (r *PagesProjectResource) Fetch(ctx context.Context, asset core.Asset) ([]c
 		AccountID: cloudflare.F(accountID),
 	})
 	if err != nil {
-		return resources, nil
+		return resources, err
 	}
 
 	for _, project := range result.Result {

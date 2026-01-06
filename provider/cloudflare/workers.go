@@ -7,6 +7,7 @@ import (
 
 	"github.com/cloudflare/cloudflare-go/v4"
 	"github.com/cloudflare/cloudflare-go/v4/workers"
+
 	"github.com/kopexa-grc/kspec/core"
 )
 
@@ -38,7 +39,7 @@ func (r *WorkerResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Re
 		AccountID: cloudflare.F(accountID),
 	})
 	if err != nil {
-		return resources, nil
+		return resources, err
 	}
 
 	for _, script := range result.Result {

@@ -24,7 +24,7 @@ func (r *DeviceConfigurationResource) Fetch(ctx context.Context, asset core.Asse
 	result, err := r.client.DeviceManagement().DeviceConfigurations().Get(ctx, nil)
 	if err != nil {
 		// Device management might not be licensed
-		return resources, nil
+		return resources, err
 	}
 
 	if result.GetValue() == nil {
@@ -55,11 +55,8 @@ func (r *DeviceConfigurationResource) Fetch(ctx context.Context, asset core.Asse
 		}
 
 		// Get additional data which contains platform-specific settings
-		additionalData := config.GetAdditionalData()
-		if additionalData != nil {
-			for key, value := range additionalData {
-				resourceMap[key] = value
-			}
+		for key, value := range config.GetAdditionalData() {
+			resourceMap[key] = value
 		}
 
 		resources = append(resources, resourceMap)
@@ -83,7 +80,7 @@ func (r *DeviceCompliancePolicyResource) Fetch(ctx context.Context, asset core.A
 	result, err := r.client.DeviceManagement().DeviceCompliancePolicies().Get(ctx, nil)
 	if err != nil {
 		// Device management might not be licensed
-		return resources, nil
+		return resources, err
 	}
 
 	if result.GetValue() == nil {
@@ -114,11 +111,8 @@ func (r *DeviceCompliancePolicyResource) Fetch(ctx context.Context, asset core.A
 		}
 
 		// Get additional data which contains platform-specific settings
-		additionalData := policy.GetAdditionalData()
-		if additionalData != nil {
-			for key, value := range additionalData {
-				resourceMap[key] = value
-			}
+		for key, value := range policy.GetAdditionalData() {
+			resourceMap[key] = value
 		}
 
 		resources = append(resources, resourceMap)

@@ -7,6 +7,7 @@ import (
 
 	"github.com/cloudflare/cloudflare-go/v4"
 	"github.com/cloudflare/cloudflare-go/v4/option"
+
 	"github.com/kopexa-grc/kspec/core"
 )
 

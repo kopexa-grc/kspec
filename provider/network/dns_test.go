@@ -6,8 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kopexa-grc/kspec/core"
 	"github.com/miekg/dns"
+
+	"github.com/kopexa-grc/kspec/core"
 )
 
 func TestDNSFetch(t *testing.T) {
@@ -38,7 +39,7 @@ func TestDNSFetch(t *testing.T) {
 		w.WriteMsg(m)
 	})
 
-	pc, err := net.ListenPacket("udp", "127.0.0.1:0")
+	pc, err := net.ListenPacket("udp", "127.0.0.1:0") //nolint:noctx // Test code
 	if err != nil {
 		t.Fatalf("Failed to listen: %v", err)
 	}

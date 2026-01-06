@@ -70,11 +70,11 @@ func InitProvider(ctx context.Context, providerName string, config map[string]st
 	}
 
 	registry := make(map[string]core.ResourceSpec)
-	
+
 	// Register all primary resources
 	for _, r := range conn.Resources() {
 		registry[r.Name()] = r
-		
+
 		// Check if this resource provides sub-resources
 		if subProvider, ok := r.(core.SubResourceProvider); ok {
 			subResources := subProvider.SubResources()

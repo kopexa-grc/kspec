@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/google/go-github/v62/github"
+
 	"github.com/kopexa-grc/kspec/core"
 )
 

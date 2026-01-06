@@ -22,7 +22,7 @@ func (r *AppleCareResource) Name() string {
 
 func (r *AppleCareResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
 	// 1. Get Serial Number
-	serial, err := getSerialNumber()
+	serial, err := getSerialNumber(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get serial number: %w", err)
 	}
@@ -84,8 +84,8 @@ func (r *AppleCareResource) Fetch(ctx context.Context, asset core.Asset) ([]core
 	return []core.Resource{res}, nil
 }
 
-func getSerialNumber() (string, error) {
-	out, err := exec.Command("system_profiler", "SPHardwareDataType").Output()
+func getSerialNumber(ctx context.Context) (string, error) {
+	out, err := exec.CommandContext(ctx, "system_profiler", "SPHardwareDataType").Output()
 	if err != nil {
 		return "", err
 	}

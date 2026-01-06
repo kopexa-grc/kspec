@@ -7,6 +7,7 @@ import (
 
 	"github.com/cloudflare/cloudflare-go/v4"
 	"github.com/cloudflare/cloudflare-go/v4/zero_trust"
+
 	"github.com/kopexa-grc/kspec/core"
 )
 
@@ -60,7 +61,7 @@ func (r *TunnelResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Re
 	}
 
 	if err := iter.Err(); err != nil {
-		return resources, nil
+		return resources, err
 	}
 
 	return resources, nil

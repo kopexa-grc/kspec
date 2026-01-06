@@ -62,20 +62,27 @@ func (r *TLSResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resou
 
 	dial := func(version uint16) (*tls.ConnectionState, error) {
 		conf := &tls.Config{
-			InsecureSkipVerify: true, // We inspect regardless of validity
+			InsecureSkipVerify: true, //nolint:gosec // Intentional: security scanner needs to inspect certs even if invalid
 			MinVersion:         version,
 			MaxVersion:         version,
 			ServerName:         domainName, // SNI
 		}
-		dialer := &net.Dialer{
-			Timeout: 5 * time.Second,
+		dialer := &tls.Dialer{
+			NetDialer: &net.Dialer{
+				Timeout: 5 * time.Second,
+			},
+			Config: conf,
 		}
-		conn, err := tls.DialWithDialer(dialer, "tcp", target, conf)
+		conn, err := dialer.DialContext(ctx, "tcp", target)
 		if err != nil {
 			return nil, err
 		}
 		defer conn.Close()
-		state := conn.ConnectionState()
+		tlsConn, ok := conn.(*tls.Conn)
+		if !ok {
+			return nil, fmt.Errorf("connection is not a TLS connection")
+		}
+		state := tlsConn.ConnectionState()
 		return &state, nil
 	}
 
@@ -192,7 +199,7 @@ func versionToString(v uint16) string {
 		return "tls1.2"
 	case tls.VersionTLS13:
 		return "tls1.3"
-	case tls.VersionSSL30:
+	case 0x0300: // SSLv3 (deprecated constant)
 		return "ssl3.0"
 	default:
 		return fmt.Sprintf("unknown_%x", v)

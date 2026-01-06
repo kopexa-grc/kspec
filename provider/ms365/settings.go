@@ -24,7 +24,7 @@ func (r *DirectorySettingResource) Fetch(ctx context.Context, asset core.Asset) 
 	result, err := r.client.GroupSettings().Get(ctx, nil)
 	if err != nil {
 		// Group settings might not be configured
-		return resources, nil
+		return resources, err
 	}
 
 	if result.GetValue() == nil {
@@ -121,7 +121,7 @@ func (r *ExternalIdentityPolicyResource) Fetch(ctx context.Context, asset core.A
 	// Get B2B collaboration settings via cross-tenant access settings
 	result, err := r.client.Policies().CrossTenantAccessPolicy().Get(ctx, nil)
 	if err != nil {
-		return resources, nil
+		return resources, err
 	}
 
 	resourceMap := make(map[string]interface{})

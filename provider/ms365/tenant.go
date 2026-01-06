@@ -64,9 +64,9 @@ func (r *TenantResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Re
 		var plans []map[string]interface{}
 		for _, plan := range organization.GetAssignedPlans() {
 			plans = append(plans, map[string]interface{}{
-				"service":        plan.GetService(),
+				"service":          plan.GetService(),
 				"capabilityStatus": plan.GetCapabilityStatus(),
-				"servicePlanId":  plan.GetServicePlanId(),
+				"servicePlanId":    plan.GetServicePlanId(),
 			})
 		}
 		resourceMap["assignedPlans"] = plans

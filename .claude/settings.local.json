@@ -18,7 +18,11 @@
       "WebSearch",
       "Bash(go get:*)",
       "Bash(go doc:*)",
-      "Bash(goimports:*)"
+      "Bash(goimports:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat\\(hetzner\\): add Hetzner Cloud provider for infrastructure security scanning\n\nAdd comprehensive Hetzner Cloud provider with support for:\n- Servers with protection, backup, and network status\n- Firewalls with rule analysis and permissiveness checks\n- Volumes with attachment and protection status\n- Networks with subnet configuration\n- SSH keys with key type detection \\(Ed25519/RSA/DSA\\)\n- Floating IPs with DNS PTR and block status\n- Primary IPs with location and protection info\n- Server types with deprecation status\n- Images with deprecation checks\n- Locations and datacenters\n\nIncludes security policy with 18 checks, setup documentation,\nCLI integration, and unit tests.\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git push:*)",
+      "Bash(git commit:*)"
     ]
   }
 }

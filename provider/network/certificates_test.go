@@ -29,7 +29,7 @@ func TestCertificatesFetch(t *testing.T) {
 	}
 
 	// 2. Start a TLS server
-	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	listener, err := net.Listen("tcp", "127.0.0.1:0") //nolint:noctx // Test code
 	if err != nil {
 		t.Fatalf("Failed to listen: %v", err)
 	}
@@ -43,7 +43,7 @@ func TestCertificatesFetch(t *testing.T) {
 				return
 			}
 			tlsConn := tls.Server(conn, serverConfig)
-			tlsConn.Handshake()
+			_ = tlsConn.Handshake() //nolint:noctx // Test code
 			tlsConn.Close()
 		}
 	}()

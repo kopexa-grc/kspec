@@ -52,8 +52,8 @@ func (r *ApplicationResource) Fetch(ctx context.Context, asset core.Asset) ([]co
 			var secrets []map[string]interface{}
 			for _, cred := range app.GetPasswordCredentials() {
 				secrets = append(secrets, map[string]interface{}{
-					"keyId":       cred.GetKeyId(),
-					"displayName": cred.GetDisplayName(),
+					"keyId":         cred.GetKeyId(),
+					"displayName":   cred.GetDisplayName(),
 					"startDateTime": cred.GetStartDateTime(),
 					"endDateTime":   cred.GetEndDateTime(),
 				})
@@ -198,10 +198,10 @@ func (r *ServicePrincipalResource) Fetch(ctx context.Context, asset core.Asset) 
 			var roles []map[string]interface{}
 			for _, role := range appRoles.GetValue() {
 				roles = append(roles, map[string]interface{}{
-					"id":                   role.GetId(),
-					"appRoleId":            role.GetAppRoleId(),
-					"resourceDisplayName":  role.GetResourceDisplayName(),
-					"resourceId":           role.GetResourceId(),
+					"id":                  role.GetId(),
+					"appRoleId":           role.GetAppRoleId(),
+					"resourceDisplayName": role.GetResourceDisplayName(),
+					"resourceId":          role.GetResourceId(),
 				})
 			}
 			resourceMap["appRoleAssignments"] = roles

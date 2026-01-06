@@ -7,6 +7,7 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/appservice/armappservice"
+
 	"github.com/kopexa-grc/kspec/core"
 )
 

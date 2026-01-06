@@ -289,8 +289,8 @@ func TestParseCredentialFromConfig(t *testing.T) {
 		{
 			name: "private key with path",
 			config: map[string]string{
-				"credential_type":       "private_key",
-				"private_key_path":      "/path/to/key",
+				"credential_type":      "private_key",
+				"private_key_path":     "/path/to/key",
 				"private_key_password": "keypass",
 			},
 			want: &Credential{

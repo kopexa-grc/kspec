@@ -6,8 +6,9 @@ import (
 	"net/http"
 
 	"github.com/google/go-github/v62/github"
-	"github.com/kopexa-grc/kspec/core"
 	"golang.org/x/oauth2"
+
+	"github.com/kopexa-grc/kspec/core"
 )
 
 // GithubProvider is now a factory
@@ -24,7 +25,7 @@ func (p *GithubProvider) Name() string {
 func (p *GithubProvider) Connect(ctx context.Context, config map[string]string) (core.Connection, error) {
 	// Try to parse credentials from config
 	var token string
-	
+
 	// Attempt to parse credential
 	cred, err := core.ParseCredentialFromConfig(config)
 	if err != nil {

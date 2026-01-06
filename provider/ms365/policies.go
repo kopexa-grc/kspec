@@ -52,11 +52,11 @@ func (r *AuthorizationPolicyResource) Fetch(ctx context.Context, asset core.Asse
 	if result.GetDefaultUserRolePermissions() != nil {
 		perms := result.GetDefaultUserRolePermissions()
 		resourceMap["defaultUserRolePermissions"] = map[string]interface{}{
-			"allowedToCreateApps":                  perms.GetAllowedToCreateApps(),
-			"allowedToCreateSecurityGroups":       perms.GetAllowedToCreateSecurityGroups(),
-			"allowedToCreateTenants":              perms.GetAllowedToCreateTenants(),
+			"allowedToCreateApps":                      perms.GetAllowedToCreateApps(),
+			"allowedToCreateSecurityGroups":            perms.GetAllowedToCreateSecurityGroups(),
+			"allowedToCreateTenants":                   perms.GetAllowedToCreateTenants(),
 			"allowedToReadBitlockerKeysForOwnedDevice": perms.GetAllowedToReadBitlockerKeysForOwnedDevice(),
-			"allowedToReadOtherUsers":             perms.GetAllowedToReadOtherUsers(),
+			"allowedToReadOtherUsers":                  perms.GetAllowedToReadOtherUsers(),
 		}
 	}
 
@@ -102,8 +102,8 @@ func (r *AuthenticationMethodPolicyResource) Fetch(ctx context.Context, asset co
 		if enforcement.GetAuthenticationMethodsRegistrationCampaign() != nil {
 			campaign := enforcement.GetAuthenticationMethodsRegistrationCampaign()
 			resourceMap["registrationCampaign"] = map[string]interface{}{
-				"state":                    campaign.GetState(),
-				"snoozeDurationInDays":     campaign.GetSnoozeDurationInDays(),
+				"state":                campaign.GetState(),
+				"snoozeDurationInDays": campaign.GetSnoozeDurationInDays(),
 			}
 		}
 	}

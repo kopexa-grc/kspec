@@ -85,9 +85,9 @@ func NewEvaluator(registry map[string]ResourceSpec) (*Evaluator, error) {
 		cel.Variable("asset", cel.MapType(cel.StringType, cel.DynType)),     // Asset context injected
 		cel.Variable("empty", cel.NullType),                                 // Empty constant
 		cel.Variable("regex", cel.MapType(cel.StringType, cel.StringType)),  // Regex patterns injected
-		ext.Strings(),                                                       // String extensions (contains, split, etc.)
-		ext.Lists(),                                                         // List extensions (filter, map, slice, etc.)
-		ext.Encoders(),                                                      // Encoding extensions (base64, etc.)
+		ext.Strings(),  // String extensions (contains, split, etc.)
+		ext.Lists(),    // List extensions (filter, map, slice, etc.)
+		ext.Encoders(), // Encoding extensions (base64, etc.)
 	}, dnsFuncOpts...)
 
 	env, err := cel.NewEnv(envOpts...)

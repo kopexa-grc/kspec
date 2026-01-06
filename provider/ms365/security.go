@@ -24,7 +24,7 @@ func (r *RiskyUserResource) Fetch(ctx context.Context, asset core.Asset) ([]core
 	result, err := r.client.IdentityProtection().RiskyUsers().Get(ctx, nil)
 	if err != nil {
 		// Identity Protection might not be licensed
-		return resources, nil
+		return resources, err
 	}
 
 	if result.GetValue() == nil {
@@ -72,7 +72,7 @@ func (r *SecureScoreResource) Fetch(ctx context.Context, asset core.Asset) ([]co
 	result, err := r.client.Security().SecureScores().Get(ctx, nil)
 	if err != nil {
 		// Security API might not be available
-		return resources, nil
+		return resources, err
 	}
 
 	if result.GetValue() == nil {
@@ -117,10 +117,10 @@ func (r *SecureScoreResource) Fetch(ctx context.Context, asset core.Asset) ([]co
 		var controls []map[string]interface{}
 		for _, control := range score.GetControlScores() {
 			controls = append(controls, map[string]interface{}{
-				"controlName":        control.GetControlName(),
-				"controlCategory":    control.GetControlCategory(),
-				"score":              control.GetScore(),
-				"description":        control.GetDescription(),
+				"controlName":     control.GetControlName(),
+				"controlCategory": control.GetControlCategory(),
+				"score":           control.GetScore(),
+				"description":     control.GetDescription(),
 			})
 		}
 		resourceMap["controlScores"] = controls
@@ -144,7 +144,7 @@ func (r *SecurityAlertResource) Fetch(ctx context.Context, asset core.Asset) ([]
 	result, err := r.client.Security().Alerts_v2().Get(ctx, nil)
 	if err != nil {
 		// Security API might not be available
-		return resources, nil
+		return resources, err
 	}
 
 	if result.GetValue() == nil {
