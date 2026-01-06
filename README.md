@@ -12,6 +12,8 @@
     <b>Validate. Secure. Comply.</b><br />
     A modern, extensible framework for defining and enforcing security policies across your digital infrastructure.
   </p>
+
+  <img src="docs/demo.gif" alt="kspec demo" width="100%" />
 </div>
 
 ---
