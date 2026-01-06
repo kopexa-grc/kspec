@@ -15,6 +15,7 @@ type Scanner struct {
 	config   ScanConfig
 	registry map[string]core.ResourceSpec
 	handler  ScanEventHandler
+	errors   []*ScanError
 }
 
 // NewScanner creates a new Scanner instance
@@ -36,6 +37,16 @@ func (s *Scanner) emit(event ScanEvent) {
 	}
 }
 
+// recordError adds an error to the scanner's error list
+func (s *Scanner) recordError(phase, resourceType, message string, err error) {
+	s.errors = append(s.errors, &ScanError{
+		Phase:        phase,
+		ResourceType: resourceType,
+		Message:      message,
+		Err:          err,
+	})
+}
+
 // Initialize connects to the provider and sets up the registry
 func (s *Scanner) Initialize(ctx context.Context) error {
 	registry, err := provider.InitProvider(ctx, s.config.ProviderName, s.config.ProviderConfig)
@@ -52,9 +63,12 @@ func (s *Scanner) Registry() map[string]core.ResourceSpec {
 }
 
 // Run executes the full scan process
-func (s *Scanner) Run(ctx context.Context) (*common.ResourceTree, error) {
+func (s *Scanner) Run(ctx context.Context) *ScanResult {
 	asset := s.config.Asset
 	policies := s.config.Policies
+
+	// Initialize errors slice
+	s.errors = make([]*ScanError, 0)
 
 	// Create resource tree with root node
 	tree := common.NewResourceTree(asset.Name, asset.Type)
@@ -79,7 +93,10 @@ func (s *Scanner) Run(ctx context.Context) (*common.ResourceTree, error) {
 	tree.Root.State = common.AssetStateComplete
 	s.emit(ScanEvent{Type: EventScanComplete, Tree: tree})
 
-	return tree, nil
+	return &ScanResult{
+		Tree:   tree,
+		Errors: s.errors,
+	}
 }
 
 // discover runs the discovery phase
@@ -95,6 +112,7 @@ func (s *Scanner) discover(ctx context.Context, tree *common.ResourceTree) (map[
 			hasDiscovery = true
 			discovered, err := discoverer.Discover(ctx, asset)
 			if err != nil {
+				s.recordError("discovery", resSpec.Name(), err.Error(), err)
 				continue
 			}
 
@@ -158,6 +176,7 @@ func (s *Scanner) createResourceNodes(ctx context.Context, tree *common.Resource
 						if subDiscoverer, ok := subSpec.(core.DiscoveryResource); ok {
 							subDiscovered, err := subDiscoverer.Discover(ctx, asset)
 							if err != nil {
+								s.recordError("discovery", subSpec.Name(), err.Error(), err)
 								continue
 							}
 							for subResType, subCount := range subDiscovered {
@@ -364,6 +383,7 @@ func (s *Scanner) processSubResources(
 		// Fetch sub-resources
 		subResources, err := subSpec.Fetch(ctx, instanceAsset)
 		if err != nil {
+			s.recordError("fetch", subResType, err.Error(), err)
 			continue
 		}
 

@@ -119,8 +119,11 @@ The repository includes pre-built security policies:
 | [MS365 Security](policies/ms365-security.yml) | MS365 | MFA enforcement, Conditional Access, identity protection, Teams security |
 | [GitHub Security](policies/github-security.yml) | GitHub | Branch protection, 2FA, repository security settings |
 | [Hetzner Security](policies/hetzner-security.yml) | Hetzner | Server protection, firewall rules, SSH key security, network isolation |
-| [TLS Security](policies/tls-security.yml) | Network | Protocol versions, cipher suites, certificate validation |
-| [Email Security](policies/email-security.yml) | Network | SPF records, DMARC enforcement, DNS hygiene |
+| [TLS Security](policies/tls_security.yaml) | Network | TLS versions, cipher suites, PFS, AEAD ciphers |
+| [Certificate Security](policies/certificate_security.yaml) | Network | Expiration, validity period, signature algorithms |
+| [HTTP Security](policies/http_security.yaml) | Network | Security headers (HSTS, CSP, X-Frame-Options) |
+| [DNS Security](policies/dns_security.yaml) | Network | DNS record validation |
+| [Email Security](policies/email-security.policy.yaml) | Network | SPF records, DMARC enforcement |
 
 ## Writing Policies
 
@@ -179,6 +182,7 @@ kspec operates on a **Provider-Resource-Policy** model:
 
 ## Documentation
 
+- **[Quickstart Guide](docs/QUICKSTART.md)** - Scan a host in 5 minutes
 - [Azure Setup Guide](docs/azure-setup.md) - Configure Azure provider and credentials
 - [Microsoft 365 Setup Guide](docs/ms365-setup.md) - Configure MS365 provider and app registration
 - [GitHub Setup Guide](docs/github-setup.md) - Configure GitHub provider and tokens

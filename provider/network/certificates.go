@@ -16,6 +16,26 @@ import (
 	"github.com/kopexa-grc/kspec/core"
 )
 
+const (
+	// Certificate validity constants per CA/Browser Forum Ballot SC-081v3
+	// Timeline: 398 days (current) -> 200 days (Mar 2026) -> 100 days (Mar 2027) -> 47 days (Mar 2029)
+
+	// MaxValidityDaysCurrent is the current maximum (until March 2026)
+	MaxValidityDaysCurrent = 398
+	// MaxValidityDays2026 is the maximum starting March 15, 2026
+	MaxValidityDays2026 = 200
+	// MaxValidityDays2027 is the maximum starting March 15, 2027
+	MaxValidityDays2027 = 100
+	// MaxValidityDays2029 is the maximum starting March 15, 2029
+	MaxValidityDays2029 = 47
+
+	// MaxValidityDays is set to the current standard
+	MaxValidityDays = MaxValidityDaysCurrent
+
+	// ExpirationWarningDays is the number of days before expiration to warn
+	ExpirationWarningDays = 30
+)
+
 // CertificatesResource provides access to TLS certificate information from remote hosts.
 type CertificatesResource struct{}
 
@@ -69,28 +89,76 @@ func (r *CertificatesResource) Fetch(ctx context.Context, asset core.Asset) ([]c
 
 	resources := make([]core.Resource, 0, len(certs))
 
-	// Provide all certificates in the chain? Or just leaf?
-	// Usually 'certificate' resource might be a collection where we return each cert in the chain as a resource?
-	// Or one resource with a list?
-	// The snippet suggests "CertificatesToMqlCertificates" taking a collection.
-	// We'll return each certificate in the chain as a separate resource,
-	// so the user can query "certificate.where(c, c.is_ca)" etc.
+	// Verify certificate chain against system roots
+	isChainVerified := false
+	if len(certs) > 0 {
+		intermediates := x509.NewCertPool()
+		for i := 1; i < len(certs); i++ {
+			intermediates.AddCert(certs[i])
+		}
+		opts := x509.VerifyOptions{
+			DNSName:       domainName,
+			Intermediates: intermediates,
+		}
+		if _, err := certs[0].Verify(opts); err == nil {
+			isChainVerified = true
+		}
+	}
 
 	for i, cert := range certs {
-		res := parseCertificate(cert)
-		// Add metadata about position in chain?
+		res := parseCertificate(cert, domainName)
+
+		// Add metadata about position in chain
 		res["chain_index"] = i
 		res["is_leaf"] = (i == 0)
 		res["target"] = target
+
+		// Add calculated time fields
+		daysUntilExpiry := int(time.Until(cert.NotAfter).Hours() / 24)
+		validityDays := int(cert.NotAfter.Sub(cert.NotBefore).Hours() / 24)
+
+		res["expiresIn"] = map[string]interface{}{
+			"days": daysUntilExpiry,
+		}
+		res["validityDays"] = validityDays
+		res["isExpired"] = daysUntilExpiry < 0
+		res["isExpiringSoon"] = daysUntilExpiry >= 0 && daysUntilExpiry <= ExpirationWarningDays
+		res["hasLongValidity"] = validityDays > MaxValidityDays
+
+		// Only leaf cert gets chain verification result
+		if i == 0 {
+			res["isVerified"] = isChainVerified
+			// Check if self-signed (subject == issuer for single cert or leaf with no proper chain)
+			res["isSelfSigned"] = cert.Subject.CommonName == cert.Issuer.CommonName && !isChainVerified
+		} else {
+			res["isVerified"] = false
+			res["isSelfSigned"] = false
+		}
+
 		resources = append(resources, res)
 	}
 
 	return resources, nil
 }
 
-func parseCertificate(cert *x509.Certificate) core.Resource {
+func parseCertificate(cert *x509.Certificate, domainName string) core.Resource {
 	// Calculate fingerprints
 	sha256Fingerprint := hex.EncodeToString(sha256Hash(cert.Raw))
+
+	// Check if domain name matches certificate
+	domainMatches := false
+	if domainName != "" {
+		if cert.Subject.CommonName == domainName {
+			domainMatches = true
+		} else {
+			for _, dns := range cert.DNSNames {
+				if dns == domainName || matchWildcard(dns, domainName) {
+					domainMatches = true
+					break
+				}
+			}
+		}
+	}
 
 	res := core.Resource{
 		"serialNumber":       cert.SerialNumber.String(), // BigInt to string
@@ -107,6 +175,7 @@ func parseCertificate(cert *x509.Certificate) core.Resource {
 		"publicKeyAlgorithm": cert.PublicKeyAlgorithm.String(),
 		"version":            cert.Version,
 		"fingerprint_sha256": sha256Fingerprint,
+		"domainMatches":      domainMatches,
 	}
 
 	// Extensions (simplified)
@@ -114,6 +183,21 @@ func parseCertificate(cert *x509.Certificate) core.Resource {
 	res["extKeyUsage"] = parseExtKeyUsage(cert.ExtKeyUsage)
 
 	return res
+}
+
+// matchWildcard checks if a wildcard certificate pattern matches the domain
+func matchWildcard(pattern, domain string) bool {
+	if !strings.HasPrefix(pattern, "*.") {
+		return false
+	}
+	// *.example.com should match foo.example.com but not foo.bar.example.com
+	suffix := pattern[1:] // Remove the *
+	if strings.HasSuffix(domain, suffix) {
+		prefix := strings.TrimSuffix(domain, suffix)
+		// Prefix should not contain any dots (single level only)
+		return !strings.Contains(prefix, ".")
+	}
+	return false
 }
 
 func pkixNameMap(name pkix.Name) map[string]interface{} {

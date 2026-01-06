@@ -53,7 +53,9 @@ queries:
       resource.certificates[0].expiresIn.days >= 0 &&
       resource.certificates[0].validityDays <= 398 &&
       resource.certificates[0].isVerified
-    docs: Certificate must be valid, not expired, trusted by root CAs, and have validity period <= 398 days.
+    docs: |
+      Certificate must be valid, not expired, trusted by root CAs, and have validity period
+      within CA/Browser Forum limits (currently 398 days, reducing to 47 days by 2029).
     remediation: Renew certificate with valid parameters.
     audit: Check details.
 

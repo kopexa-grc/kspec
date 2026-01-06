@@ -1,0 +1,132 @@
+apiVersion: kopexa.io/v1alpha1
+kind: Policy
+metadata:
+  name: kopexa-certificate-security
+  title: Kopexa Certificate Security
+  version: 1.0.0
+
+groups:
+  - title: Certificate Validity
+    filter: asset.type == 'host'
+    checks:
+      - uid: kopexa-cert-not-expired
+      - uid: kopexa-cert-not-expiring-soon
+      - uid: kopexa-cert-validity-period
+      - uid: kopexa-cert-domain-match
+      - uid: kopexa-cert-verified
+      - uid: kopexa-cert-not-self-signed
+
+  - title: Certificate Security
+    filter: asset.type == 'host'
+    checks:
+      - uid: kopexa-cert-strong-signature
+      - uid: kopexa-cert-strong-key-algorithm
+      - uid: kopexa-cert-has-san
+
+queries:
+  # Validity checks
+  - uid: kopexa-cert-not-expired
+    title: Certificate must not be expired
+    resource: certificate
+    severity: critical
+    query: resource.is_leaf == false || resource.isExpired == false
+    docs: |
+      Expired certificates will cause browsers to display security warnings
+      and may prevent users from accessing your site.
+    remediation: Renew the certificate immediately.
+    audit: Check the notAfter date of the certificate.
+
+  - uid: kopexa-cert-not-expiring-soon
+    title: Certificate should not expire within 30 days
+    resource: certificate
+    severity: high
+    query: resource.is_leaf == false || resource.isExpiringSoon == false
+    docs: |
+      Certificates expiring soon should be renewed to prevent service disruption.
+      A 30-day buffer allows time for renewal and deployment.
+    remediation: Renew the certificate before it expires.
+    audit: Check expiresIn.days value.
+
+  - uid: kopexa-cert-validity-period
+    title: Certificate validity period should not exceed maximum allowed
+    resource: certificate
+    severity: medium
+    query: resource.is_leaf == false || resource.hasLongValidity == false
+    docs: |
+      Per CA/Browser Forum Ballot SC-081v3, certificate validity periods are being reduced:
+      - Until March 2026: 398 days maximum
+      - From March 2026: 200 days maximum
+      - From March 2027: 100 days maximum
+      - From March 2029: 47 days maximum
+      Shorter validity periods reduce the window of exposure if a certificate is compromised.
+    remediation: Request a certificate with a validity period within the current maximum.
+    audit: Check validityDays value against current CA/Browser Forum requirements.
+
+  - uid: kopexa-cert-domain-match
+    title: Certificate domain must match the target host
+    resource: certificate
+    severity: critical
+    query: resource.is_leaf == false || resource.domainMatches == true
+    docs: |
+      The certificate's Common Name or Subject Alternative Names must match
+      the domain being accessed to establish trust.
+    remediation: Obtain a certificate that matches your domain name.
+    audit: Check subject.commonName and dnsNames fields.
+
+  - uid: kopexa-cert-verified
+    title: Certificate chain must be verified by trusted CA
+    resource: certificate
+    severity: critical
+    query: resource.is_leaf == false || resource.isVerified == true
+    docs: |
+      The certificate chain should be verifiable against system trusted root CAs.
+      Unverified certificates will cause browser warnings.
+    remediation: Ensure the certificate is signed by a trusted Certificate Authority.
+    audit: Check isVerified field.
+
+  - uid: kopexa-cert-not-self-signed
+    title: Do not use self-signed certificates in production
+    resource: certificate
+    severity: high
+    query: resource.is_leaf == false || resource.isSelfSigned == false
+    docs: |
+      Self-signed certificates are not trusted by browsers and should not
+      be used in production environments.
+    remediation: Obtain a certificate from a trusted Certificate Authority.
+    audit: Check isSelfSigned field.
+
+  # Security checks
+  - uid: kopexa-cert-strong-signature
+    title: Certificate must use strong signature algorithm
+    resource: certificate
+    severity: high
+    query: |
+      !resource.signatureAlgorithm.matches('(?i)md2|md5|sha1')
+    docs: |
+      Weak signature algorithms (MD2, MD5, SHA-1) are vulnerable to collision
+      attacks and should not be used.
+    remediation: Reissue certificate with SHA-256 or stronger signature algorithm.
+    audit: Check signatureAlgorithm field.
+
+  - uid: kopexa-cert-strong-key-algorithm
+    title: Certificate must use strong key algorithm
+    resource: certificate
+    severity: medium
+    query: |
+      resource.publicKeyAlgorithm.matches('(?i)rsa|ecdsa|ed25519')
+    docs: |
+      Use modern key algorithms like RSA (2048+ bits), ECDSA, or Ed25519.
+    remediation: Generate a new key pair using RSA-2048+, ECDSA, or Ed25519.
+    audit: Check publicKeyAlgorithm field.
+
+  - uid: kopexa-cert-has-san
+    title: Certificate should have Subject Alternative Names
+    resource: certificate
+    severity: low
+    query: |
+      resource.is_leaf == false || resource.isCA == true || size(resource.dnsNames) > 0
+    docs: |
+      Modern browsers require Subject Alternative Names (SAN) for domain validation.
+      Relying only on Common Name is deprecated.
+    remediation: Include all domains in the Subject Alternative Names extension.
+    audit: Check dnsNames field.

@@ -433,11 +433,26 @@ func (m Model) renderCheckPanel(width, height int) string {
 	summaryLine += m.styles.CheckSkipped.Render(fmt.Sprintf("⊘ %d", skipped))
 	lines = append(lines, summaryLine, strings.Repeat("─", width-2), "")
 
-	// Check list
+	// Check list with scroll indicator
 	visibleChecks := height - 10
+	if visibleChecks < 1 {
+		visibleChecks = 1
+	}
 	startIdx := 0
 	if m.checkCursor >= visibleChecks {
 		startIdx = m.checkCursor - visibleChecks + 1
+	}
+
+	// Calculate end index for display
+	endIdx := startIdx + visibleChecks
+	if endIdx > len(checks) {
+		endIdx = len(checks)
+	}
+
+	// Show scroll up indicator if not at top
+	if startIdx > 0 {
+		scrollUpHint := common.MutedStyle.Render(fmt.Sprintf("  ↑ %d more above", startIdx))
+		lines = append(lines, scrollUpHint)
 	}
 
 	for i, check := range checks {
@@ -450,6 +465,19 @@ func (m Model) renderCheckPanel(width, height int) string {
 
 		line := m.renderCheckItem(check, i == m.checkCursor && m.focusedPanel == PanelRight, width-4)
 		lines = append(lines, line)
+	}
+
+	// Show scroll down indicator if more items below
+	remainingBelow := len(checks) - endIdx
+	if remainingBelow > 0 {
+		scrollDownHint := common.MutedStyle.Render(fmt.Sprintf("  ↓ %d more below", remainingBelow))
+		lines = append(lines, scrollDownHint)
+	}
+
+	// Show position indicator if there are more checks than visible
+	if len(checks) > visibleChecks {
+		positionHint := common.MutedStyle.Render(fmt.Sprintf("\n  Showing %d-%d of %d (use ↑↓ to scroll)", startIdx+1, endIdx, len(checks)))
+		lines = append(lines, positionHint)
 	}
 
 	return strings.Join(lines, "\n")

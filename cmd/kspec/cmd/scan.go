@@ -145,7 +145,13 @@ func runScan(cmd *cobra.Command, args []string) error {
 
 	// Run scan in background
 	go func() {
-		_, _ = s.Run(ctx) //nolint:errcheck // Intentional: Error is handled via UI events
+		result := s.Run(ctx)
+		// Log any errors that occurred during scanning
+		if len(result.Errors) > 0 {
+			for _, err := range result.Errors {
+				p.Send(cli.ScanErrorMsg{Error: err})
+			}
+		}
 	}()
 
 	// Run the UI

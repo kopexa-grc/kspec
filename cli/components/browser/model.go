@@ -38,6 +38,7 @@ type Model struct {
 	focusedPanel Panel
 	cursor       int // Cursor position in left panel
 	checkCursor  int // Cursor position in right panel (checks)
+	detailScroll int // Scroll position in detail panel
 }
 
 // NavigateDownMsg requests navigation into a child node.
@@ -67,6 +68,7 @@ func New(tree *common.ResourceTree) Model {
 		focusedPanel: PanelLeft,
 		cursor:       0,
 		checkCursor:  0,
+		detailScroll: 0,
 	}
 
 	m.rebuildTable()
@@ -105,7 +107,23 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "up", "k":
-			// Move cursor up in current panel
+			// In check detail view
+			if m.viewMode == ViewModeCheckDetail {
+				if m.focusedPanel == PanelLeft {
+					// Navigate checks
+					if m.checkCursor > 0 {
+						m.checkCursor--
+						m.detailScroll = 0 // Reset scroll when changing checks
+					}
+				} else {
+					// Scroll detail content up
+					if m.detailScroll > 0 {
+						m.detailScroll--
+					}
+				}
+				return m, nil
+			}
+			// Normal view: Move cursor up in current panel
 			if m.focusedPanel == PanelLeft {
 				if m.cursor > 0 {
 					m.cursor--
@@ -118,7 +136,26 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 
 		case "down", "j":
-			// Move cursor down in current panel
+			// In check detail view
+			if m.viewMode == ViewModeCheckDetail {
+				if m.focusedPanel == PanelLeft {
+					// Navigate checks
+					children := m.tree.GetCurrentChildren()
+					if m.cursor < len(children) {
+						node := children[m.cursor]
+						checks := m.getChecksForNode(node)
+						if m.checkCursor < len(checks)-1 {
+							m.checkCursor++
+							m.detailScroll = 0 // Reset scroll when changing checks
+						}
+					}
+				} else {
+					// Scroll detail content down
+					m.detailScroll++
+				}
+				return m, nil
+			}
+			// Normal view: Move cursor down in current panel
 			if m.focusedPanel == PanelLeft {
 				children := m.tree.GetCurrentChildren()
 				if m.cursor < len(children)-1 {
@@ -135,6 +172,23 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			}
 			return m, nil
+
+		case "pgdown", "ctrl+d":
+			// Fast scroll detail content down
+			if m.viewMode == ViewModeCheckDetail && m.focusedPanel == PanelRight {
+				m.detailScroll += 5
+				return m, nil
+			}
+
+		case "pgup", "ctrl+u":
+			// Fast scroll detail content up
+			if m.viewMode == ViewModeCheckDetail && m.focusedPanel == PanelRight {
+				m.detailScroll -= 5
+				if m.detailScroll < 0 {
+					m.detailScroll = 0
+				}
+				return m, nil
+			}
 
 		case "tab":
 			// Switch between panels
@@ -231,57 +285,219 @@ func (m Model) View() string {
 	return m.renderLayout()
 }
 
-// renderCheckDetailView renders the full-screen check detail view
+// renderCheckDetailView renders the split-panel check detail view
 func (m Model) renderCheckDetailView() string {
-	if m.selectedCheck == nil {
+	// Get checks for the current node
+	children := m.tree.GetCurrentChildren()
+	if m.cursor >= len(children) {
+		return "No resource selected"
+	}
+	node := children[m.cursor]
+	checks := m.getChecksForNode(node)
+
+	if len(checks) == 0 {
+		return "No checks available"
+	}
+
+	// Ensure checkCursor is in bounds
+	if m.checkCursor >= len(checks) {
+		m.checkCursor = len(checks) - 1
+	}
+	if m.checkCursor < 0 {
+		m.checkCursor = 0
+	}
+
+	check := &checks[m.checkCursor]
+
+	// Calculate panel widths
+	leftWidth := m.width * 35 / 100 // 35% for check list
+	rightWidth := m.width - leftWidth - 3
+	panelHeight := m.height - 4
+
+	// Build left panel - check list
+	leftPanel := m.renderCheckListPanel(checks, leftWidth, panelHeight)
+
+	// Build right panel - check detail
+	rightPanel := m.renderCheckDetailPanel(check, rightWidth, panelHeight)
+
+	// Combine panels with focus indication
+	inactiveBorder := lipgloss.Color("#444")
+	activeBorder := common.ColorPrimary
+
+	leftBorderColor := inactiveBorder
+	rightBorderColor := inactiveBorder
+	if m.focusedPanel == PanelLeft {
+		leftBorderColor = activeBorder
+	} else {
+		rightBorderColor = activeBorder
+	}
+
+	leftStyle := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(leftBorderColor).
+		Width(leftWidth).
+		Height(panelHeight)
+
+	rightStyle := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(rightBorderColor).
+		Width(rightWidth).
+		Height(panelHeight)
+
+	combined := lipgloss.JoinHorizontal(
+		lipgloss.Top,
+		leftStyle.Render(leftPanel),
+		rightStyle.Render(rightPanel),
+	)
+
+	// Help bar
+	helpStyle := lipgloss.NewStyle().Foreground(common.ColorMuted)
+	var helpText string
+	if m.focusedPanel == PanelLeft {
+		helpText = helpStyle.Render("↑↓ Navigate checks • Tab Switch to details • ESC Back • q Quit")
+	} else {
+		helpText = helpStyle.Render("↑↓ Scroll details • PgUp/PgDn Fast scroll • Tab Switch to checks • ESC Back")
+	}
+
+	return combined + "\n" + helpText
+}
+
+// renderCheckListPanel renders the left panel with the list of checks
+func (m Model) renderCheckListPanel(checks []common.CheckResult, width, height int) string {
+	lines := make([]string, 0, height)
+
+	// Header
+	headerStyle := lipgloss.NewStyle().Bold(true).Foreground(common.ColorPrimary)
+	lines = append(lines, headerStyle.Render("📋 Checks"), "")
+
+	// Count stats
+	passed, failed, skipped := 0, 0, 0
+	for _, c := range checks {
+		switch c.Status {
+		case StatusPassed:
+			passed++
+		case StatusFailed:
+			failed++
+		case StatusSkipped:
+			skipped++
+		}
+	}
+	statsLine := fmt.Sprintf("%s %d  %s %d  %s %d",
+		lipgloss.NewStyle().Foreground(common.ColorSuccess).Render("✓"),
+		passed,
+		lipgloss.NewStyle().Foreground(common.ColorError).Render("✗"),
+		failed,
+		lipgloss.NewStyle().Foreground(common.ColorMuted).Render("⊘"),
+		skipped,
+	)
+	lines = append(lines, statsLine, strings.Repeat("─", width-4), "")
+
+	// Calculate visible area
+	visibleItems := height - 8
+	if visibleItems < 1 {
+		visibleItems = 1
+	}
+	startIdx := 0
+	if m.checkCursor >= visibleItems {
+		startIdx = m.checkCursor - visibleItems + 1
+	}
+
+	// Scroll up indicator
+	if startIdx > 0 {
+		lines = append(lines, common.MutedStyle.Render(fmt.Sprintf("↑ %d more", startIdx)))
+	}
+
+	// Check items
+	for i, check := range checks {
+		if i < startIdx {
+			continue
+		}
+		if i-startIdx >= visibleItems {
+			break
+		}
+
+		// Status icon
+		var icon string
+		var iconStyle lipgloss.Style
+		switch check.Status {
+		case StatusPassed:
+			icon = SymbolCheck
+			iconStyle = lipgloss.NewStyle().Foreground(common.ColorSuccess)
+		case StatusFailed:
+			icon = SymbolCross
+			iconStyle = lipgloss.NewStyle().Foreground(common.ColorError)
+		case StatusSkipped:
+			icon = SymbolSkipped
+			iconStyle = lipgloss.NewStyle().Foreground(common.ColorMuted)
+		default:
+			icon = "?"
+			iconStyle = lipgloss.NewStyle()
+		}
+
+		// Truncate name to fit
+		name := check.Name
+		maxNameLen := width - 8
+		if len(name) > maxNameLen {
+			name = name[:maxNameLen-3] + "..."
+		}
+
+		line := fmt.Sprintf("%s %s", iconStyle.Render(icon), name)
+
+		// Highlight selected
+		if i == m.checkCursor {
+			line = lipgloss.NewStyle().
+				Background(common.ColorPrimary).
+				Foreground(lipgloss.Color("#000")).
+				Bold(true).
+				Width(width - 4).
+				Render(line)
+		}
+
+		lines = append(lines, line)
+	}
+
+	// Scroll down indicator
+	endIdx := startIdx + visibleItems
+	if endIdx > len(checks) {
+		endIdx = len(checks)
+	}
+	remaining := len(checks) - endIdx
+	if remaining > 0 {
+		lines = append(lines, common.MutedStyle.Render(fmt.Sprintf("↓ %d more", remaining)))
+	}
+
+	return strings.Join(lines, "\n")
+}
+
+// renderCheckDetailPanel renders the right panel with check details (scrollable)
+func (m Model) renderCheckDetailPanel(check *common.CheckResult, width, height int) string {
+	if check == nil {
 		return "No check selected"
 	}
 
-	check := m.selectedCheck
-	contentWidth := min(m.width-8, 100)
+	contentWidth := width - 4
 
 	// Styles
-	headerStyle := lipgloss.NewStyle().
-		Bold(true).
-		Foreground(common.ColorPrimary)
+	headerStyle := lipgloss.NewStyle().Bold(true).Foreground(common.ColorPrimary)
+	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#fff"))
+	labelStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#888"))
+	sectionStyle := lipgloss.NewStyle().Bold(true).Foreground(common.ColorPrimary)
 
-	titleStyle := lipgloss.NewStyle().
-		Bold(true).
-		Foreground(lipgloss.Color("#fff")).
-		Background(lipgloss.Color("#333")).
-		Padding(0, 2).
-		MarginBottom(1)
+	// Build ALL content lines first (for scrolling)
+	allLines := make([]string, 0, height*2)
 
-	sectionTitleStyle := lipgloss.NewStyle().
-		Bold(true).
-		Foreground(common.ColorPrimary).
-		MarginTop(1)
-
-	labelStyle := lipgloss.NewStyle().
-		Bold(true).
-		Foreground(lipgloss.Color("#888"))
-
-	contentStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#ccc")).
-		Width(contentWidth)
-
-	boxStyle := lipgloss.NewStyle().
-		Border(lipgloss.RoundedBorder()).
-		BorderForeground(lipgloss.Color("#444")).
-		Padding(1, 2).
-		Width(contentWidth + 6)
-
-	var output strings.Builder
-
-	// Header
-	output.WriteString(headerStyle.Render("🔍 Check Detail"))
-	output.WriteString("\n\n")
+	// Header (fixed, not scrolled)
+	header := headerStyle.Render("🔍 Details")
 
 	// Title
-	output.WriteString(titleStyle.Render(check.Name))
-	output.WriteString("\n\n")
+	title := check.Name
+	wrappedTitle := wrapText(title, contentWidth)
+	for _, t := range wrappedTitle {
+		allLines = append(allLines, titleStyle.Render(t))
+	}
+	allLines = append(allLines, "")
 
-	// Status and Severity in a row
+	// Status
 	var statusIcon, statusText string
 	var statusStyle lipgloss.Style
 	switch check.Status {
@@ -303,6 +519,7 @@ func (m Model) renderCheckDetailView() string {
 		statusStyle = lipgloss.NewStyle()
 	}
 
+	// Severity styling
 	severityStyle := lipgloss.NewStyle()
 	switch check.Severity {
 	case "critical":
@@ -315,64 +532,130 @@ func (m Model) renderCheckDetailView() string {
 		severityStyle = severityStyle.Foreground(common.ColorMuted)
 	}
 
-	statusLine := fmt.Sprintf("%s %s    %s %s    %s %s",
-		labelStyle.Render("Status:"),
-		statusStyle.Render(statusIcon+" "+statusText),
-		labelStyle.Render("Severity:"),
-		severityStyle.Render(check.Severity),
-		labelStyle.Render("Group:"),
-		check.Group,
+	allLines = append(allLines,
+		fmt.Sprintf("%s %s", labelStyle.Render("Status:"), statusStyle.Render(statusIcon+" "+statusText)),
+		fmt.Sprintf("%s %s", labelStyle.Render("Severity:"), severityStyle.Render(check.Severity)),
 	)
-	output.WriteString(statusLine)
-	output.WriteString("\n")
 
-	// Check ID
+	if check.Group != "" {
+		allLines = append(allLines, fmt.Sprintf("%s %s", labelStyle.Render("Group:"), check.Group))
+	}
 	if check.ID != "" {
-		output.WriteString(labelStyle.Render("ID: "))
-		output.WriteString(lipgloss.NewStyle().Foreground(common.ColorMuted).Render(check.ID))
-		output.WriteString("\n")
+		allLines = append(allLines, fmt.Sprintf("%s %s", labelStyle.Render("ID:"), common.MutedStyle.Render(check.ID)))
 	}
 
-	output.WriteString("\n")
+	allLines = append(allLines, "")
 
-	// Description (docs)
+	// Description
 	if check.Docs != "" {
-		output.WriteString(sectionTitleStyle.Render("📖 Description"))
-		output.WriteString("\n")
-		docsBox := boxStyle.Render(contentStyle.Render(check.Docs))
-		output.WriteString(docsBox)
-		output.WriteString("\n\n")
+		allLines = append(allLines, sectionStyle.Render("📖 Description"))
+		docLines := wrapText(check.Docs, contentWidth)
+		allLines = append(allLines, docLines...)
+		allLines = append(allLines, "")
 	}
 
-	// Remediation
+	// Remediation (shown for failed checks)
 	if check.Details != "" {
-		output.WriteString(sectionTitleStyle.Render("🔧 Remediation"))
-		output.WriteString("\n")
-		remediationStyle := lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#ffa500")).
-			Width(contentWidth)
-		remediationBox := boxStyle.BorderForeground(common.ColorWarning).Render(remediationStyle.Render(check.Details))
-		output.WriteString(remediationBox)
-		output.WriteString("\n\n")
+		remediationStyle := lipgloss.NewStyle().Foreground(common.ColorWarning)
+		allLines = append(allLines, sectionStyle.Render("🔧 Remediation"))
+		remLines := wrapText(check.Details, contentWidth)
+		for _, l := range remLines {
+			allLines = append(allLines, remediationStyle.Render(l))
+		}
+		allLines = append(allLines, "")
 	}
 
 	// Audit
 	if check.Audit != "" {
-		output.WriteString(sectionTitleStyle.Render("🔎 Audit"))
-		output.WriteString("\n")
-		auditStyle := lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#88ccff")).
-			Width(contentWidth)
-		auditBox := boxStyle.BorderForeground(lipgloss.Color("#88ccff")).Render(auditStyle.Render(check.Audit))
-		output.WriteString(auditBox)
-		output.WriteString("\n\n")
+		auditStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#88ccff"))
+		allLines = append(allLines, sectionStyle.Render("🔎 Audit"))
+		auditLines := wrapText(check.Audit, contentWidth)
+		for _, l := range auditLines {
+			allLines = append(allLines, auditStyle.Render(l))
+		}
 	}
 
-	// Help
-	helpStyle := lipgloss.NewStyle().Foreground(common.ColorMuted).MarginTop(1)
-	output.WriteString(helpStyle.Render("Press ESC to go back"))
+	// Apply scrolling
+	visibleHeight := height - 4 // Reserve space for header and scroll indicator
+	totalLines := len(allLines)
 
-	return output.String()
+	// Clamp scroll position
+	maxScroll := totalLines - visibleHeight
+	if maxScroll < 0 {
+		maxScroll = 0
+	}
+	scrollPos := m.detailScroll
+	if scrollPos > maxScroll {
+		scrollPos = maxScroll
+	}
+	if scrollPos < 0 {
+		scrollPos = 0
+	}
+
+	// Build output with scroll
+	var output []string
+	output = append(output, header, "")
+
+	// Scroll up indicator
+	if scrollPos > 0 {
+		output = append(output, common.MutedStyle.Render(fmt.Sprintf("↑ %d lines above", scrollPos)))
+	}
+
+	// Visible content
+	endIdx := scrollPos + visibleHeight
+	if endIdx > totalLines {
+		endIdx = totalLines
+	}
+
+	for i := scrollPos; i < endIdx; i++ {
+		output = append(output, allLines[i])
+	}
+
+	// Scroll down indicator
+	remaining := totalLines - endIdx
+	if remaining > 0 {
+		output = append(output, common.MutedStyle.Render(fmt.Sprintf("↓ %d lines below", remaining)))
+	}
+
+	return strings.Join(output, "\n")
+}
+
+// wrapText wraps text to fit within maxWidth
+func wrapText(text string, maxWidth int) []string {
+	if maxWidth <= 0 {
+		maxWidth = 40
+	}
+
+	var lines []string
+	// Split by newlines first
+	paragraphs := strings.Split(text, "\n")
+
+	for _, para := range paragraphs {
+		para = strings.TrimSpace(para)
+		if para == "" {
+			lines = append(lines, "")
+			continue
+		}
+
+		// Wrap long lines
+		for len(para) > maxWidth {
+			// Find last space before maxWidth
+			breakPoint := maxWidth
+			for i := maxWidth; i > 0; i-- {
+				if para[i] == ' ' {
+					breakPoint = i
+					break
+				}
+			}
+			lines = append(lines, para[:breakPoint])
+			para = strings.TrimSpace(para[breakPoint:])
+		}
+		if para != "" {
+			lines = append(lines, para)
+		}
+	}
+
+	return lines
 }
 
 // UpdateTree updates the tree reference

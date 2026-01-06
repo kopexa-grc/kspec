@@ -54,33 +54,32 @@ queries:
     query: |
       !has(resource.controlScores) ||
       resource.controlScores.exists(c, c.controlName == "SigninRiskPolicy" && c.score >= 7.0)
-    docs:
-      desc: |
-        This check ensures that policies are in place to detect risky sign-ins in real-time and offline. Risky sign-ins refer to attempts that may be performed by unauthorized individuals trying to access user accounts.
+    docs: |
+      This check ensures that policies are in place to detect risky sign-ins in real-time and offline. Risky sign-ins refer to attempts that may be performed by unauthorized individuals trying to access user accounts.
 
-        **Why this matters**
+      **Why this matters**
 
-        Risky sign-ins are a key indicator of potential account compromise. Detecting and responding to these events promptly is critical to safeguarding sensitive data and maintaining the security of user accounts. Policies that monitor and flag risky sign-ins help organizations identify suspicious activities, such as sign-ins from unfamiliar locations, unusual devices, or atypical behavior patterns.
+      Risky sign-ins are a key indicator of potential account compromise. Detecting and responding to these events promptly is critical to safeguarding sensitive data and maintaining the security of user accounts. Policies that monitor and flag risky sign-ins help organizations identify suspicious activities, such as sign-ins from unfamiliar locations, unusual devices, or atypical behavior patterns.
 
-        Implementing policies to detect risky sign-ins supports a proactive security posture and aligns with best practices for identity and access management. It also helps organizations meet compliance requirements for standards such as:
-          - ISO/IEC 27001 (A.9.4.2: Secure log-on procedures)
-          - NIST 800-53 (AC-7: Unsuccessful Login Attempts)
-          - CIS Controls (CIS Control 16: Account Monitoring and Control)
-      remediation: |
-        **To configure a Sign-In risk policy, use the following steps:**
+      Implementing policies to detect risky sign-ins supports a proactive security posture and aligns with best practices for identity and access management. It also helps organizations meet compliance requirements for standards such as:
+        - ISO/IEC 27001 (A.9.4.2: Secure log-on procedures)
+        - NIST 800-53 (AC-7: Unsuccessful Login Attempts)
+        - CIS Controls (CIS Control 16: Account Monitoring and Control)
+    remediation: |
+      **To configure a Sign-In risk policy, use the following steps:**
 
-        1. Navigate to the `Microsoft Entra admin center` https://entra.microsoft.com.
-        2. Select expand `Protection` > `Conditional Access` select `Policies`.
-        3. Create a new policy by selecting `New policy`.
-        4. Set the following conditions within the policy:
-          - Under `Users or workload identities` choose `All users`
-          - Under `Cloud apps or actions` choose `All cloud apps`
-          - Under `Conditions` choose `Sign-in risk` then `Yes` and check the risk level boxes `High` and `Medium`
-          - Under `Access Controls` select `Grant` then in the right pane select `Grant access` then select `Require multifactor authentication`.
-          - Under `Session` select `Sign-in Frequency` and set to `Every time`.
-        5. Select `Select`
-        6. Set the policy to `On` to be in effect.
-        7. Select `Create`.
+      1. Navigate to the `Microsoft Entra admin center` https://entra.microsoft.com.
+      2. Select expand `Protection` > `Conditional Access` select `Policies`.
+      3. Create a new policy by selecting `New policy`.
+      4. Set the following conditions within the policy:
+        - Under `Users or workload identities` choose `All users`
+        - Under `Cloud apps or actions` choose `All cloud apps`
+        - Under `Conditions` choose `Sign-in risk` then `Yes` and check the risk level boxes `High` and `Medium`
+        - Under `Access Controls` select `Grant` then in the right pane select `Grant access` then select `Require multifactor authentication`.
+        - Under `Session` select `Sign-in Frequency` and set to `Every time`.
+      5. Select `Select`
+      6. Set the policy to `On` to be in effect.
+      7. Select `Create`.
 
   - uid: kspec-ms365-security-enable-user-risk-policies
     title: Enable Azure AD Identity Protection user risk policies
@@ -89,33 +88,32 @@ queries:
     query: |
       !has(resource.controlScores) ||
       resource.controlScores.exists(c, c.controlName == "UserRiskPolicy" && c.score >= 7.0)
-    docs:
-      desc: |
-        This check ensures that policies are in place to detect risky users in real-time and offline. Risky users refer to accounts that may have been compromised or are exhibiting suspicious behavior.
+    docs: |
+      This check ensures that policies are in place to detect risky users in real-time and offline. Risky users refer to accounts that may have been compromised or are exhibiting suspicious behavior.
 
-        **Why this matters**
+      **Why this matters**
 
-        Risky users are a key indicator of potential account compromise. Detecting and responding to these events promptly is critical to safeguarding sensitive data and maintaining the security of user accounts.
+      Risky users are a key indicator of potential account compromise. Detecting and responding to these events promptly is critical to safeguarding sensitive data and maintaining the security of user accounts.
 
-        Implementing policies to detect risky users supports a proactive security posture and aligns with best practices for identity and access management. It also helps organizations meet compliance requirements for standards such as:
-          - ISO/IEC 27001 (A.9.4.2: Secure log-on procedures)
-          - NIST 800-53 (AC-7: Unsuccessful Login Attempts)
-          - CIS Controls (CIS Control 16: Account Monitoring and Control)
-      remediation: |
-        **To configure a User risk policy, use the following steps:**
+      Implementing policies to detect risky users supports a proactive security posture and aligns with best practices for identity and access management. It also helps organizations meet compliance requirements for standards such as:
+        - ISO/IEC 27001 (A.9.4.2: Secure log-on procedures)
+        - NIST 800-53 (AC-7: Unsuccessful Login Attempts)
+        - CIS Controls (CIS Control 16: Account Monitoring and Control)
+    remediation: |
+      **To configure a User risk policy, use the following steps:**
 
-        1. Navigate to the `Microsoft Entra admin center` https://entra.microsoft.com.
-        2. Select expand `Protection` > `Conditional Access` select `Policies`.
-        3. Create a new policy by selecting `New policy`.
-        4. Set the following conditions within the policy:
-          - Under `Users or workload identities` choose `All users`
-          - Under `Cloud apps or actions` choose `All cloud apps`
-          - Under `Conditions` choose `User risk` then `Yes` and select the user risk level `High`.
-          - Under `Access Controls` select `Grant` then in the right pane select `Grant access` then select `Require multifactor authentication` and `Require password change`.
-          - Under `Session` ensure `Sign-in frequency` is set to `Every time`.
-        5. Select `Select`.
-        6. Set the policy to `On` to be in effect.
-        7. Select `Create`.
+      1. Navigate to the `Microsoft Entra admin center` https://entra.microsoft.com.
+      2. Select expand `Protection` > `Conditional Access` select `Policies`.
+      3. Create a new policy by selecting `New policy`.
+      4. Set the following conditions within the policy:
+        - Under `Users or workload identities` choose `All users`
+        - Under `Cloud apps or actions` choose `All cloud apps`
+        - Under `Conditions` choose `User risk` then `Yes` and select the user risk level `High`.
+        - Under `Access Controls` select `Grant` then in the right pane select `Grant access` then select `Require multifactor authentication` and `Require password change`.
+        - Under `Session` ensure `Sign-in frequency` is set to `Every time`.
+      5. Select `Select`.
+      6. Set the policy to `On` to be in effect.
+      7. Select `Create`.
 
   - uid: kspec-ms365-security-block-legacy-authentication
     title: Enable Conditional Access policies to block legacy authentication
@@ -124,31 +122,30 @@ queries:
     query: |
       !has(resource.controlScores) ||
       resource.controlScores.exists(c, c.controlName == "BlockLegacyAuthentication" && c.score >= 8.0)
-    docs:
-      desc: |
-        This check ensures that legacy authentication protocols are disabled in Microsoft 365.
+    docs: |
+      This check ensures that legacy authentication protocols are disabled in Microsoft 365.
 
-        **Why this matters**
+      **Why this matters**
 
-        Legacy authentication protocols, such as POP, IMAP, and SMTP, do not support modern security features like multi-factor authentication (MFA). These protocols are often targeted by attackers as they provide an easier entry point for unauthorized access to user accounts.
+      Legacy authentication protocols, such as POP, IMAP, and SMTP, do not support modern security features like multi-factor authentication (MFA). These protocols are often targeted by attackers as they provide an easier entry point for unauthorized access to user accounts.
 
-        Disabling legacy authentication reduces the attack surface by preventing the use of outdated protocols that lack robust security measures. This helps protect sensitive data, prevent unauthorized access, and align with best practices for securing cloud environments.
+      Disabling legacy authentication reduces the attack surface by preventing the use of outdated protocols that lack robust security measures. This helps protect sensitive data, prevent unauthorized access, and align with best practices for securing cloud environments.
 
-        Ensuring legacy authentication is disabled strengthens the security posture of an organization and supports compliance with standards such as:
-          - ISO/IEC 27001 (A.9.4.2: Secure log-on procedures)
-          - NIST 800-53 (AC-7: Unsuccessful Login Attempts)
-          - CIS Controls (CIS Control 16: Account Monitoring and Control)
-      remediation: |
-        **To setup a conditional access policy to block legacy authentication:**
+      Ensuring legacy authentication is disabled strengthens the security posture of an organization and supports compliance with standards such as:
+        - ISO/IEC 27001 (A.9.4.2: Secure log-on procedures)
+        - NIST 800-53 (AC-7: Unsuccessful Login Attempts)
+        - CIS Controls (CIS Control 16: Account Monitoring and Control)
+    remediation: |
+      **To setup a conditional access policy to block legacy authentication:**
 
-        1. Navigate to the `Microsoft Entra admin center` https://entra.microsoft.com.
-        2. Select expand `Protection` > `Conditional Access` select `Policies`.
-        3. Create a new policy by selecting `New policy`.
-        4. Set the following conditions within the policy:
-          - Select `Conditions` then `Client apps` enable the settings for `Exchange ActiveSync clients` and `other clients`.
-          - Under `Access controls` set the `Grant` section to `Block access`
-          - Under `Assignments` enable `All users`
-          - Under `Assignments` and `Users and groups` set the `Exclude` to be at least one low risk account or directory role.
+      1. Navigate to the `Microsoft Entra admin center` https://entra.microsoft.com.
+      2. Select expand `Protection` > `Conditional Access` select `Policies`.
+      3. Create a new policy by selecting `New policy`.
+      4. Set the following conditions within the policy:
+        - Select `Conditions` then `Client apps` enable the settings for `Exchange ActiveSync clients` and `other clients`.
+        - Under `Access controls` set the `Grant` section to `Block access`
+        - Under `Assignments` enable `All users`
+        - Under `Assignments` and `Users and groups` set the `Exclude` to be at least one low risk account or directory role.
 
   - uid: kspec-ms365-security-admin-mfa-enabled
     title: Ensure multi-factor authentication (MFA) is enabled for all users in administrative roles
@@ -157,45 +154,44 @@ queries:
     query: |
       !has(resource.controlScores) ||
       resource.controlScores.exists(c, c.controlName == "AdminMFAV2" && c.score >= 10.0)
-    docs:
-      desc: |
-        This check ensures that multi-factor authentication (MFA) is enabled for all users in administrative roles within the Microsoft 365 tenant.
+    docs: |
+      This check ensures that multi-factor authentication (MFA) is enabled for all users in administrative roles within the Microsoft 365 tenant.
 
-        **Why this matters**
+      **Why this matters**
 
-        Enabling MFA for administrative roles adds an essential layer of security to protect privileged accounts from unauthorized access. Administrative accounts are high-value targets for attackers, as they have elevated permissions that can be exploited to compromise the entire environment.
+      Enabling MFA for administrative roles adds an essential layer of security to protect privileged accounts from unauthorized access. Administrative accounts are high-value targets for attackers, as they have elevated permissions that can be exploited to compromise the entire environment.
 
-        Implementing MFA for administrative roles aligns with security best practices and compliance requirements, such as:
-          - ISO/IEC 27001 (A.9.4.2: Secure log-on procedures)
-          - NIST 800-53 (IA-2: Identification and Authentication)
-          - CIS Controls (CIS Control 16: Account Monitoring and Control)
-      remediation: |
-        **To enable multi-factor authentication (MFA) for administrators:**
+      Implementing MFA for administrative roles aligns with security best practices and compliance requirements, such as:
+        - ISO/IEC 27001 (A.9.4.2: Secure log-on procedures)
+        - NIST 800-53 (IA-2: Identification and Authentication)
+        - CIS Controls (CIS Control 16: Account Monitoring and Control)
+    remediation: |
+      **To enable multi-factor authentication (MFA) for administrators:**
 
-        1. Navigate to the `Microsoft Entra admin center` https://entra.microsoft.com.
-        2. Select expand `Protection` > `Conditional Access` select `Policies`.
-        3. Select `New policy`.
-        4. Go to `Assignments` > `Users and groups` > `Include` > `Select users and groups` > check `Directory roles`.
-        5. At a minimum, select the following Directory roles:
-          - Application administrator
-          - Authentication administrator
-          - Billing administrator
-          - Cloud application administrator
-          - Conditional Access administrator
-          - Exchange administrator
-          - Global administrator
-          - Global reader
-          - Helpdesk administrator
-          - Password administrator
-          - Privileged authentication administrator
-          - Privileged role administrator
-          - Security administrator
-          - SharePoint administrator
-          - User administrator
-        6. Go to `Cloud apps or actions` > `Cloud apps` > `Include` > select `All cloud apps`.
-        7. Under `Access controls` > `Grant` > select `Grant access` > check `Require multi-factor authentication`.
-        8. Make sure the policy is enabled.
-        9. Create.
+      1. Navigate to the `Microsoft Entra admin center` https://entra.microsoft.com.
+      2. Select expand `Protection` > `Conditional Access` select `Policies`.
+      3. Select `New policy`.
+      4. Go to `Assignments` > `Users and groups` > `Include` > `Select users and groups` > check `Directory roles`.
+      5. At a minimum, select the following Directory roles:
+        - Application administrator
+        - Authentication administrator
+        - Billing administrator
+        - Cloud application administrator
+        - Conditional Access administrator
+        - Exchange administrator
+        - Global administrator
+        - Global reader
+        - Helpdesk administrator
+        - Password administrator
+        - Privileged authentication administrator
+        - Privileged role administrator
+        - Security administrator
+        - SharePoint administrator
+        - User administrator
+      6. Go to `Cloud apps or actions` > `Cloud apps` > `Include` > select `All cloud apps`.
+      7. Under `Access controls` > `Grant` > select `Grant access` > check `Require multi-factor authentication`.
+      8. Make sure the policy is enabled.
+      9. Create.
 
   - uid: kspec-ms365-security-all-users-mfa-enabled
     title: Ensure multi-factor authentication (MFA) is enabled for all users
@@ -204,29 +200,28 @@ queries:
     query: |
       !has(resource.controlScores) ||
       resource.controlScores.exists(c, c.controlName == "MFARegistrationV2" && c.score >= 9.0)
-    docs:
-      desc: |
-        This check ensures that multi-factor authentication (MFA) is enabled for all users in the Microsoft 365 tenant.
+    docs: |
+      This check ensures that multi-factor authentication (MFA) is enabled for all users in the Microsoft 365 tenant.
 
-        **Why this matters**
+      **Why this matters**
 
-        Enabling MFA for all users adds an essential layer of security to protect user accounts from unauthorized access. User accounts are often targeted by attackers, as they can be exploited to gain access to sensitive data and systems.
+      Enabling MFA for all users adds an essential layer of security to protect user accounts from unauthorized access. User accounts are often targeted by attackers, as they can be exploited to gain access to sensitive data and systems.
 
-        Implementing MFA for all users aligns with security best practices and compliance requirements, such as:
-          - ISO/IEC 27001 (A.9.4.2: Secure log-on procedures)
-          - NIST 800-53 (IA-2: Identification and Authentication)
-          - CIS Controls (CIS Control 16: Account Monitoring and Control)
-      remediation: |
-        **To enable multi-factor authentication (MFA) for all users:**
+      Implementing MFA for all users aligns with security best practices and compliance requirements, such as:
+        - ISO/IEC 27001 (A.9.4.2: Secure log-on procedures)
+        - NIST 800-53 (IA-2: Identification and Authentication)
+        - CIS Controls (CIS Control 16: Account Monitoring and Control)
+    remediation: |
+      **To enable multi-factor authentication (MFA) for all users:**
 
-        1. Navigate to the `Microsoft Entra admin center` https://entra.microsoft.com.
-        2. Select expand `Protection` > `Conditional Access` select `Policies`.
-        3. Select `New policy`.
-        4. Go to `Assignments` > `Users and groups` > `Include` > select `All users`.
-        5. Select `Cloud apps or actions` > `All cloud apps`.
-        6. `Access Controls` > `Grant` > `Require multi-factor authentication`.
-        7. Make sure the policy is Enabled/On.
-        8. Create.
+      1. Navigate to the `Microsoft Entra admin center` https://entra.microsoft.com.
+      2. Select expand `Protection` > `Conditional Access` select `Policies`.
+      3. Select `New policy`.
+      4. Go to `Assignments` > `Users and groups` > `Include` > select `All users`.
+      5. Select `Cloud apps or actions` > `All cloud apps`.
+      6. `Access Controls` > `Grant` > `Require multi-factor authentication`.
+      7. Make sure the policy is Enabled/On.
+      8. Create.
 
   - uid: kspec-ms365-security-security-defaults-disabled
     title: Ensure Security Defaults is disabled on Azure Active Directory
@@ -234,28 +229,27 @@ queries:
     impact: 80
     query: |
       resource.isEnabled == false
-    docs:
-      desc: |
-        This check ensures that the security defaults are disabled in Azure Active Directory to allow for custom Conditional Access policies.
+    docs: |
+     This check ensures that the security defaults are disabled in Azure Active Directory to allow for custom Conditional Access policies.
 
-        **Why this matters**
+      **Why this matters**
 
-        Security defaults are a set of basic identity security mechanisms provided by Microsoft. While they offer a good starting point, they may not meet the specific needs of all organizations.
+      Security defaults are a set of basic identity security mechanisms provided by Microsoft. While they offer a good starting point, they may not meet the specific needs of all organizations.
 
-        Disabling security defaults allows organizations to implement custom Conditional Access policies tailored to their unique security requirements. This enables more granular control over access to resources, such as enforcing MFA for specific users or applications, blocking legacy authentication protocols, and applying risk-based access controls.
+      Disabling security defaults allows organizations to implement custom Conditional Access policies tailored to their unique security requirements. This enables more granular control over access to resources, such as enforcing MFA for specific users or applications, blocking legacy authentication protocols, and applying risk-based access controls.
 
-        Note: Using security defaults prohibits custom settings. Many best security practices require custom settings.
-      remediation: |
-        **To disable security defaults:**
+      Note: Using security defaults prohibits custom settings. Many best security practices require custom settings.
+    remediation: |
+      **To disable security defaults:**
 
-        1. Navigate to the `Microsoft Entra admin center` https://entra.microsoft.com.
-        2. Select to expand `Identity` select `Overview`
-        3. Select `Properties`.
-        4. Select `Manage security defaults`.
-        5. Set the `Security defaults` dropdown to `Disabled`.
-        6. Select Save.
+      1. Navigate to the `Microsoft Entra admin center` https://entra.microsoft.com.
+      2. Select to expand `Identity` select `Overview`
+      3. Select `Properties`.
+      4. Select `Manage security defaults`.
+      5. Set the `Security defaults` dropdown to `Disabled`.
+      6. Select Save.
 
-        **WARNING:** Do not disable security defaults until you are ready to implement conditional access rules. Rules such as requiring MFA for all users and blocking legacy protocols are required to make up the gap.
+      **WARNING:** Do not disable security defaults until you are ready to implement conditional access rules. Rules such as requiring MFA for all users and blocking legacy protocols are required to make up the gap.
 
   - uid: kspec-ms365-security-global-admin-count
     title: Ensure that between two and four global admins are designated
@@ -264,33 +258,32 @@ queries:
     query: |
       resource.displayName != "Global Administrator" ||
       (has(resource.memberCount) && resource.memberCount >= 2 && resource.memberCount <= 4)
-    docs:
-      desc: |
-        This check ensures that there are enough Global Admins in a single tenant (between 2 and 4).
+    docs: | 
+      This check ensures that there are enough Global Admins in a single tenant (between 2 and 4).
 
-        **Why this matters**
+      **Why this matters**
 
-        When it comes to designating global admins, it's important to consider the size and complexity of the organization. As a general rule, it's a good idea to have at least two global admins to ensure redundancy and coverage in case one admin is unavailable or leaves the organization.
+      When it comes to designating global admins, it's important to consider the size and complexity of the organization. As a general rule, it's a good idea to have at least two global admins to ensure redundancy and coverage in case one admin is unavailable or leaves the organization.
 
-        At the same time, having too many global admins can lead to confusion and inefficiency, as multiple people may be making decisions or taking actions without proper coordination. Therefore, it's recommended to keep the number of global admins to no more than four.
-      remediation: |
-        **To correct the number of global tenant administrators:**
+      At the same time, having too many global admins can lead to confusion and inefficiency, as multiple people may be making decisions or taking actions without proper coordination. Therefore, it's recommended to keep the number of global admins to no more than four.
+    remediation: |
+      **To correct the number of global tenant administrators:**
 
-        1. Navigate to the `Microsoft 365 admin center` https://admin.microsoft.com
-        2. Select `Users` > `Active Users`.
-        3. In the `Search` field enter the name of the user to be made a Global Administrator.
-        4. To create a new Global Admin:
-          1. Select the user's name.
-          2. A window will appear to the right.
-          3. Select `Manage roles`.
-          4. Select `Admin center access`.
-          4. Check `Global Administrator`.
-          5. Select `Save changes`.
-        5. To remove Global Admins:
-          1. Select User.
-          2. Under `Roles` select `Manage roles`
-          3. De-Select the appropriate role.
-          4. Select `Save changes`.
+      1. Navigate to the `Microsoft 365 admin center` https://admin.microsoft.com
+      2. Select `Users` > `Active Users`.
+      3. In the `Search` field enter the name of the user to be made a Global Administrator.
+      4. To create a new Global Admin:
+        1. Select the user's name.
+        2. A window will appear to the right.
+        3. Select `Manage roles`.
+        4. Select `Admin center access`.
+        4. Check `Global Administrator`.
+        5. Select `Save changes`.
+      5. To remove Global Admins:
+        1. Select User.
+        2. Under `Roles` select `Manage roles`
+        3. De-Select the appropriate role.
+        4. Select `Save changes`.
 
   - uid: kspec-ms365-security-passwords-no-expiry
     title: Ensure the 'Password expiration policy' is set to 'Set passwords to never expire'
@@ -299,33 +292,32 @@ queries:
     query: |
       !has(resource.passwordValidityPeriodInDays) ||
       resource.passwordValidityPeriodInDays == 2147483647
-    docs:
-      desc: |
-        This check ensures that Microsoft 365 passwords are set to never expire. Based on research from several organizations, it has been confirmed that forcing users to change their passwords frequently can lead to weaker password practices.
+    docs: |
+      This check ensures that Microsoft 365 passwords are set to never expire. Based on research from several organizations, it has been confirmed that forcing users to change their passwords frequently can lead to weaker password practices.
 
-        **Why this matters**
+      **Why this matters**
 
-        Forcing users to change their passwords regularly often results in predictable patterns or weaker passwords, as users may resort to minor variations of their previous passwords. This behavior can make it easier for attackers to guess or compromise passwords.
+      Forcing users to change their passwords regularly often results in predictable patterns or weaker passwords, as users may resort to minor variations of their previous passwords. This behavior can make it easier for attackers to guess or compromise passwords.
 
-        Allowing passwords to never expire, combined with strong password policies and multi-factor authentication (MFA), provides a more secure and user-friendly approach. This aligns with modern security best practices and compliance requirements, such as:
-          - ISO/IEC 27001 (A.9.4.3: Password management system)
-          - NIST 800-63 (IA-5: Authenticator Management)
-          - CIS Controls (CIS Control 16: Account Monitoring and Control)
-      remediation: |
-        **To set Microsoft 365 passwords to never expire:**
+      Allowing passwords to never expire, combined with strong password policies and multi-factor authentication (MFA), provides a more secure and user-friendly approach. This aligns with modern security best practices and compliance requirements, such as:
+        - ISO/IEC 27001 (A.9.4.3: Password management system)
+        - NIST 800-63 (IA-5: Authenticator Management)
+        - CIS Controls (CIS Control 16: Account Monitoring and Control)
+    remediation: |
+      **To set Microsoft 365 passwords to never expire:**
 
-        1. Navigate to the `Microsoft 365 admin center` at https://admin.microsoft.com.
-        2. Go to `Settings` > `Org settings`.
-        3. Under the `Security & privacy` tab, locate and select `Password expiration policy`.
-        4. Check the box for `Set passwords to never expire (recommended)`.
-        5. Select `Save changes`.
+      1. Navigate to the `Microsoft 365 admin center` at https://admin.microsoft.com.
+      2. Go to `Settings` > `Org settings`.
+      3. Under the `Security & privacy` tab, locate and select `Password expiration policy`.
+      4. Check the box for `Set passwords to never expire (recommended)`.
+      5. Select `Save changes`.
 
-        **Using Microsoft Graph PowerShell:**
+      **Using Microsoft Graph PowerShell:**
 
-        ```powershell
-        Connect-MgGraph -Scopes "Domain.ReadWrite.All"
-        Update-MgDomain -DomainId <Domain> -PasswordValidityPeriodInDays 2147483647 -PasswordNotificationWindowInDays 30
-        ```
+      ```powershell
+      Connect-MgGraph -Scopes "Domain.ReadWrite.All"
+      Update-MgDomain -DomainId <Domain> -PasswordValidityPeriodInDays 2147483647 -PasswordNotificationWindowInDays 30
+      ```
 
   - uid: kspec-ms365-security-spf-records-configured
     title: Ensure that SPF records are published for all Exchange Domains
@@ -338,28 +330,27 @@ queries:
         r.supportedService == "Email" &&
         r.recordType == "Txt"
       )
-    docs:
-      desc: |
-        This check ensures that SPF records are created for each domain in Exchange.
+    docs: |
+      This check ensures that SPF records are created for each domain in Exchange.
 
-        **Why this matters**
+      **Why this matters**
 
-        Sender Policy Framework (SPF) records are a critical component of email authentication. They help prevent email spoofing by specifying which mail servers are authorized to send emails on behalf of a domain. Without SPF records, attackers can impersonate your domain to send fraudulent emails, leading to phishing attacks, reputational damage, and potential data breaches.
+      Sender Policy Framework (SPF) records are a critical component of email authentication. They help prevent email spoofing by specifying which mail servers are authorized to send emails on behalf of a domain. Without SPF records, attackers can impersonate your domain to send fraudulent emails, leading to phishing attacks, reputational damage, and potential data breaches.
 
-        Implementing SPF records aligns with security best practices and compliance requirements, such as:
-          - ISO/IEC 27001 (A.13.2.3: Electronic messaging)
-          - NIST 800-53 (SC-7: Boundary Protection)
-          - CIS Controls (CIS Control 9: Email and Web Browser Protections)
-      remediation: |
-        **To setup SPF records for Exchange Online accepted domains:**
+      Implementing SPF records aligns with security best practices and compliance requirements, such as:
+        - ISO/IEC 27001 (A.13.2.3: Electronic messaging)
+        - NIST 800-53 (SC-7: Boundary Protection)
+        - CIS Controls (CIS Control 9: Email and Web Browser Protections)
+    remediation: |
+      **To setup SPF records for Exchange Online accepted domains:**
 
-        1. If all email in your domain is sent from and received by Exchange Online, add the following TXT record for each Accepted Domain:
+      1. If all email in your domain is sent from and received by Exchange Online, add the following TXT record for each Accepted Domain:
 
-        ```
-        v=spf1 include:spf.protection.outlook.com -all
-        ```
+      ```
+      v=spf1 include:spf.protection.outlook.com -all
+      ```
 
-        2. If there are other systems that send email in the environment, ensure the SPF record includes all authorized email-sending systems.
+      2. If there are other systems that send email in the environment, ensure the SPF record includes all authorized email-sending systems.
 
   - uid: kspec-ms365-security-third-party-apps-blocked
     title: Ensure that third party integrated applications are not allowed
@@ -368,26 +359,25 @@ queries:
     query: |
       !has(resource.defaultUserRolePermissions) ||
       resource.defaultUserRolePermissions.allowedToCreateApps == false
-    docs:
-      desc: |
-        This check ensures that users cannot register third-party applications that could access organizational data.
+    docs: |
+      This check ensures that users cannot register third-party applications that could access organizational data.
 
-        **Why this matters**
+      **Why this matters**
 
-        Allowing third-party integrated applications to connect to your services can introduce security risks, such as unauthorized access, data leakage, or exploitation of vulnerabilities in the third-party applications. Restricting third-party integrations helps maintain control over your organization's data and reduces the attack surface.
+      Allowing third-party integrated applications to connect to your services can introduce security risks, such as unauthorized access, data leakage, or exploitation of vulnerabilities in the third-party applications. Restricting third-party integrations helps maintain control over your organization's data and reduces the attack surface.
 
-        By preventing third-party applications from connecting, organizations can ensure that only trusted and approved applications are used. This aligns with security best practices and compliance requirements, such as:
-          - ISO/IEC 27001 (A.13.1.1: Network controls)
-          - NIST 800-53 (AC-3: Access Enforcement)
-          - CIS Controls (CIS Control 14: Controlled Access Based on the Need to Know)
-      remediation: |
-        **To disable third-party app registration:**
+      By preventing third-party applications from connecting, organizations can ensure that only trusted and approved applications are used. This aligns with security best practices and compliance requirements, such as:
+        - ISO/IEC 27001 (A.13.1.1: Network controls)
+        - NIST 800-53 (AC-3: Access Enforcement)
+        - CIS Controls (CIS Control 14: Controlled Access Based on the Need to Know)
+    remediation: |
+      **To disable third-party app registration:**
 
-        1. Log in as Global Administrator to the Microsoft 365 portal at https://admin.microsoft.com.
-        2. Navigate to "Azure Active Directory" in the "Admin Centers."
-        3. Go to "Users" > "User settings."
-        4. Under "App registrations," set "Users can register applications" to "No."
-        5. Save your changes.
+      1. Log in as Global Administrator to the Microsoft 365 portal at https://admin.microsoft.com.
+      2. Navigate to "Azure Active Directory" in the "Admin Centers."
+      3. Go to "Users" > "User settings."
+      4. Under "App registrations," set "Users can register applications" to "No."
+      5. Save your changes.
 
   - uid: kspec-ms365-security-risky-users-monitored
     title: Ensure risky users are identified and monitored
@@ -399,29 +389,28 @@ queries:
       resource.riskLevel == "low" ||
       resource.riskState == "remediated" ||
       resource.riskState == "dismissed"
-    docs:
-      desc: |
-        This check ensures that risky users are being monitored and appropriate action is taken for high-risk accounts.
+    docs: |
+      This check ensures that risky users are being monitored and appropriate action is taken for high-risk accounts.
 
-        **Why this matters**
+      **Why this matters**
 
-        Azure AD Identity Protection identifies users whose accounts may have been compromised. Risky users with high or medium risk levels that haven't been remediated or dismissed represent potential security threats that require immediate attention.
+      Azure AD Identity Protection identifies users whose accounts may have been compromised. Risky users with high or medium risk levels that haven't been remediated or dismissed represent potential security threats that require immediate attention.
 
-        Monitoring and addressing risky users helps:
-          - Prevent unauthorized access to sensitive data
-          - Reduce the impact of compromised accounts
-          - Maintain compliance with security standards
-      remediation: |
-        **To review and remediate risky users:**
+      Monitoring and addressing risky users helps:
+        - Prevent unauthorized access to sensitive data
+        - Reduce the impact of compromised accounts
+        - Maintain compliance with security standards
+    remediation: |
+      **To review and remediate risky users:**
 
-        1. Navigate to the `Microsoft Entra admin center` https://entra.microsoft.com.
-        2. Go to `Protection` > `Identity Protection` > `Risky users`.
-        3. Review users with `High` or `Medium` risk levels.
-        4. For each risky user:
-          - Investigate the risk detections
-          - If legitimate, require the user to reset their password and re-register for MFA
-          - If false positive, dismiss the risk
-        5. Implement user risk policies to automate remediation.
+      1. Navigate to the `Microsoft Entra admin center` https://entra.microsoft.com.
+      2. Go to `Protection` > `Identity Protection` > `Risky users`.
+      3. Review users with `High` or `Medium` risk levels.
+      4. For each risky user:
+        - Investigate the risk detections
+        - If legitimate, require the user to reset their password and re-register for MFA
+        - If false positive, dismiss the risk
+      5. Implement user risk policies to automate remediation.
 
   - uid: kspec-ms365-security-conditional-access-enabled
     title: Ensure Conditional Access policies are configured
@@ -429,29 +418,28 @@ queries:
     impact: 90
     query: |
       has(resource.state) && resource.state == "enabled"
-    docs:
-      desc: |
-        This check ensures that Conditional Access policies are enabled and active.
+    docs: |
+      This check ensures that Conditional Access policies are enabled and active.
 
-        **Why this matters**
+      **Why this matters**
 
-        Conditional Access policies are the foundation of a Zero Trust security model. They allow organizations to enforce access controls based on specific conditions such as user risk, device compliance, location, and application sensitivity.
+      Conditional Access policies are the foundation of a Zero Trust security model. They allow organizations to enforce access controls based on specific conditions such as user risk, device compliance, location, and application sensitivity.
 
-        Without active Conditional Access policies, organizations cannot:
-          - Enforce MFA for high-risk scenarios
-          - Block access from untrusted locations
-          - Require compliant devices for sensitive data access
-          - Implement risk-based access controls
-      remediation: |
-        **To enable Conditional Access policies:**
+      Without active Conditional Access policies, organizations cannot:
+        - Enforce MFA for high-risk scenarios
+        - Block access from untrusted locations
+        - Require compliant devices for sensitive data access
+        - Implement risk-based access controls
+    remediation: |
+      **To enable Conditional Access policies:**
 
-        1. Navigate to the `Microsoft Entra admin center` https://entra.microsoft.com.
-        2. Go to `Protection` > `Conditional Access` > `Policies`.
-        3. Review existing policies and ensure critical policies are set to `On` (not `Report-only`).
-        4. Create baseline policies for:
-          - Requiring MFA for all users
-          - Blocking legacy authentication
-          - Requiring compliant devices for sensitive apps
+      1. Navigate to the `Microsoft Entra admin center` https://entra.microsoft.com.
+      2. Go to `Protection` > `Conditional Access` > `Policies`.
+      3. Review existing policies and ensure critical policies are set to `On` (not `Report-only`).
+      4. Create baseline policies for:
+        - Requiring MFA for all users
+        - Blocking legacy authentication
+        - Requiring compliant devices for sensitive apps
 
   - uid: kspec-ms365-security-guest-access-restricted
     title: Ensure guest user access is restricted
@@ -461,30 +449,29 @@ queries:
       !has(resource.guestUserRoleId) ||
       resource.guestUserRoleId == "2af84b1e-32c8-42b7-82bc-daa82404023b" ||
       resource.guestUserRoleId == "10dae51f-b6af-4016-8d66-8c2a99b929b3"
-    docs:
-      desc: |
-        This check ensures that guest users have restricted access to directory data.
+    docs: |
+      This check ensures that guest users have restricted access to directory data.
 
-        **Why this matters**
+      **Why this matters**
 
-        Guest users are external users invited to collaborate in your tenant. By default, guest users may have more access to directory information than necessary, potentially exposing sensitive organizational data.
+      Guest users are external users invited to collaborate in your tenant. By default, guest users may have more access to directory information than necessary, potentially exposing sensitive organizational data.
 
-        Restricting guest access helps:
-          - Limit exposure of directory information to external parties
-          - Reduce the risk of data leakage through guest accounts
-          - Maintain principle of least privilege for external collaborators
+      Restricting guest access helps:
+        - Limit exposure of directory information to external parties
+        - Reduce the risk of data leakage through guest accounts
+        - Maintain principle of least privilege for external collaborators
 
-        Guest role IDs:
-          - `2af84b1e-32c8-42b7-82bc-daa82404023b` - Restricted Guest User (most restrictive)
-          - `10dae51f-b6af-4016-8d66-8c2a99b929b3` - Guest User (limited access)
-          - `a0b1b346-4d3e-4e8b-98f8-753987be4970` - User (same as member users - not recommended)
-      remediation: |
-        **To restrict guest user access:**
+      Guest role IDs:
+        - `2af84b1e-32c8-42b7-82bc-daa82404023b` - Restricted Guest User (most restrictive)
+        - `10dae51f-b6af-4016-8d66-8c2a99b929b3` - Guest User (limited access)
+        - `a0b1b346-4d3e-4e8b-98f8-753987be4970` - User (same as member users - not recommended)
+    remediation: |
+      **To restrict guest user access:**
 
-        1. Navigate to the `Microsoft Entra admin center` https://entra.microsoft.com.
-        2. Go to `Identity` > `External Identities` > `External collaboration settings`.
-        3. Under `Guest user access`, select `Guest user access is restricted to properties and memberships of their own directory objects (most restrictive)`.
-        4. Save your changes.
+      1. Navigate to the `Microsoft Entra admin center` https://entra.microsoft.com.
+      2. Go to `Identity` > `External Identities` > `External collaboration settings`.
+      3. Under `Guest user access`, select `Guest user access is restricted to properties and memberships of their own directory objects (most restrictive)`.
+      4. Save your changes.
 
   - uid: kspec-ms365-security-teams-external-access
     title: Ensure Teams external access is configured securely
@@ -493,33 +480,32 @@ queries:
     query: |
       !has(resource.guestSettings) ||
       resource.guestSettings.allowCreateUpdateChannels == false
-    docs:
-      desc: |
-        This check ensures that guest users in Teams have restricted permissions for channel management.
+    docs: |
+      This check ensures that guest users in Teams have restricted permissions for channel management.
 
-        **Why this matters**
+      **Why this matters**
 
-        Microsoft Teams allows external collaboration through guest access. However, giving guests the ability to create or modify channels can lead to:
-          - Uncontrolled proliferation of channels
-          - Potential data exposure in misconfigured channels
-          - Difficulty in maintaining governance and compliance
+      Microsoft Teams allows external collaboration through guest access. However, giving guests the ability to create or modify channels can lead to:
+        - Uncontrolled proliferation of channels
+        - Potential data exposure in misconfigured channels
+        - Difficulty in maintaining governance and compliance
 
-        Restricting guest permissions to channel management helps maintain control over your Teams environment while still enabling collaboration.
-      remediation: |
-        **To restrict guest permissions in Teams:**
+      Restricting guest permissions to channel management helps maintain control over your Teams environment while still enabling collaboration.
+    remediation: |
+      **To restrict guest permissions in Teams:**
 
-        1. Navigate to the `Microsoft Teams admin center` https://admin.teams.microsoft.com.
-        2. Go to `Teams` > `Teams settings`.
-        3. Under `Guest access`, disable:
-          - `Allow guests to create or update channels`
-          - `Allow guests to delete channels`
-        4. Save your changes.
+      1. Navigate to the `Microsoft Teams admin center` https://admin.teams.microsoft.com.
+      2. Go to `Teams` > `Teams settings`.
+      3. Under `Guest access`, disable:
+        - `Allow guests to create or update channels`
+        - `Allow guests to delete channels`
+      4. Save your changes.
 
-        **Per-team settings:**
+      **Per-team settings:**
 
-        1. In Microsoft Teams, go to the team settings.
-        2. Select `Settings` > `Guest permissions`.
-        3. Uncheck `Allow guests to create or update channels`.
+      1. In Microsoft Teams, go to the team settings.
+      2. Select `Settings` > `Guest permissions`.
+      3. Uncheck `Allow guests to create or update channels`.
 
   - uid: kspec-ms365-security-android-encryption-enabled
     title: Ensure that Android mobile device encryption is enabled
@@ -529,27 +515,26 @@ queries:
       !has(resource.configurationType) ||
       resource.configurationType != "#microsoft.graph.androidGeneralDeviceConfiguration" ||
       (has(resource.storageRequireDeviceEncryption) && resource.storageRequireDeviceEncryption == true)
-    docs:
-      desc: |
-        This check ensures that encryption in Android mobile devices has been enabled to prevent any unauthorized access to the data.
+    docs: |
+      This check ensures that encryption in Android mobile devices has been enabled to prevent any unauthorized access to the data.
 
-        **Why this matters**
+      **Why this matters**
 
-        Encryption ensures that sensitive data stored on mobile devices is protected from unauthorized access, even if the device is lost or stolen. Without encryption, attackers can easily access data by bypassing basic security measures.
+      Encryption ensures that sensitive data stored on mobile devices is protected from unauthorized access, even if the device is lost or stolen. Without encryption, attackers can easily access data by bypassing basic security measures.
 
-        Implementing encryption aligns with security best practices and compliance requirements, such as:
-          - ISO/IEC 27001 (A.10.1.1: Policy on the use of cryptographic controls)
-          - NIST 800-53 (SC-12: Cryptographic Key Establishment and Management)
-          - CIS Controls (CIS Control 13: Data Protection)
-      remediation: |
-        **To enable Android device encryption via Intune:**
+      Implementing encryption aligns with security best practices and compliance requirements, such as:
+        - ISO/IEC 27001 (A.10.1.1: Policy on the use of cryptographic controls)
+        - NIST 800-53 (SC-12: Cryptographic Key Establishment and Management)
+        - CIS Controls (CIS Control 13: Data Protection)
+    remediation: |
+      **To enable Android device encryption via Intune:**
 
-        1. Log in to the Microsoft 365 portal at https://admin.microsoft.com
-        2. Navigate to Endpoint Manager > Devices > Policy > Configuration profiles
-        3. Create or edit an Android device configuration profile
-        4. Under Device restrictions > Password section:
-          - Set "Encryption" to "Require"
-        5. Save and assign the profile to your Android devices.
+      1. Log in to the Microsoft 365 portal at https://admin.microsoft.com
+      2. Navigate to Endpoint Manager > Devices > Policy > Configuration profiles
+      3. Create or edit an Android device configuration profile
+      4. Under Device restrictions > Password section:
+        - Set "Encryption" to "Require"
+      5. Save and assign the profile to your Android devices.
 
   - uid: kspec-ms365-security-minimum-password-length
     title: Ensure that minimum password length is set to prevent brute force attacks
@@ -564,24 +549,23 @@ queries:
        resource.configurationType != "#microsoft.graph.androidWorkProfileGeneralDeviceConfiguration") ||
       (has(resource.passwordMinimumLength) && resource.passwordMinimumLength >= 8) ||
       (has(resource.passcodeMinimumLength) && resource.passcodeMinimumLength >= 8)
-    docs:
-      desc: |
-        This check ensures that there is a minimum password length of at least eight characters for mobile devices.
+    docs: |
+      This check ensures that there is a minimum password length of at least eight characters for mobile devices.
 
-        **Why this matters**
+      **Why this matters**
 
-        According to NIST (SP 800-63-2), user-chosen memorized secrets should be a minimum of 8 characters long. Enforcing a minimum password length helps protect against brute force attacks and ensures stronger security for mobile devices.
+      According to NIST (SP 800-63-2), user-chosen memorized secrets should be a minimum of 8 characters long. Enforcing a minimum password length helps protect against brute force attacks and ensures stronger security for mobile devices.
 
-        Without a minimum password length, attackers can exploit weak passwords, increasing the risk of unauthorized access to sensitive data. Implementing this policy aligns with security best practices and compliance requirements, such as:
-          - ISO/IEC 27001 (A.9.4.3: Password management system)
-          - NIST 800-53 (IA-5: Authenticator Management)
-          - CIS Controls (CIS Control 16: Account Monitoring and Control)
-      remediation: |
-        **To set minimum password length via Intune:**
+      Without a minimum password length, attackers can exploit weak passwords, increasing the risk of unauthorized access to sensitive data. Implementing this policy aligns with security best practices and compliance requirements, such as:
+        - ISO/IEC 27001 (A.9.4.3: Password management system)
+        - NIST 800-53 (IA-5: Authenticator Management)
+        - CIS Controls (CIS Control 16: Account Monitoring and Control)
+    remediation: |
+      **To set minimum password length via Intune:**
 
-        1. Log in to the Microsoft 365 portal at https://admin.microsoft.com
-        2. Navigate to Endpoint Manager > Devices > Policy > Configuration profiles
-        3. Create or edit a device configuration profile for each platform (Windows, macOS, iOS, Android)
-        4. Under Device restrictions > Password section:
-          - Set "Minimum password length" to 8 or greater
-        5. Save and assign the profiles to your devices.
+      1. Log in to the Microsoft 365 portal at https://admin.microsoft.com
+      2. Navigate to Endpoint Manager > Devices > Policy > Configuration profiles
+      3. Create or edit a device configuration profile for each platform (Windows, macOS, iOS, Android)
+      4. Under Device restrictions > Password section:
+        - Set "Minimum password length" to 8 or greater
+      5. Save and assign the profiles to your devices.

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/common/types"
@@ -15,6 +16,10 @@ import (
 type Evaluator struct {
 	Env      *cel.Env
 	Registry map[string]ResourceSpec // Access to providers
+
+	// Expression cache for compiled programs
+	cache   map[string]cel.Program
+	cacheMu sync.RWMutex
 }
 
 // NewEvaluator creates a new evaluator with the given resource registry.
@@ -97,19 +102,18 @@ func NewEvaluator(registry map[string]ResourceSpec) (*Evaluator, error) {
 		return nil, err
 	}
 
-	return &Evaluator{Env: env, Registry: registry}, nil
+	return &Evaluator{
+		Env:      env,
+		Registry: registry,
+		cache:    make(map[string]cel.Program),
+	}, nil
 }
 
 // Evaluate runs a CEL expression against a resource and returns the boolean result.
 func (e *Evaluator) Evaluate(expression string, resource Resource, config map[string]string, props map[string]interface{}, asset Asset) (bool, error) {
-	ast, issues := e.Env.Compile(expression)
-	if issues != nil && issues.Err() != nil {
-		return false, fmt.Errorf("compile error: %w", issues.Err())
-	}
-
-	prg, err := e.Env.Program(ast)
+	prg, err := e.getOrCompileProgram(expression)
 	if err != nil {
-		return false, fmt.Errorf("program construction error: %w", err)
+		return false, err
 	}
 
 	// Activation
@@ -149,4 +153,46 @@ func (e *Evaluator) Evaluate(expression string, resource Resource, config map[st
 	}
 
 	return false, fmt.Errorf("expression did not return a boolean, got: %v", out.Value())
+}
+
+// getOrCompileProgram returns a cached compiled program or compiles and caches a new one.
+func (e *Evaluator) getOrCompileProgram(expression string) (cel.Program, error) {
+	// Check cache first with read lock
+	e.cacheMu.RLock()
+	if prg, ok := e.cache[expression]; ok {
+		e.cacheMu.RUnlock()
+		return prg, nil
+	}
+	e.cacheMu.RUnlock()
+
+	// Not in cache, compile with write lock
+	e.cacheMu.Lock()
+	defer e.cacheMu.Unlock()
+
+	// Double-check after acquiring write lock
+	if prg, ok := e.cache[expression]; ok {
+		return prg, nil
+	}
+
+	// Compile the expression
+	ast, issues := e.Env.Compile(expression)
+	if issues != nil && issues.Err() != nil {
+		return nil, fmt.Errorf("compile error: %w", issues.Err())
+	}
+
+	prg, err := e.Env.Program(ast)
+	if err != nil {
+		return nil, fmt.Errorf("program construction error: %w", err)
+	}
+
+	// Cache and return
+	e.cache[expression] = prg
+	return prg, nil
+}
+
+// CacheStats returns statistics about the expression cache.
+func (e *Evaluator) CacheStats() (size int) {
+	e.cacheMu.RLock()
+	defer e.cacheMu.RUnlock()
+	return len(e.cache)
 }

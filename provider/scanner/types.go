@@ -1,6 +1,8 @@
 package scanner
 
 import (
+	"fmt"
+
 	"github.com/kopexa-grc/kspec/cli/components/common"
 	"github.com/kopexa-grc/kspec/core"
 )
@@ -49,6 +51,33 @@ type ScanEvent struct {
 	ResourceType string
 	Error        error
 	Message      string
+}
+
+// ScanError represents an error that occurred during scanning
+type ScanError struct {
+	Phase        string // "discovery", "fetch", "evaluation"
+	ResourceType string
+	Message      string
+	Err          error
+}
+
+// Error implements the error interface.
+func (e *ScanError) Error() string {
+	if e.ResourceType != "" {
+		return fmt.Sprintf("%s error for %s: %s", e.Phase, e.ResourceType, e.Message)
+	}
+	return fmt.Sprintf("%s error: %s", e.Phase, e.Message)
+}
+
+// Unwrap returns the underlying error.
+func (e *ScanError) Unwrap() error {
+	return e.Err
+}
+
+// ScanResult contains the results of a scan including any errors
+type ScanResult struct {
+	Tree   *common.ResourceTree
+	Errors []*ScanError
 }
 
 // ScanEventHandler is a callback for scan events

@@ -92,3 +92,8 @@ type UpdateNodeStateMsg struct {
 	ChecksFailed  int
 	ChecksSkipped int
 }
+
+// ScanErrorMsg reports an error that occurred during scanning
+type ScanErrorMsg struct {
+	Error error
+}
