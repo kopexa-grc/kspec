@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.4](https://github.com/kopexa-grc/kspec/compare/v0.1.3...v0.1.4) (2026-01-06)
+
+
+### Features
+
+* add enterprise security features ([e53fc94](https://github.com/kopexa-grc/kspec/commit/e53fc949d50a1fed53810b178423e8e004f19992))
+* add signed releases and SLSA provenance ([cd290a9](https://github.com/kopexa-grc/kspec/commit/cd290a9714385b6f503ebcfe6a652d4762079306))
+* **factorial:** add Factorial HR provider for compliance scanning ([31972b9](https://github.com/kopexa-grc/kspec/commit/31972b99edf3f5c210ea039cec8ec80b2f80287e))
+
+
+### Bug Fixes
+
+* resolve linter issues and add test coverage ([4b986db](https://github.com/kopexa-grc/kspec/commit/4b986db0cf5ac07c0023dc379ce3f1221b9c774e))
+* standardize policy YAML files to match Go struct ([b36b00e](https://github.com/kopexa-grc/kspec/commit/b36b00e546542ea1b858629770fac5d6ffc2cff1))
+
+
+### Documentation
+
+* add comprehensive provider documentation ([9ed122f](https://github.com/kopexa-grc/kspec/commit/9ed122fc3b356c0bbce1e66111a5494e898f3817))
+* reorganize and complete documentation structure ([1287a4e](https://github.com/kopexa-grc/kspec/commit/1287a4e990dbd4fea8482e4b7fed4020591140de))
+
 ## [0.1.3](https://github.com/kopexa-grc/kspec/compare/v0.1.2...v0.1.3) (2026-01-06)
 
 
