@@ -27,7 +27,11 @@ Examples:
   kspec scan azure subscription <sub-id> -f policy.yml
   kspec scan ms365 tenant <tenant-id> --client-id <id> --client-secret <secret> -f policy.yml
   kspec scan cloudflare account -f policy.yml
-  kspec scan cloudflare zone <zone-id> --api-token <token> -f policy.yml`,
+  kspec scan cloudflare zone <zone-id> --api-token <token> -f policy.yml
+  kspec scan atlassian site yoursite.atlassian.net -f policy.yml
+  kspec scan atlassian org <org-id> --site yoursite.atlassian.net -f policy.yml
+  kspec scan sbom file ./sbom.json -f policy.yml
+  kspec scan sbom dir ./sboms/ -f policy.yml`,
 	Args: cobra.MinimumNArgs(1),
 	RunE: runScan,
 }
@@ -53,8 +57,15 @@ func init() {
 	// Cloudflare-specific flags
 	scanCmd.Flags().String("api-token", "", "Cloudflare API Token")
 	scanCmd.Flags().String("api-key", "", "Cloudflare API Key (legacy)")
-	scanCmd.Flags().String("email", "", "Cloudflare account email (for API Key auth)")
+	scanCmd.Flags().String("email", "", "Cloudflare/Atlassian account email")
 	scanCmd.Flags().String("account-id", "", "Cloudflare Account ID")
+
+	// Atlassian-specific flags
+	scanCmd.Flags().String("site", "", "Atlassian site (e.g., yoursite.atlassian.net)")
+	scanCmd.Flags().String("org-id", "", "Atlassian Organization ID (for admin APIs)")
+
+	// SBOM-specific flags
+	scanCmd.Flags().String("sbom-path", "", "Path to SBOM file or directory")
 }
 
 func runScan(cmd *cobra.Command, args []string) error {
@@ -271,6 +282,108 @@ func parseScanArgs(cmd *cobra.Command, args []string) (scanner.ScanConfig, strin
 			assetConfig["account_id"] = accountID
 		}
 
+	case "atlassian", "jira", "confluence":
+		providerName = "atlassian"
+
+		// Check resource type
+		if len(args) >= 2 {
+			resourceType := args[1]
+			switch resourceType {
+			case "site":
+				assetType = "atlassian-site"
+				if len(args) >= 3 {
+					assetName = args[2]
+					assetConfig["site"] = args[2]
+				} else {
+					// Get site from flag
+					site, _ := cmd.Flags().GetString("site")
+					if site != "" {
+						assetName = site
+						assetConfig["site"] = site
+					} else {
+						return scanner.ScanConfig{}, "", fmt.Errorf("usage: kspec scan atlassian site <site-name> -f policy.yml")
+					}
+				}
+			case "org":
+				if len(args) < 3 {
+					return scanner.ScanConfig{}, "", fmt.Errorf("usage: kspec scan atlassian org <org-id> -f policy.yml")
+				}
+				assetType = "atlassian-org"
+				assetName = args[2]
+				assetConfig["org_id"] = args[2]
+			default:
+				return scanner.ScanConfig{}, "", fmt.Errorf("unknown atlassian resource type: %s (use 'site' or 'org')", resourceType)
+			}
+		} else {
+			// Default to site scan
+			assetType = "atlassian-site"
+			site, _ := cmd.Flags().GetString("site")
+			if site != "" {
+				assetName = site
+				assetConfig["site"] = site
+			} else {
+				return scanner.ScanConfig{}, "", fmt.Errorf("usage: kspec scan atlassian site <site-name> -f policy.yml")
+			}
+		}
+
+		// Get credentials from flags
+		if apiToken, _ := cmd.Flags().GetString("api-token"); apiToken != "" {
+			assetConfig["api_token"] = apiToken
+		}
+		if email, _ := cmd.Flags().GetString("email"); email != "" {
+			assetConfig["email"] = email
+		}
+		if site, _ := cmd.Flags().GetString("site"); site != "" && assetConfig["site"] == "" {
+			assetConfig["site"] = site
+		}
+		if orgID, _ := cmd.Flags().GetString("org-id"); orgID != "" {
+			assetConfig["org_id"] = orgID
+		}
+
+	case "sbom", "bom", "cyclonedx", "spdx":
+		providerName = "sbom"
+
+		// Check resource type
+		if len(args) >= 2 {
+			resourceType := args[1]
+			switch resourceType {
+			case "file":
+				if len(args) < 3 {
+					return scanner.ScanConfig{}, "", fmt.Errorf("usage: kspec scan sbom file <path> -f policy.yml")
+				}
+				assetType = "sbom-file"
+				assetName = args[2]
+				assetConfig["sbom_path"] = args[2]
+			case "dir", "directory":
+				if len(args) < 3 {
+					return scanner.ScanConfig{}, "", fmt.Errorf("usage: kspec scan sbom dir <path> -f policy.yml")
+				}
+				assetType = "sbom-directory"
+				assetName = args[2]
+				assetConfig["sbom_path"] = args[2]
+			default:
+				// Assume it's a file path directly
+				assetType = "sbom-file"
+				assetName = resourceType
+				assetConfig["sbom_path"] = resourceType
+			}
+		} else {
+			// Get path from flag
+			sbomPath, _ := cmd.Flags().GetString("sbom-path")
+			if sbomPath != "" {
+				assetType = "sbom-file"
+				assetName = sbomPath
+				assetConfig["sbom_path"] = sbomPath
+			} else {
+				return scanner.ScanConfig{}, "", fmt.Errorf("usage: kspec scan sbom file <path> -f policy.yml")
+			}
+		}
+
+		// Get path from flag if not set
+		if sbomPath, _ := cmd.Flags().GetString("sbom-path"); sbomPath != "" && assetConfig["sbom_path"] == "" {
+			assetConfig["sbom_path"] = sbomPath
+		}
+
 	default:
 		return scanner.ScanConfig{}, "", fmt.Errorf("unknown provider: %s", providerArg)
 	}
@@ -382,6 +495,48 @@ func buildProviderConfig(cmd *cobra.Command, providerName string, assetConfig ma
 		accountID, _ := cmd.Flags().GetString("account-id")
 		if accountID != "" {
 			providerConfig["account_id"] = accountID
+		}
+
+	case "atlassian":
+		// Copy asset config to provider config
+		for k, v := range assetConfig {
+			providerConfig[k] = v
+		}
+
+		// Get API token from flag
+		apiToken, _ := cmd.Flags().GetString("api-token")
+		if apiToken != "" {
+			providerConfig["api_token"] = apiToken
+		}
+
+		// Get email from flag
+		email, _ := cmd.Flags().GetString("email")
+		if email != "" {
+			providerConfig["email"] = email
+		}
+
+		// Get site from flag
+		site, _ := cmd.Flags().GetString("site")
+		if site != "" {
+			providerConfig["site"] = site
+		}
+
+		// Get org ID from flag
+		orgID, _ := cmd.Flags().GetString("org-id")
+		if orgID != "" {
+			providerConfig["org_id"] = orgID
+		}
+
+	case "sbom":
+		// Copy asset config to provider config
+		for k, v := range assetConfig {
+			providerConfig[k] = v
+		}
+
+		// Get SBOM path from flag
+		sbomPath, _ := cmd.Flags().GetString("sbom-path")
+		if sbomPath != "" {
+			providerConfig["sbom_path"] = sbomPath
 		}
 	}
 

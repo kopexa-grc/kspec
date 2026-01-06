@@ -1,0 +1,186 @@
+policies:
+  - uid: kopexa-atlassian-security
+    name: Kopexa Atlassian Security Policy
+    version: "1.0"
+    tags:
+      - atlassian
+      - jira
+      - confluence
+      - security
+      - compliance
+    authors:
+      - name: Kopexa GmbH
+        email: security@kopexa.com
+    docs:
+      desc: |
+        The Kopexa Atlassian Security policy identifies critical misconfigurations in your
+        Atlassian Cloud infrastructure. This policy covers Jira, Confluence, Admin APIs,
+        and SCIM provisioning.
+
+    require:
+      - provider: atlassian
+
+    groups:
+      - title: Jira Project Security
+        filter: asset.type == "atlassian-site" || asset.type == "atlassian-org"
+        checks:
+          - uid: kopexa-atlassian-jira-project-has-lead
+          - uid: kopexa-atlassian-jira-no-anonymous-permissions
+
+      - title: Confluence Space Security
+        filter: asset.type == "atlassian-site" || asset.type == "atlassian-org"
+        checks:
+          - uid: kopexa-atlassian-confluence-no-anonymous-access
+          - uid: kopexa-atlassian-confluence-no-unlicensed-access
+          - uid: kopexa-atlassian-confluence-spaces-active
+
+      - title: User Security
+        filter: asset.type == "atlassian-site" || asset.type == "atlassian-org"
+        checks:
+          - uid: kopexa-atlassian-users-active
+          - uid: kopexa-atlassian-users-have-email
+
+      - title: Organization Security
+        filter: asset.type == "atlassian-org"
+        checks:
+          - uid: kopexa-atlassian-org-verified-domains
+          - uid: kopexa-atlassian-org-users-billable
+
+    queries:
+      # Jira Project Checks
+      - uid: kopexa-atlassian-jira-project-has-lead
+        title: Jira projects should have assigned leads
+        resource: atlassian_jira_project
+        query: resource.has_lead == true
+        severity: medium
+        docs:
+          desc: |
+            Every Jira project should have an assigned lead to ensure accountability
+            and proper project management.
+          remediation: |
+            1. Go to Project Settings in Jira
+            2. Navigate to Details
+            3. Assign a project lead
+            4. Ensure the lead has appropriate permissions
+
+      - uid: kopexa-atlassian-jira-no-anonymous-permissions
+        title: Permission schemes should not allow anonymous access
+        resource: atlassian_jira_permission_scheme
+        query: resource.has_anonymous_access != true && resource.has_group_anyone_access != true
+        severity: high
+        docs:
+          desc: |
+            Jira permission schemes should not grant access to anonymous users or the
+            "anyone" group as this could expose sensitive project data.
+          remediation: |
+            1. Go to Jira Administration > Issues > Permission Schemes
+            2. Review each permission scheme
+            3. Remove any permissions granted to "Anyone" or anonymous users
+            4. Replace with specific groups or project roles
+
+      # Confluence Space Checks
+      - uid: kopexa-atlassian-confluence-no-anonymous-access
+        title: Confluence spaces should not allow anonymous access
+        resource: atlassian_confluence_space
+        query: resource.has_anonymous_access != true
+        severity: high
+        docs:
+          desc: |
+            Confluence spaces should not be accessible to anonymous users as this
+            could expose sensitive documentation and internal information.
+          remediation: |
+            1. Go to Space Settings > Permissions
+            2. Review space permissions
+            3. Remove anonymous access
+            4. Configure appropriate group or user permissions
+
+      - uid: kopexa-atlassian-confluence-no-unlicensed-access
+        title: Confluence spaces should not allow unlicensed user access
+        resource: atlassian_confluence_space
+        query: resource.has_unlicensed_access != true
+        severity: medium
+        docs:
+          desc: |
+            Confluence spaces should not be accessible to unlicensed users to ensure
+            proper access control and license compliance.
+          remediation: |
+            1. Go to Space Settings > Permissions
+            2. Review permissions for unlicensed users
+            3. Remove or restrict unlicensed user access
+            4. Ensure users who need access are properly licensed
+
+      - uid: kopexa-atlassian-confluence-spaces-active
+        title: Confluence spaces should be in active state
+        resource: atlassian_confluence_space
+        query: resource.is_active == true
+        severity: low
+        docs:
+          desc: |
+            Confluence spaces should be in an active (current) state. Inactive or
+            archived spaces may indicate stale content that needs review.
+          remediation: |
+            1. Review inactive spaces
+            2. Archive spaces that are no longer needed
+            3. Delete spaces with sensitive content that is no longer required
+            4. Reactivate spaces that should be active
+
+      # User Security Checks
+      - uid: kopexa-atlassian-users-active
+        title: User accounts should be active
+        resource: atlassian_jira_user
+        query: resource.is_active == true
+        severity: low
+        docs:
+          desc: |
+            User accounts should be in an active state. Inactive accounts may
+            indicate former employees or unused service accounts.
+          remediation: |
+            1. Review inactive user accounts
+            2. Deactivate accounts for users who have left the organization
+            3. Remove unnecessary service accounts
+            4. Document and approve any intentionally inactive accounts
+
+      - uid: kopexa-atlassian-users-have-email
+        title: User accounts should have email addresses
+        resource: atlassian_jira_user
+        query: resource.has_email == true
+        severity: low
+        docs:
+          desc: |
+            User accounts should have associated email addresses for proper
+            identification and notification purposes.
+          remediation: |
+            1. Review accounts without email addresses
+            2. Update user profiles with valid email addresses
+            3. Consider if accounts without emails are legitimate service accounts
+
+      # Organization Checks
+      - uid: kopexa-atlassian-org-verified-domains
+        title: Organization should have verified domains
+        resource: atlassian_organization
+        query: resource.has_verified_domains == true
+        severity: high
+        docs:
+          desc: |
+            Organizations should have verified domains to ensure proper identity
+            management and enable features like domain claiming.
+          remediation: |
+            1. Go to admin.atlassian.com
+            2. Navigate to Directory > Domains
+            3. Add and verify your organization's domains
+            4. Set up domain claiming to manage user accounts
+
+      - uid: kopexa-atlassian-org-users-billable
+        title: Organization users should be properly licensed
+        resource: atlassian_admin_user
+        query: resource.is_billable == true || resource.is_active != true
+        severity: medium
+        docs:
+          desc: |
+            Active users should be properly licensed (billable) to ensure compliance
+            with Atlassian licensing terms.
+          remediation: |
+            1. Review user licensing in admin.atlassian.com
+            2. Assign appropriate licenses to active users
+            3. Deactivate users who no longer need access
+            4. Consider using groups for efficient license management

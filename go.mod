@@ -18,6 +18,7 @@ require (
 	github.com/charmbracelet/bubbletea v1.3.10
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/cloudflare/cloudflare-go/v4 v4.6.0
+	github.com/ctreminiom/go-atlassian v1.6.1
 	github.com/google/cel-go v0.26.1
 	github.com/google/go-github/v62 v62.0.0
 	github.com/microsoftgraph/msgraph-sdk-go v1.92.0
@@ -29,6 +30,7 @@ require (
 
 require (
 	cel.dev/expr v0.24.0 // indirect
+	dario.cat/mergo v1.0.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.11.2 // indirect
 	github.com/AzureAD/microsoft-authentication-library-for-go v1.6.0 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.0 // indirect
@@ -65,7 +67,7 @@ require (
 	github.com/spf13/pflag v1.0.9 // indirect
 	github.com/std-uritemplate/std-uritemplate/go/v2 v2.0.3 // indirect
 	github.com/stoewer/go-strcase v1.2.0 // indirect
-	github.com/tidwall/gjson v1.14.4 // indirect
+	github.com/tidwall/gjson v1.17.1 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
 	github.com/tidwall/sjson v1.2.5 // indirect
