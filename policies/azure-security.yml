@@ -1,18 +1,20 @@
-name: Kopexa Microsoft Azure Security
-version: 2.0.3
-license: BUSL-1.1
-tags:
-  kopexa.com/category: security
-  kopexa.com/platform: azure,cloud
+apiVersion: kopexa.io/v1alpha1
+kind: Policy
+metadata:
+  name: kopexa-azure-security
+  title: Kopexa Microsoft Azure Security
+  version: 2.0.3
+  license: BUSL-1.1
+  tags:
+    kopexa.com/category: security
+    kopexa.com/platform: azure,cloud
+
 require:
   - provider: azure
-  - provider: terraform
+
 authors:
   - name: Kopexa GmbH
     email: security@kopexa.com
-docs:
-  desc: |
-    The Kopexa Azure Security policy is designed to identify critical misconfigurations that could leave your Azure infrastructure vulnerable to attackers. This policy helps organizations detect and remediate security risks before they can be exploited, reducing the likelihood of unauthorized access, data breaches, privilege escalation, and operational disruptions.
 
 groups:
   - title: Azure Storage
@@ -43,7 +45,7 @@ groups:
       - uid: kopexa-azure-security-nsg-no-unrestricted-rdp
 
   - title: Azure Core
-    filter: asset.type == "azure"
+    filter: asset.type == "azure-subscription"
     checks:
       - uid: kopexa-azure-security-diagnostic-settings-exist
       - uid: kopexa-azure-security-ensure-register-with-ad-is-enabled-on-app-service
@@ -55,13 +57,12 @@ queries:
   # Storage Security Checks
   - uid: kopexa-azure-security-public-access-level-private-blob-containers
     title: Ensure that anonymous access to blob containers and public access on storage accounts are disabled
-    impact: 80
     resource: azure_storage_account
+    severity: critical
     query: |
       has(resource.properties) &&
       has(resource.properties.allowBlobPublicAccess) &&
       resource.properties.allowBlobPublicAccess == false
-    severity: critical
     docs: |
       Anonymous access to blob containers can lead to unauthorized data exposure. This check ensures that public blob access is disabled on storage accounts.
     audit: |
@@ -75,15 +76,14 @@ queries:
 
   - uid: kopexa-azure-security-trusted-microsoft-services-enabled-for-storage-account-access
     title: Ensure "Trusted Microsoft Services" have access to azure storage accounts
-    impact: 80
     resource: azure_storage_account
+    severity: high
     query: |
       has(resource.properties) &&
       has(resource.properties.networkAcls) &&
       has(resource.properties.networkAcls.bypass) &&
       resource.properties.networkAcls.bypass == "AzureServices" &&
       resource.properties.networkAcls.defaultAction == "Deny"
-    severity: high
     docs: |
       Allowing trusted Microsoft services ensures operational functionality while maintaining security.
     remediation: |
@@ -91,13 +91,12 @@ queries:
 
   - uid: kopexa-azure-security-secure-transfer-required-enabled
     title: Mandate HTTPS for Secure Data Transfer to azure storage accounts
-    impact: 80
     resource: azure_storage_account
+    severity: critical
     query: |
       has(resource.properties) &&
       has(resource.properties.supportsHttpsTrafficOnly) &&
       resource.properties.supportsHttpsTrafficOnly == true
-    severity: critical
     docs: |
       Enforces HTTPS for all data operations to prevent data interception.
     remediation: |
@@ -105,13 +104,12 @@ queries:
 
   - uid: kopexa-azure-security-default-network-access-rule-storage-accounts-deny
     title: Enforce Deny as Default Network Access for Azure Storage Accounts
-    impact: 80
     resource: azure_storage_account
+    severity: critical
     query: |
       has(resource.properties) &&
       has(resource.properties.networkAcls) &&
       resource.properties.networkAcls.defaultAction == "Deny"
-    severity: critical
     docs: |
       Setting default network access to "Deny" ensures only explicitly allowed networks can access storage.
     remediation: |
@@ -120,12 +118,11 @@ queries:
   # SQL Security Checks
   - uid: kopexa-azure-security-sql-server-audit-on
     title: Ensure that all activities on SQL server are audited
-    impact: 60
     resource: azure_sql_server
+    severity: high
     query: |
       has(resource.auditingPolicy) &&
       resource.auditingPolicy.state == "Enabled"
-    severity: high
     docs: |
       Auditing SQL server activities helps detect unauthorized access and suspicious behavior.
     remediation: |
@@ -133,13 +130,12 @@ queries:
 
   - uid: kopexa-azure-security-sql-server-tde-on
     title: Ensure that transparent data encryption is enabled for SQL Server databases
-    impact: 60
     resource: azure_sql_database
-    query: |
-      resource.name != "master" &&
-      has(resource.transparentDataEncryption) &&
-      resource.transparentDataEncryption.state == "Enabled"
     severity: high
+    query: |
+      resource.name == "master" ||
+      (has(resource.transparentDataEncryption) &&
+       resource.transparentDataEncryption.state == "Enabled")
     docs: |
       TDE encrypts data at rest, protecting sensitive information from unauthorized access.
     remediation: |
@@ -147,13 +143,12 @@ queries:
 
   - uid: kopexa-azure-security-ensure-that-ssl-enabled-latest-version-mysql
     title: Ensure SSL connection enabled for MySQL Database Server with the latest version
-    impact: 80
     resource: azure_mysql_server
+    severity: critical
     query: |
       has(resource.properties) &&
       resource.properties.sslEnforcement == "Enabled" &&
       resource.properties.minimalTlsVersion == "TLS1_2"
-    severity: critical
     docs: |
       Enforces SSL/TLS connections and ensures the latest TLS version is used for MySQL servers.
     remediation: |
@@ -161,12 +156,11 @@ queries:
 
   - uid: kopexa-azure-security-ensure-that-ssl-enabled-postgresql
     title: Ensure SSL connection enabled for PostgreSQL database servers
-    impact: 80
     resource: azure_postgresql_server
+    severity: critical
     query: |
       has(resource.properties) &&
       resource.properties.sslEnforcement == "Enabled"
-    severity: critical
     docs: |
       Enforces SSL/TLS for all PostgreSQL connections to protect data in transit.
     remediation: |
@@ -174,13 +168,12 @@ queries:
 
   - uid: kopexa-azure-security-no-sql-databases-allow-ingress-0-0-0-0-0
     title: Ensure no SQL Databases allow ingress 0.0.0.0/0 (ANY IP)
-    impact: 80
     resource: azure_sql_server
+    severity: critical
     query: |
       !has(resource.firewallRules) ||
       size(resource.firewallRules) == 0 ||
       resource.firewallRules.all(rule, rule.startIpAddress != "0.0.0.0" || rule.endIpAddress != "255.255.255.255")
-    severity: critical
     docs: |
       Prevents unrestricted network access to SQL databases from any IP address.
     remediation: |
@@ -188,14 +181,13 @@ queries:
 
   - uid: kopexa-azure-security-ensure-disabled-public-access-sql
     title: Ensure public network access for SQL server is blocked or Limited to Use Selected Networks
-    impact: 80
     resource: azure_sql_server
+    severity: critical
     query: |
       has(resource.properties) &&
       (resource.properties.publicNetworkAccess == "Disabled" ||
        (has(resource.virtualNetworkRules) && size(resource.virtualNetworkRules) > 0) ||
        (has(resource.firewallRules) && size(resource.firewallRules) > 0))
-    severity: critical
     docs: |
       Limits public network access to SQL servers to reduce exposure to attacks.
     remediation: |
@@ -204,13 +196,12 @@ queries:
   # Key Vault Security Checks
   - uid: kopexa-azure-security-ensure-the-kv-is-recoverable
     title: Ensure Key Vaults are configured with Recovery features
-    impact: 80
     resource: azure_keyvault_vault
+    severity: critical
     query: |
       has(resource.properties) &&
       has(resource.properties.enablePurgeProtection) &&
       resource.properties.enablePurgeProtection == true
-    severity: critical
     docs: |
       Purge protection prevents accidental or malicious permanent deletion of key vaults.
     remediation: |
@@ -218,15 +209,14 @@ queries:
 
   - uid: kopexa-azure-security-keyvault-public-access-disabled
     title: Ensure default public network access for Azure Key Vault is disabled
-    impact: 80
     resource: azure_keyvault_vault
+    severity: critical
     query: |
       has(resource.properties) &&
       (resource.properties.publicNetworkAccess == "Disabled" ||
        (has(resource.properties.networkAcls) &&
         ((has(resource.properties.networkAcls.ipRules) && size(resource.properties.networkAcls.ipRules) > 0) ||
          (has(resource.properties.networkAcls.virtualNetworkRules) && size(resource.properties.networkAcls.virtualNetworkRules) > 0))))
-    severity: critical
     docs: |
       Restricting public network access to Key Vault minimizes exposure to potential attacks.
     remediation: |
@@ -235,14 +225,13 @@ queries:
   # Compute Security Checks
   - uid: kopexa-azure-security-ensure-os-disk-are-encrypted
     title: Ensure OS Disks in azure virtual machines are encrypted with Customer Managed Keys
-    impact: 80
     resource: azure_virtual_machine
+    severity: critical
     query: |
       has(resource.osDisk) &&
       has(resource.osDisk.properties) &&
       has(resource.osDisk.properties.encryption) &&
       resource.osDisk.properties.encryption.type == "EncryptionAtRestWithCustomerKey"
-    severity: critical
     docs: |
       Encrypting OS disks with CMK provides enhanced control over encryption and decryption processes.
     remediation: |
@@ -250,8 +239,8 @@ queries:
 
   - uid: kopexa-azure-security-nsg-no-unrestricted-ssh
     title: Ensure that SSH access is restricted from the internet
-    impact: 80
     resource: azure_network_security_group
+    severity: critical
     query: |
       !has(resource.securityRules) ||
       size(resource.securityRules) == 0 ||
@@ -267,7 +256,6 @@ queries:
         (rule.properties.destinationPortRange == "22" ||
          rule.properties.destinationPortRange == "*")
       )
-    severity: critical
     docs: |
       Restricting SSH access from the internet prevents unauthorized remote access attempts.
     remediation: |
@@ -275,8 +263,8 @@ queries:
 
   - uid: kopexa-azure-security-nsg-no-unrestricted-rdp
     title: Ensure that RDP access is restricted from the internet
-    impact: 80
     resource: azure_network_security_group
+    severity: critical
     query: |
       !has(resource.securityRules) ||
       size(resource.securityRules) == 0 ||
@@ -292,7 +280,6 @@ queries:
         (rule.properties.destinationPortRange == "3389" ||
          rule.properties.destinationPortRange == "*")
       )
-    severity: critical
     docs: |
       Restricting RDP access from the internet prevents brute force and unauthorized access attempts.
     remediation: |
@@ -301,13 +288,12 @@ queries:
   # Core Security Checks
   - uid: kopexa-azure-security-diagnostic-settings-exist
     title: Ensure that diagnostic settings exist for the subscription
-    impact: 80
     resource: azure_subscription
+    severity: high
     query: |
       has(resource.monitor) &&
       has(resource.monitor.diagnosticSettings) &&
       size(resource.monitor.diagnosticSettings) > 0
-    severity: high
     docs: |
       Diagnostic settings enable effective monitoring and security analysis of Azure resources.
     remediation: |
@@ -315,15 +301,14 @@ queries:
 
   - uid: kopexa-azure-security-ensure-register-with-ad-is-enabled-on-app-service
     title: Enable Managed Identities for App services to Authenticate via Microsoft Entra ID
-    impact: 80
     resource: azure_app_service
+    severity: high
     query: |
       has(resource.identity) &&
       has(resource.identity.type) &&
       resource.identity.type == "SystemAssigned" &&
       has(resource.identity.principalId) &&
       resource.identity.principalId != ""
-    severity: high
     docs: |
       Managed Identities eliminate the need to store credentials and enhance security.
     remediation: |
@@ -331,13 +316,12 @@ queries:
 
   - uid: kopexa-azure-security-ensure-web-app-is-using-the-latest-tls
     title: Ensure that Web Apps use the latest available version of TLS encryption
-    impact: 80
     resource: azure_app_service
+    severity: high
     query: |
       has(resource.configuration) &&
       has(resource.configuration.properties) &&
       resource.configuration.properties.minTlsVersion == "1.2"
-    severity: high
     docs: |
       Using the latest TLS version ensures strong encryption and mitigates known vulnerabilities.
     remediation: |

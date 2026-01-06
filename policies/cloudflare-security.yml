@@ -1,266 +1,251 @@
-policies:
-  - uid: kopexa-cloudflare-security
-    name: Kopexa Cloudflare Security Policy
-    version: "1.0"
-    tags:
-      - cloudflare
-      - security
-      - compliance
-    authors:
-      - name: Kopexa GmbH
-        email: security@kopexa.com
-    docs:
-      desc: |
-        The Kopexa Cloudflare Security policy identifies critical misconfigurations in your Cloudflare infrastructure.
-        This policy covers zones, DNS records, WAF rules, R2 buckets, Workers, Tunnels, and Zero Trust Access.
+apiVersion: kopexa.io/v1alpha1
+kind: Policy
+metadata:
+  name: kopexa-cloudflare-security
+  title: Kopexa Cloudflare Security Policy
+  version: "1.0"
+  tags:
+    category: security
+    platform: cloudflare
 
-    require:
-      - provider: cloudflare
+require:
+  - provider: cloudflare
 
-    groups:
-      - title: Zone Configuration
-        filter: asset.type == "cloudflare-zone" || asset.type == "cloudflare-account"
-        checks:
-          - uid: kopexa-cloudflare-zone-active
-          - uid: kopexa-cloudflare-zone-not-paused
+authors:
+  - name: Kopexa GmbH
+    email: security@kopexa.com
 
-      - title: DNS Security
-        filter: asset.type == "cloudflare-zone"
-        checks:
-          - uid: kopexa-cloudflare-dns-no-wildcard
-          - uid: kopexa-cloudflare-dns-spf-record
-          - uid: kopexa-cloudflare-dns-dmarc-record
-          - uid: kopexa-cloudflare-dns-proxied-web-records
-
-      - title: WAF & Firewall
-        filter: asset.type == "cloudflare-zone"
-        checks:
-          - uid: kopexa-cloudflare-waf-managed-rules
-          - uid: kopexa-cloudflare-waf-owasp-enabled
-
-      - title: R2 Storage Security
-        filter: asset.type == "cloudflare-account"
-        checks:
-          - uid: kopexa-cloudflare-r2-private-buckets
-
-      - title: Workers Security
-        filter: asset.type == "cloudflare-account"
-        checks:
-          - uid: kopexa-cloudflare-workers-no-exposed-secrets
-
-      - title: Tunnel Security
-        filter: asset.type == "cloudflare-account"
-        checks:
-          - uid: kopexa-cloudflare-tunnel-healthy
-
-      - title: Zero Trust Access
-        filter: asset.type == "cloudflare-account"
-        checks:
-          - uid: kopexa-cloudflare-access-mfa-required
-          - uid: kopexa-cloudflare-access-no-bypass-policies
-
-    queries:
-      # Zone Configuration Checks
+groups:
+  - title: Zone Configuration
+    filter: asset.type == "cloudflare-zone" || asset.type == "cloudflare-account"
+    checks:
       - uid: kopexa-cloudflare-zone-active
-        title: Zone should be active
-        resource: cloudflare_zone
-        query: resource.status == "active"
-        severity: high
-        docs:
-          desc: |
-            Cloudflare zones should be in an active state to ensure traffic is properly proxied
-            and protected by Cloudflare's security features.
-          remediation: |
-            1. Check your domain's nameservers are pointing to Cloudflare
-            2. Verify DNS propagation has completed
-            3. Check for any pending verification steps in the Cloudflare Dashboard
-
       - uid: kopexa-cloudflare-zone-not-paused
-        title: Zone should not be paused
-        resource: cloudflare_zone_settings
-        query: resource.is_paused != true
-        severity: high
-        docs:
-          desc: |
-            A paused zone bypasses Cloudflare entirely, exposing your origin server directly
-            to the internet and disabling all security features.
-          remediation: |
-            1. Go to the Cloudflare Dashboard
-            2. Select the affected zone
-            3. Click "Re-enable Cloudflare" or unpause the zone
 
-      # DNS Security Checks
+  - title: DNS Security
+    filter: asset.type == "cloudflare-zone"
+    checks:
       - uid: kopexa-cloudflare-dns-no-wildcard
-        title: Avoid wildcard DNS records for web traffic
-        resource: cloudflare_dns_record
-        query: "!resource.is_wildcard || resource.type != 'A' && resource.type != 'AAAA'"
-        severity: medium
-        docs:
-          desc: |
-            Wildcard DNS records (*.example.com) for A/AAAA records can expose unintended
-            subdomains and increase your attack surface.
-          remediation: |
-            1. Identify all subdomains that need DNS records
-            2. Create specific DNS records for each subdomain
-            3. Remove the wildcard record
-
       - uid: kopexa-cloudflare-dns-spf-record
-        title: SPF record should be configured for email security
-        resource: cloudflare_dns_record
-        query: resource.is_spf == true
-        severity: medium
-        docs:
-          desc: |
-            SPF (Sender Policy Framework) records help prevent email spoofing by specifying
-            which mail servers are authorized to send email for your domain.
-          remediation: |
-            1. Identify your legitimate email sending sources
-            2. Create a TXT record with SPF policy, e.g.:
-               "v=spf1 include:_spf.google.com ~all"
-            3. Test with SPF validation tools
-
       - uid: kopexa-cloudflare-dns-dmarc-record
-        title: DMARC record should be configured
-        resource: cloudflare_dns_record
-        query: resource.is_dmarc == true
-        severity: medium
-        docs:
-          desc: |
-            DMARC (Domain-based Message Authentication) builds on SPF and DKIM to provide
-            email authentication and reporting.
-          remediation: |
-            1. Create a TXT record for _dmarc.yourdomain.com
-            2. Start with a monitoring policy:
-               "v=DMARC1; p=none; rua=mailto:dmarc@yourdomain.com"
-            3. Gradually enforce stricter policies after monitoring
-
       - uid: kopexa-cloudflare-dns-proxied-web-records
-        title: Web traffic records should be proxied through Cloudflare
-        resource: cloudflare_dns_record
-        query: |
-          (resource.type != "A" && resource.type != "AAAA" && resource.type != "CNAME") ||
-          resource.is_proxied == true ||
-          has(resource.name) && (
-            resource.name.startsWith("_") ||
-            resource.name.contains("mail") ||
-            resource.name.contains("smtp") ||
-            resource.name.contains("imap") ||
-            resource.name.contains("pop")
-          )
-        severity: medium
-        docs:
-          desc: |
-            A and AAAA records for web traffic should be proxied (orange cloud) to benefit
-            from Cloudflare's security features including DDoS protection and WAF.
-          remediation: |
-            1. Go to DNS settings in Cloudflare Dashboard
-            2. Click the cloud icon to enable proxying (orange cloud)
-            3. Ensure your origin server accepts Cloudflare IPs
 
-      # WAF & Firewall Checks
+  - title: WAF & Firewall
+    filter: asset.type == "cloudflare-zone"
+    checks:
       - uid: kopexa-cloudflare-waf-managed-rules
-        title: WAF managed rulesets should be deployed
-        resource: cloudflare_waf_rule
-        query: resource.is_managed == true
-        severity: high
-        docs:
-          desc: |
-            Cloudflare's managed WAF rulesets provide protection against common web
-            vulnerabilities including OWASP Top 10 threats.
-          remediation: |
-            1. Go to Security > WAF in Cloudflare Dashboard
-            2. Enable "Cloudflare Managed Ruleset"
-            3. Enable "OWASP Core Ruleset"
-            4. Review and adjust sensitivity levels
-
       - uid: kopexa-cloudflare-waf-owasp-enabled
-        title: OWASP Core Ruleset should be enabled
-        resource: cloudflare_waf_rule
-        query: resource.is_owasp == true
-        severity: high
-        docs:
-          desc: |
-            The OWASP ModSecurity Core Rule Set provides protection against common
-            web application attacks based on OWASP guidelines.
-          remediation: |
-            1. Go to Security > WAF > Managed rules
-            2. Deploy "Cloudflare OWASP Core Ruleset"
-            3. Configure paranoia level (PL2 recommended)
-            4. Monitor for false positives
 
-      # R2 Storage Security
+  - title: R2 Storage Security
+    filter: asset.type == "cloudflare-account"
+    checks:
       - uid: kopexa-cloudflare-r2-private-buckets
-        title: R2 buckets should not have public access enabled
-        resource: cloudflare_r2_bucket
-        query: resource.default_private == true
-        severity: high
-        docs:
-          desc: |
-            R2 buckets with public access can expose sensitive data to the internet.
-            Ensure buckets are private by default.
-          remediation: |
-            1. Review bucket access settings in Cloudflare Dashboard
-            2. Remove public access via r2.dev domains
-            3. Use signed URLs or Cloudflare Access for controlled access
 
-      # Workers Security
+  - title: Workers Security
+    filter: asset.type == "cloudflare-account"
+    checks:
       - uid: kopexa-cloudflare-workers-no-exposed-secrets
-        title: Workers should use secrets bindings instead of plain text
-        resource: cloudflare_worker
-        query: resource.has_secrets != true || resource.has_bindings == true
-        severity: high
-        docs:
-          desc: |
-            Sensitive values in Workers should use secret bindings rather than
-            plain text environment variables to prevent exposure in logs and code.
-          remediation: |
-            1. Use wrangler secret put to add secrets
-            2. Reference secrets via env bindings in wrangler.toml
-            3. Remove any hardcoded secrets from Worker code
 
-      # Tunnel Security
+  - title: Tunnel Security
+    filter: asset.type == "cloudflare-account"
+    checks:
       - uid: kopexa-cloudflare-tunnel-healthy
-        title: Cloudflare Tunnels should be healthy
-        resource: cloudflare_tunnel
-        query: resource.is_healthy == true || resource.is_down != true
-        severity: high
-        docs:
-          desc: |
-            Unhealthy or down tunnels indicate connectivity issues that may affect
-            availability and could indicate security incidents.
-          remediation: |
-            1. Check tunnel connector (cloudflared) status
-            2. Verify network connectivity from connector to Cloudflare
-            3. Review tunnel logs for errors
-            4. Restart cloudflared service if needed
 
-      # Zero Trust Access
+  - title: Zero Trust Access
+    filter: asset.type == "cloudflare-account"
+    checks:
       - uid: kopexa-cloudflare-access-mfa-required
-        title: Access policies should require MFA for sensitive applications
-        resource: cloudflare_access_policy
-        query: resource.is_bypass != true && (resource.requires_mfa == true || resource.has_device_posture == true)
-        severity: high
-        docs:
-          desc: |
-            Multi-factor authentication provides an additional layer of security
-            beyond passwords for protecting sensitive applications.
-          remediation: |
-            1. Go to Zero Trust > Access > Applications
-            2. Edit the application's policy
-            3. Add an "Include" rule requiring MFA
-            4. Configure identity provider MFA settings
-
       - uid: kopexa-cloudflare-access-no-bypass-policies
-        title: Access policies should not use bypass rules in production
-        resource: cloudflare_access_policy
-        query: resource.is_bypass != true
-        severity: high
-        docs:
-          desc: |
-            Bypass policies allow unauthenticated access to protected applications,
-            which can be a security risk if misconfigured.
-          remediation: |
-            1. Review bypass policies in Zero Trust Dashboard
-            2. Remove unnecessary bypass rules
-            3. Use service tokens for machine-to-machine access
-            4. Implement proper authentication for all users
+
+queries:
+  # Zone Configuration Checks
+  - uid: kopexa-cloudflare-zone-active
+    title: Zone should be active
+    resource: cloudflare_zone
+    severity: high
+    query: resource.status == "active"
+    docs: |
+      Cloudflare zones should be in an active state to ensure traffic is properly proxied
+      and protected by Cloudflare's security features.
+    remediation: |
+      1. Check your domain's nameservers are pointing to Cloudflare
+      2. Verify DNS propagation has completed
+      3. Check for any pending verification steps in the Cloudflare Dashboard
+
+  - uid: kopexa-cloudflare-zone-not-paused
+    title: Zone should not be paused
+    resource: cloudflare_zone_settings
+    severity: high
+    query: resource.is_paused != true
+    docs: |
+      A paused zone bypasses Cloudflare entirely, exposing your origin server directly
+      to the internet and disabling all security features.
+    remediation: |
+      1. Go to the Cloudflare Dashboard
+      2. Select the affected zone
+      3. Click "Re-enable Cloudflare" or unpause the zone
+
+  # DNS Security Checks
+  - uid: kopexa-cloudflare-dns-no-wildcard
+    title: Avoid wildcard DNS records for web traffic
+    resource: cloudflare_dns_record
+    severity: medium
+    query: "!resource.is_wildcard || resource.type != 'A' && resource.type != 'AAAA'"
+    docs: |
+      Wildcard DNS records (*.example.com) for A/AAAA records can expose unintended
+      subdomains and increase your attack surface.
+    remediation: |
+      1. Identify all subdomains that need DNS records
+      2. Create specific DNS records for each subdomain
+      3. Remove the wildcard record
+
+  - uid: kopexa-cloudflare-dns-spf-record
+    title: SPF record should be configured for email security
+    resource: cloudflare_dns_record
+    severity: medium
+    query: resource.is_spf == true
+    docs: |
+      SPF (Sender Policy Framework) records help prevent email spoofing by specifying
+      which mail servers are authorized to send email for your domain.
+    remediation: |
+      1. Identify your legitimate email sending sources
+      2. Create a TXT record with SPF policy, e.g.:
+         "v=spf1 include:_spf.google.com ~all"
+      3. Test with SPF validation tools
+
+  - uid: kopexa-cloudflare-dns-dmarc-record
+    title: DMARC record should be configured
+    resource: cloudflare_dns_record
+    severity: medium
+    query: resource.is_dmarc == true
+    docs: |
+      DMARC (Domain-based Message Authentication) builds on SPF and DKIM to provide
+      email authentication and reporting.
+    remediation: |
+      1. Create a TXT record for _dmarc.yourdomain.com
+      2. Start with a monitoring policy:
+         "v=DMARC1; p=none; rua=mailto:dmarc@yourdomain.com"
+      3. Gradually enforce stricter policies after monitoring
+
+  - uid: kopexa-cloudflare-dns-proxied-web-records
+    title: Web traffic records should be proxied through Cloudflare
+    resource: cloudflare_dns_record
+    severity: medium
+    query: |
+      (resource.type != "A" && resource.type != "AAAA" && resource.type != "CNAME") ||
+      resource.is_proxied == true ||
+      has(resource.name) && (
+        resource.name.startsWith("_") ||
+        resource.name.contains("mail") ||
+        resource.name.contains("smtp") ||
+        resource.name.contains("imap") ||
+        resource.name.contains("pop")
+      )
+    docs: |
+      A and AAAA records for web traffic should be proxied (orange cloud) to benefit
+      from Cloudflare's security features including DDoS protection and WAF.
+    remediation: |
+      1. Go to DNS settings in Cloudflare Dashboard
+      2. Click the cloud icon to enable proxying (orange cloud)
+      3. Ensure your origin server accepts Cloudflare IPs
+
+  # WAF & Firewall Checks
+  - uid: kopexa-cloudflare-waf-managed-rules
+    title: WAF managed rulesets should be deployed
+    resource: cloudflare_waf_rule
+    severity: high
+    query: resource.is_managed == true
+    docs: |
+      Cloudflare's managed WAF rulesets provide protection against common web
+      vulnerabilities including OWASP Top 10 threats.
+    remediation: |
+      1. Go to Security > WAF in Cloudflare Dashboard
+      2. Enable "Cloudflare Managed Ruleset"
+      3. Enable "OWASP Core Ruleset"
+      4. Review and adjust sensitivity levels
+
+  - uid: kopexa-cloudflare-waf-owasp-enabled
+    title: OWASP Core Ruleset should be enabled
+    resource: cloudflare_waf_rule
+    severity: high
+    query: resource.is_owasp == true
+    docs: |
+      The OWASP ModSecurity Core Rule Set provides protection against common
+      web application attacks based on OWASP guidelines.
+    remediation: |
+      1. Go to Security > WAF > Managed rules
+      2. Deploy "Cloudflare OWASP Core Ruleset"
+      3. Configure paranoia level (PL2 recommended)
+      4. Monitor for false positives
+
+  # R2 Storage Security
+  - uid: kopexa-cloudflare-r2-private-buckets
+    title: R2 buckets should not have public access enabled
+    resource: cloudflare_r2_bucket
+    severity: high
+    query: resource.default_private == true
+    docs: |
+      R2 buckets with public access can expose sensitive data to the internet.
+      Ensure buckets are private by default.
+    remediation: |
+      1. Review bucket access settings in Cloudflare Dashboard
+      2. Remove public access via r2.dev domains
+      3. Use signed URLs or Cloudflare Access for controlled access
+
+  # Workers Security
+  - uid: kopexa-cloudflare-workers-no-exposed-secrets
+    title: Workers should use secrets bindings instead of plain text
+    resource: cloudflare_worker
+    severity: high
+    query: resource.has_secrets != true || resource.has_bindings == true
+    docs: |
+      Sensitive values in Workers should use secret bindings rather than
+      plain text environment variables to prevent exposure in logs and code.
+    remediation: |
+      1. Use wrangler secret put to add secrets
+      2. Reference secrets via env bindings in wrangler.toml
+      3. Remove any hardcoded secrets from Worker code
+
+  # Tunnel Security
+  - uid: kopexa-cloudflare-tunnel-healthy
+    title: Cloudflare Tunnels should be healthy
+    resource: cloudflare_tunnel
+    severity: high
+    query: resource.is_healthy == true || resource.is_down != true
+    docs: |
+      Unhealthy or down tunnels indicate connectivity issues that may affect
+      availability and could indicate security incidents.
+    remediation: |
+      1. Check tunnel connector (cloudflared) status
+      2. Verify network connectivity from connector to Cloudflare
+      3. Review tunnel logs for errors
+      4. Restart cloudflared service if needed
+
+  # Zero Trust Access
+  - uid: kopexa-cloudflare-access-mfa-required
+    title: Access policies should require MFA for sensitive applications
+    resource: cloudflare_access_policy
+    severity: high
+    query: resource.is_bypass != true && (resource.requires_mfa == true || resource.has_device_posture == true)
+    docs: |
+      Multi-factor authentication provides an additional layer of security
+      beyond passwords for protecting sensitive applications.
+    remediation: |
+      1. Go to Zero Trust > Access > Applications
+      2. Edit the application's policy
+      3. Add an "Include" rule requiring MFA
+      4. Configure identity provider MFA settings
+
+  - uid: kopexa-cloudflare-access-no-bypass-policies
+    title: Access policies should not use bypass rules in production
+    resource: cloudflare_access_policy
+    severity: high
+    query: resource.is_bypass != true
+    docs: |
+      Bypass policies allow unauthenticated access to protected applications,
+      which can be a security risk if misconfigured.
+    remediation: |
+      1. Review bypass policies in Zero Trust Dashboard
+      2. Remove unnecessary bypass rules
+      3. Use service tokens for machine-to-machine access
+      4. Implement proper authentication for all users

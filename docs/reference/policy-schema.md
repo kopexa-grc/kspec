@@ -10,18 +10,49 @@ Policies are defined in YAML format with the `.yml` or `.yaml` extension.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `name` | string | Yes | Policy name |
-| `version` | string | Yes | Semantic version (e.g., `1.0.0`) |
-| `license` | string | No | License identifier |
-| `tags` | map | No | Key-value metadata |
+| `apiVersion` | string | Yes | API version (e.g., `kopexa.io/v1alpha1`) |
+| `kind` | string | Yes | Resource kind (always `Policy`) |
+| `metadata` | Metadata | Yes | Policy metadata |
+| `require` | []Requirement | No | Provider requirements |
 | `authors` | []Author | No | Policy authors |
-| `require` | []Require | No | Provider requirements |
-| `docs` | Docs | No | Policy documentation |
 | `groups` | []Group | Yes | Check groups |
-| `queries` | []Query | Yes | Query definitions |
+| `queries` | []Check | Yes | Query/check definitions |
 | `scoring_system` | string | No | Scoring method |
 
 ## Schema Definitions
+
+### Metadata
+
+```yaml
+metadata:
+  name: my-security-policy
+  title: My Security Policy
+  version: 1.0.0
+  license: BUSL-1.1
+  tags:
+    category: security
+    platform: azure
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `name` | string | Yes | Unique policy identifier |
+| `title` | string | No | Human-readable title |
+| `version` | string | No | Semantic version (e.g., `1.0.0`) |
+| `license` | string | No | License identifier |
+| `tags` | map[string]string | No | Key-value metadata tags |
+
+### Requirement
+
+```yaml
+require:
+  - provider: azure
+  - provider: github
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `provider` | string | Yes | Provider name |
 
 ### Author
 
@@ -35,31 +66,6 @@ authors:
 |-------|------|----------|-------------|
 | `name` | string | Yes | Author name |
 | `email` | string | No | Author email |
-
-### Require
-
-```yaml
-require:
-  - provider: azure
-  - provider: github
-```
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `provider` | string | Yes | Provider name |
-
-### Docs
-
-```yaml
-docs:
-  desc: |
-    Multi-line description of the policy.
-    Supports markdown formatting.
-```
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `desc` | string | No | Policy description |
 
 ### Group
 
@@ -80,6 +86,8 @@ groups:
 
 ### CheckRef
 
+References a check defined in the `queries` section by UID.
+
 ```yaml
 checks:
   - uid: my-check-uid
@@ -89,7 +97,9 @@ checks:
 |-------|------|----------|-------------|
 | `uid` | string | Yes | Reference to query UID |
 
-### Query
+### Check (Query)
+
+Checks are defined in the `queries` section and referenced by groups.
 
 ```yaml
 queries:
@@ -97,7 +107,6 @@ queries:
     title: Storage accounts require HTTPS
     resource: azure_storage_account
     severity: critical
-    impact: 90
     query: |
       resource.properties.supportsHttpsTrafficOnly == true
     docs: Description of the check.
@@ -108,14 +117,33 @@ queries:
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `uid` | string | Yes | Unique identifier |
+| `id` | string | No | Alternative identifier |
 | `title` | string | Yes | Check title |
 | `resource` | string | Yes | Resource type to check |
 | `query` | string | Yes | CEL expression |
 | `severity` | string | No | Severity level |
-| `impact` | int | No | Impact score (0-100) |
 | `docs` | string | No | Check documentation |
 | `audit` | string | No | Manual audit instructions |
 | `remediation` | string | No | Remediation steps |
+| `config` | map[string]string | No | Configuration key-value pairs |
+| `props` | []Prop | No | Property extractions |
+
+### Prop
+
+Property extractions for check results.
+
+```yaml
+props:
+  - uid: my-prop
+    title: Property Title
+    mql: resource.field
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `uid` | string | No | Property identifier |
+| `title` | string | No | Property title |
+| `mql` | any | No | MQL expression for extraction |
 
 ### Severity Values
 
@@ -130,39 +158,31 @@ queries:
 
 | Value | Description |
 |-------|-------------|
-| `highest impact` | Use highest impact score from failed checks |
-| `average` | Average of all impact scores |
+| `highest impact` | Use highest severity from failed checks |
+| `average` | Average of all severity scores |
 
 ## Complete Example
 
 ```yaml
-# Policy metadata
-name: Azure Security Policy
-version: 2.0.0
-license: Apache-2.0
+apiVersion: kopexa.io/v1alpha1
+kind: Policy
+metadata:
+  name: azure-security-policy
+  title: Azure Security Policy
+  version: 2.0.0
+  license: Apache-2.0
+  tags:
+    category: security
+    platform: azure
+    compliance: cis
 
-# Tags for categorization
-tags:
-  category: security
-  platform: azure
-  compliance: cis
-
-# Provider requirements
 require:
   - provider: azure
 
-# Authors
 authors:
   - name: Security Team
     email: security@example.com
 
-# Policy documentation
-docs:
-  desc: |
-    Comprehensive security policy for Azure infrastructure.
-    Covers storage, SQL, Key Vault, and network security.
-
-# Check groups
 groups:
   - title: Storage Security
     filter: asset.type == "azure-subscription"
@@ -185,17 +205,14 @@ groups:
       - uid: nsg-no-ssh-from-internet
       - uid: nsg-no-rdp-from-internet
 
-# Scoring configuration
 scoring_system: highest impact
 
-# Query definitions
 queries:
   # Storage checks
   - uid: storage-https-required
     title: Storage accounts require HTTPS
     resource: azure_storage_account
     severity: critical
-    impact: 90
     query: |
       has(resource.properties) &&
       resource.properties.supportsHttpsTrafficOnly == true
@@ -215,7 +232,6 @@ queries:
     title: Public blob access is disabled
     resource: azure_storage_account
     severity: critical
-    impact: 95
     query: |
       has(resource.properties) &&
       resource.properties.allowBlobPublicAccess == false
@@ -228,7 +244,6 @@ queries:
     title: Default network access is deny
     resource: azure_storage_account
     severity: high
-    impact: 80
     query: |
       has(resource.properties.networkAcls) &&
       resource.properties.networkAcls.defaultAction == "Deny"
@@ -242,7 +257,6 @@ queries:
     title: SQL Server auditing is enabled
     resource: azure_sql_server
     severity: high
-    impact: 75
     query: |
       has(resource.auditingPolicy) &&
       resource.auditingPolicy.state == "Enabled"
@@ -255,7 +269,6 @@ queries:
     title: SQL databases have TDE enabled
     resource: azure_sql_database
     severity: high
-    impact: 85
     query: |
       resource.name == "master" ||
       (has(resource.transparentDataEncryption) &&
@@ -270,7 +283,6 @@ queries:
     title: Key Vault has purge protection
     resource: azure_keyvault_vault
     severity: critical
-    impact: 90
     query: |
       has(resource.properties) &&
       resource.properties.enablePurgeProtection == true
@@ -284,7 +296,6 @@ queries:
     title: SSH not open to internet
     resource: azure_network_security_group
     severity: critical
-    impact: 95
     query: |
       !has(resource.securityRules) ||
       !resource.securityRules.exists(rule,
@@ -303,7 +314,6 @@ queries:
     title: RDP not open to internet
     resource: azure_network_security_group
     severity: critical
-    impact: 95
     query: |
       !has(resource.securityRules) ||
       !resource.securityRules.exists(rule,
@@ -339,3 +349,4 @@ Policy files are validated on load. Common validation errors:
 4. **Appropriate Severity**: Match severity to actual risk
 5. **Version Policies**: Increment version on changes
 6. **Test Queries**: Validate CEL expressions before deploying
+7. **Use Tags**: Add meaningful tags for categorization and filtering

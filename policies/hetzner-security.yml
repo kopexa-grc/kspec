@@ -1,20 +1,20 @@
-name: Kopexa Hetzner Cloud Security
-version: 1.0.0
-license: BUSL-1.1
-tags:
-  kopexa.com/category: security
-  kopexa.com/platform: hetzner,cloud
+apiVersion: kopexa.io/v1alpha1
+kind: Policy
+metadata:
+  name: kopexa-hetzner-security
+  title: Kopexa Hetzner Cloud Security
+  version: 1.0.0
+  license: BUSL-1.1
+  tags:
+    kopexa.com/category: security
+    kopexa.com/platform: hetzner,cloud
+
 require:
   - provider: hetzner
+
 authors:
   - name: Kopexa GmbH
     email: security@kopexa.com
-docs:
-  desc: |
-    The Kopexa Hetzner Cloud Security policy is designed to identify security misconfigurations
-    in Hetzner Cloud infrastructure. This policy helps organizations detect and remediate security
-    risks including unprotected servers, overly permissive firewalls, weak SSH keys, and missing
-    network isolation.
 
 groups:
   - title: Hetzner Server Security
@@ -61,11 +61,10 @@ queries:
   # Server Security Checks
   - uid: kopexa-hetzner-security-servers-have-delete-protection
     title: Ensure production servers have delete protection enabled
-    impact: 60
     resource: hcloud_server
+    severity: medium
     query: |
       resource.has_delete_protection == true
-    severity: medium
     docs: |
       Delete protection prevents accidental deletion of critical server instances.
       Production servers should have this enabled to prevent service disruption.
@@ -75,11 +74,10 @@ queries:
 
   - uid: kopexa-hetzner-security-servers-have-rebuild-protection
     title: Ensure production servers have rebuild protection enabled
-    impact: 60
     resource: hcloud_server
+    severity: medium
     query: |
       resource.has_rebuild_protection == true
-    severity: medium
     docs: |
       Rebuild protection prevents accidental rebuilding of server instances which
       would result in data loss and service disruption.
@@ -89,11 +87,10 @@ queries:
 
   - uid: kopexa-hetzner-security-servers-use-private-networks
     title: Ensure servers are connected to private networks for internal communication
-    impact: 60
     resource: hcloud_server
+    severity: medium
     query: |
       resource.has_private_network == true
-    severity: medium
     docs: |
       Private networks provide isolated communication between servers without
       exposing traffic to the public internet. This is essential for secure
@@ -105,11 +102,10 @@ queries:
 
   - uid: kopexa-hetzner-security-servers-have-backups
     title: Ensure servers have automated backups enabled
-    impact: 80
     resource: hcloud_server
+    severity: high
     query: |
       resource.has_backup_window == true
-    severity: high
     docs: |
       Automated backups provide disaster recovery capability and protect against
       data loss from hardware failures or accidental deletion.
@@ -120,11 +116,10 @@ queries:
   # Firewall Security Checks
   - uid: kopexa-hetzner-security-firewalls-have-rules
     title: Ensure firewalls have at least one rule defined
-    impact: 80
     resource: hcloud_firewall
+    severity: high
     query: |
       resource.has_rules == true
-    severity: high
     docs: |
       Firewalls without rules provide no protection. Each firewall should have
       explicit rules to control traffic flow.
@@ -134,11 +129,10 @@ queries:
 
   - uid: kopexa-hetzner-security-no-overly-permissive-inbound
     title: Ensure firewalls do not allow all inbound traffic from any IP
-    impact: 90
     resource: hcloud_firewall
+    severity: critical
     query: |
       resource.allows_all_inbound == false
-    severity: critical
     docs: |
       Allowing all inbound traffic from any IP (0.0.0.0/0 or ::/0) exposes servers
       to attacks from the entire internet. Firewall rules should be restricted to
@@ -150,11 +144,10 @@ queries:
 
   - uid: kopexa-hetzner-security-firewalls-are-applied
     title: Ensure firewalls are applied to at least one resource
-    impact: 60
     resource: hcloud_firewall
+    severity: medium
     query: |
       resource.is_applied == true
-    severity: medium
     docs: |
       Firewalls that are not applied to any resources provide no protection.
       Ensure firewalls are attached to servers or use label selectors.
@@ -165,11 +158,10 @@ queries:
   # Volume Security Checks
   - uid: kopexa-hetzner-security-volumes-have-delete-protection
     title: Ensure volumes have delete protection enabled
-    impact: 60
     resource: hcloud_volume
+    severity: medium
     query: |
       resource.has_delete_protection == true
-    severity: medium
     docs: |
       Delete protection prevents accidental deletion of storage volumes which
       could result in permanent data loss.
@@ -179,11 +171,10 @@ queries:
 
   - uid: kopexa-hetzner-security-unattached-volumes
     title: Identify unattached volumes (informational)
-    impact: 20
     resource: hcloud_volume
+    severity: low
     query: |
       resource.is_attached == true
-    severity: info
     docs: |
       Unattached volumes may indicate orphaned resources that incur costs
       without providing value. Review and remove unused volumes.
@@ -194,11 +185,10 @@ queries:
   # Network Security Checks
   - uid: kopexa-hetzner-security-networks-have-subnets
     title: Ensure private networks have at least one subnet
-    impact: 80
     resource: hcloud_network
+    severity: high
     query: |
       resource.has_subnets == true
-    severity: high
     docs: |
       Private networks require at least one subnet to be functional.
       Subnets define the IP ranges available for attached resources.
@@ -208,11 +198,10 @@ queries:
 
   - uid: kopexa-hetzner-security-networks-have-delete-protection
     title: Ensure networks have delete protection enabled
-    impact: 60
     resource: hcloud_network
+    severity: medium
     query: |
       resource.has_delete_protection == true
-    severity: medium
     docs: |
       Delete protection prevents accidental deletion of private networks which
       would disrupt internal communication between servers.
@@ -223,11 +212,10 @@ queries:
   # SSH Key Security Checks
   - uid: kopexa-hetzner-security-use-modern-ssh-keys
     title: Ensure SSH keys use modern algorithms (Ed25519 preferred over RSA/DSA)
-    impact: 40
     resource: hcloud_ssh_key
+    severity: low
     query: |
       resource.is_weak_key_type == false
-    severity: low
     docs: |
       Ed25519 SSH keys are more secure and efficient than older RSA or DSA keys.
       DSA keys are considered weak and should be replaced immediately.
@@ -237,11 +225,10 @@ queries:
 
   - uid: kopexa-hetzner-security-ssh-keys-have-labels
     title: Ensure SSH keys have labels for organization
-    impact: 20
     resource: hcloud_ssh_key
+    severity: low
     query: |
       resource.has_labels == true
-    severity: info
     docs: |
       Labels help organize and manage SSH keys, making it easier to identify
       key ownership and purpose.
@@ -252,11 +239,10 @@ queries:
   # Floating IP Security Checks
   - uid: kopexa-hetzner-security-floating-ips-not-blocked
     title: Ensure floating IPs are not blocked
-    impact: 80
     resource: hcloud_floating_ip
+    severity: high
     query: |
       resource.is_blocked == false
-    severity: high
     docs: |
       Blocked floating IPs indicate potential abuse or policy violations.
       Contact Hetzner support to resolve blocked IPs.
@@ -265,11 +251,10 @@ queries:
 
   - uid: kopexa-hetzner-security-floating-ips-have-dns-ptr
     title: Ensure floating IPs have PTR records configured
-    impact: 20
     resource: hcloud_floating_ip
+    severity: low
     query: |
       resource.has_dns_ptr == true
-    severity: info
     docs: |
       PTR records (reverse DNS) are important for email deliverability and
       proper hostname resolution. Many services check PTR records for spam filtering.
@@ -280,11 +265,10 @@ queries:
   # Image Security Checks
   - uid: kopexa-hetzner-security-images-not-deprecated
     title: Ensure images are not deprecated
-    impact: 60
     resource: hcloud_image
+    severity: medium
     query: |
       resource.is_deprecated == false
-    severity: medium
     docs: |
       Deprecated images may have security vulnerabilities or lack support.
       Update to newer, actively maintained images.
@@ -295,11 +279,10 @@ queries:
   # Server Type Deprecation
   - uid: kopexa-hetzner-security-server-types-not-deprecated
     title: Ensure server types are not deprecated
-    impact: 20
     resource: hcloud_server_type
+    severity: low
     query: |
       resource.is_deprecated == false
-    severity: info
     docs: |
       Deprecated server types will eventually become unavailable.
       Plan migration to newer server types before they are removed.

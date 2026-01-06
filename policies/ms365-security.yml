@@ -1,56 +1,46 @@
-policies:
-  - uid: kspec-ms365-security
-    name: Microsoft 365 Security Policy
-    version: 1.0.0
-    tags:
-      category: security
-      platform: microsoft365,saas
-    require:
-      - provider: ms365
-    authors:
-      - name: Kopexa GRC
-        email: hello@kopexa.com
-    docs:
-      desc: |-
-        The Microsoft 365 Security policy provides guidance for establishing minimum recommended security and operational best practices for Microsoft 365.
+apiVersion: kopexa.io/v1alpha1
+kind: Policy
+metadata:
+  name: kspec-ms365-security
+  title: Microsoft 365 Security Policy
+  version: 1.0.0
+  tags:
+    category: security
+    platform: microsoft365,saas
 
-        ## Remote scan
+require:
+  - provider: ms365
 
-        Remote scans use kspec providers to retrieve on-demand scan results without having to install any agents.
+authors:
+  - name: Kopexa GRC
+    email: hello@kopexa.com
 
-        ### Scan a Microsoft 365 organization
-
-        ```bash
-        kspec scan ms365 tenant <tenant-id> --client-id <client_id> --client-secret <client_secret> -f policies/ms365-security.yml
-        ```
-
-    groups:
-      - title: Microsoft 365 Security
-        filters: |
-          asset.platform == "microsoft365"
-        checks:
-          - uid: kspec-ms365-security-enable-sign-in-risk-policies
-          - uid: kspec-ms365-security-enable-user-risk-policies
-          - uid: kspec-ms365-security-block-legacy-authentication
-          - uid: kspec-ms365-security-admin-mfa-enabled
-          - uid: kspec-ms365-security-all-users-mfa-enabled
-          - uid: kspec-ms365-security-security-defaults-disabled
-          - uid: kspec-ms365-security-global-admin-count
-          - uid: kspec-ms365-security-passwords-no-expiry
-          - uid: kspec-ms365-security-spf-records-configured
-          - uid: kspec-ms365-security-third-party-apps-blocked
-          - uid: kspec-ms365-security-risky-users-monitored
-          - uid: kspec-ms365-security-conditional-access-enabled
-          - uid: kspec-ms365-security-guest-access-restricted
-          - uid: kspec-ms365-security-teams-external-access
-          - uid: kspec-ms365-security-android-encryption-enabled
-          - uid: kspec-ms365-security-minimum-password-length
+groups:
+  - title: Microsoft 365 Security
+    filter: asset.platform == "microsoft365"
+    checks:
+      - uid: kspec-ms365-security-enable-sign-in-risk-policies
+      - uid: kspec-ms365-security-enable-user-risk-policies
+      - uid: kspec-ms365-security-block-legacy-authentication
+      - uid: kspec-ms365-security-admin-mfa-enabled
+      - uid: kspec-ms365-security-all-users-mfa-enabled
+      - uid: kspec-ms365-security-security-defaults-disabled
+      - uid: kspec-ms365-security-global-admin-count
+      - uid: kspec-ms365-security-passwords-no-expiry
+      - uid: kspec-ms365-security-spf-records-configured
+      - uid: kspec-ms365-security-third-party-apps-blocked
+      - uid: kspec-ms365-security-risky-users-monitored
+      - uid: kspec-ms365-security-conditional-access-enabled
+      - uid: kspec-ms365-security-guest-access-restricted
+      - uid: kspec-ms365-security-teams-external-access
+      - uid: kspec-ms365-security-android-encryption-enabled
+      - uid: kspec-ms365-security-minimum-password-length
 
 queries:
   - uid: kspec-ms365-security-enable-sign-in-risk-policies
     title: Enable Azure AD Identity Protection sign-in risk policies
     resource: ms365_secure_score
-    impact: 80
+    severity: high
     query: |
       !has(resource.controlScores) ||
       resource.controlScores.exists(c, c.controlName == "SigninRiskPolicy" && c.score >= 7.0)
@@ -84,7 +74,7 @@ queries:
   - uid: kspec-ms365-security-enable-user-risk-policies
     title: Enable Azure AD Identity Protection user risk policies
     resource: ms365_secure_score
-    impact: 100
+    severity: critical
     query: |
       !has(resource.controlScores) ||
       resource.controlScores.exists(c, c.controlName == "UserRiskPolicy" && c.score >= 7.0)
@@ -95,10 +85,7 @@ queries:
 
       Risky users are a key indicator of potential account compromise. Detecting and responding to these events promptly is critical to safeguarding sensitive data and maintaining the security of user accounts.
 
-      Implementing policies to detect risky users supports a proactive security posture and aligns with best practices for identity and access management. It also helps organizations meet compliance requirements for standards such as:
-        - ISO/IEC 27001 (A.9.4.2: Secure log-on procedures)
-        - NIST 800-53 (AC-7: Unsuccessful Login Attempts)
-        - CIS Controls (CIS Control 16: Account Monitoring and Control)
+      Implementing policies to detect risky users supports a proactive security posture and aligns with best practices for identity and access management.
     remediation: |
       **To configure a User risk policy, use the following steps:**
 
@@ -118,7 +105,7 @@ queries:
   - uid: kspec-ms365-security-block-legacy-authentication
     title: Enable Conditional Access policies to block legacy authentication
     resource: ms365_secure_score
-    impact: 80
+    severity: high
     query: |
       !has(resource.controlScores) ||
       resource.controlScores.exists(c, c.controlName == "BlockLegacyAuthentication" && c.score >= 8.0)
@@ -129,12 +116,7 @@ queries:
 
       Legacy authentication protocols, such as POP, IMAP, and SMTP, do not support modern security features like multi-factor authentication (MFA). These protocols are often targeted by attackers as they provide an easier entry point for unauthorized access to user accounts.
 
-      Disabling legacy authentication reduces the attack surface by preventing the use of outdated protocols that lack robust security measures. This helps protect sensitive data, prevent unauthorized access, and align with best practices for securing cloud environments.
-
-      Ensuring legacy authentication is disabled strengthens the security posture of an organization and supports compliance with standards such as:
-        - ISO/IEC 27001 (A.9.4.2: Secure log-on procedures)
-        - NIST 800-53 (AC-7: Unsuccessful Login Attempts)
-        - CIS Controls (CIS Control 16: Account Monitoring and Control)
+      Disabling legacy authentication reduces the attack surface by preventing the use of outdated protocols that lack robust security measures.
     remediation: |
       **To setup a conditional access policy to block legacy authentication:**
 
@@ -150,7 +132,7 @@ queries:
   - uid: kspec-ms365-security-admin-mfa-enabled
     title: Ensure multi-factor authentication (MFA) is enabled for all users in administrative roles
     resource: ms365_secure_score
-    impact: 100
+    severity: critical
     query: |
       !has(resource.controlScores) ||
       resource.controlScores.exists(c, c.controlName == "AdminMFAV2" && c.score >= 10.0)
@@ -160,11 +142,6 @@ queries:
       **Why this matters**
 
       Enabling MFA for administrative roles adds an essential layer of security to protect privileged accounts from unauthorized access. Administrative accounts are high-value targets for attackers, as they have elevated permissions that can be exploited to compromise the entire environment.
-
-      Implementing MFA for administrative roles aligns with security best practices and compliance requirements, such as:
-        - ISO/IEC 27001 (A.9.4.2: Secure log-on procedures)
-        - NIST 800-53 (IA-2: Identification and Authentication)
-        - CIS Controls (CIS Control 16: Account Monitoring and Control)
     remediation: |
       **To enable multi-factor authentication (MFA) for administrators:**
 
@@ -196,7 +173,7 @@ queries:
   - uid: kspec-ms365-security-all-users-mfa-enabled
     title: Ensure multi-factor authentication (MFA) is enabled for all users
     resource: ms365_secure_score
-    impact: 100
+    severity: critical
     query: |
       !has(resource.controlScores) ||
       resource.controlScores.exists(c, c.controlName == "MFARegistrationV2" && c.score >= 9.0)
@@ -205,12 +182,7 @@ queries:
 
       **Why this matters**
 
-      Enabling MFA for all users adds an essential layer of security to protect user accounts from unauthorized access. User accounts are often targeted by attackers, as they can be exploited to gain access to sensitive data and systems.
-
-      Implementing MFA for all users aligns with security best practices and compliance requirements, such as:
-        - ISO/IEC 27001 (A.9.4.2: Secure log-on procedures)
-        - NIST 800-53 (IA-2: Identification and Authentication)
-        - CIS Controls (CIS Control 16: Account Monitoring and Control)
+      Enabling MFA for all users adds an essential layer of security to protect user accounts from unauthorized access.
     remediation: |
       **To enable multi-factor authentication (MFA) for all users:**
 
@@ -226,17 +198,17 @@ queries:
   - uid: kspec-ms365-security-security-defaults-disabled
     title: Ensure Security Defaults is disabled on Azure Active Directory
     resource: ms365_security_defaults_policy
-    impact: 80
+    severity: high
     query: |
       resource.isEnabled == false
     docs: |
-     This check ensures that the security defaults are disabled in Azure Active Directory to allow for custom Conditional Access policies.
+      This check ensures that the security defaults are disabled in Azure Active Directory to allow for custom Conditional Access policies.
 
       **Why this matters**
 
       Security defaults are a set of basic identity security mechanisms provided by Microsoft. While they offer a good starting point, they may not meet the specific needs of all organizations.
 
-      Disabling security defaults allows organizations to implement custom Conditional Access policies tailored to their unique security requirements. This enables more granular control over access to resources, such as enforcing MFA for specific users or applications, blocking legacy authentication protocols, and applying risk-based access controls.
+      Disabling security defaults allows organizations to implement custom Conditional Access policies tailored to their unique security requirements.
 
       Note: Using security defaults prohibits custom settings. Many best security practices require custom settings.
     remediation: |
@@ -249,16 +221,16 @@ queries:
       5. Set the `Security defaults` dropdown to `Disabled`.
       6. Select Save.
 
-      **WARNING:** Do not disable security defaults until you are ready to implement conditional access rules. Rules such as requiring MFA for all users and blocking legacy protocols are required to make up the gap.
+      **WARNING:** Do not disable security defaults until you are ready to implement conditional access rules.
 
   - uid: kspec-ms365-security-global-admin-count
     title: Ensure that between two and four global admins are designated
     resource: ms365_directory_role
-    impact: 80
+    severity: high
     query: |
       resource.displayName != "Global Administrator" ||
       (has(resource.memberCount) && resource.memberCount >= 2 && resource.memberCount <= 4)
-    docs: | 
+    docs: |
       This check ensures that there are enough Global Admins in a single tenant (between 2 and 4).
 
       **Why this matters**
@@ -288,7 +260,7 @@ queries:
   - uid: kspec-ms365-security-passwords-no-expiry
     title: Ensure the 'Password expiration policy' is set to 'Set passwords to never expire'
     resource: ms365_domain
-    impact: 60
+    severity: medium
     query: |
       !has(resource.passwordValidityPeriodInDays) ||
       resource.passwordValidityPeriodInDays == 2147483647
@@ -297,12 +269,9 @@ queries:
 
       **Why this matters**
 
-      Forcing users to change their passwords regularly often results in predictable patterns or weaker passwords, as users may resort to minor variations of their previous passwords. This behavior can make it easier for attackers to guess or compromise passwords.
+      Forcing users to change their passwords regularly often results in predictable patterns or weaker passwords, as users may resort to minor variations of their previous passwords.
 
-      Allowing passwords to never expire, combined with strong password policies and multi-factor authentication (MFA), provides a more secure and user-friendly approach. This aligns with modern security best practices and compliance requirements, such as:
-        - ISO/IEC 27001 (A.9.4.3: Password management system)
-        - NIST 800-63 (IA-5: Authenticator Management)
-        - CIS Controls (CIS Control 16: Account Monitoring and Control)
+      Allowing passwords to never expire, combined with strong password policies and multi-factor authentication (MFA), provides a more secure and user-friendly approach.
     remediation: |
       **To set Microsoft 365 passwords to never expire:**
 
@@ -312,17 +281,10 @@ queries:
       4. Check the box for `Set passwords to never expire (recommended)`.
       5. Select `Save changes`.
 
-      **Using Microsoft Graph PowerShell:**
-
-      ```powershell
-      Connect-MgGraph -Scopes "Domain.ReadWrite.All"
-      Update-MgDomain -DomainId <Domain> -PasswordValidityPeriodInDays 2147483647 -PasswordNotificationWindowInDays 30
-      ```
-
   - uid: kspec-ms365-security-spf-records-configured
     title: Ensure that SPF records are published for all Exchange Domains
     resource: ms365_domain
-    impact: 60
+    severity: medium
     query: |
       !has(resource.serviceConfigurationRecords) ||
       size(resource.serviceConfigurationRecords) == 0 ||
@@ -335,12 +297,7 @@ queries:
 
       **Why this matters**
 
-      Sender Policy Framework (SPF) records are a critical component of email authentication. They help prevent email spoofing by specifying which mail servers are authorized to send emails on behalf of a domain. Without SPF records, attackers can impersonate your domain to send fraudulent emails, leading to phishing attacks, reputational damage, and potential data breaches.
-
-      Implementing SPF records aligns with security best practices and compliance requirements, such as:
-        - ISO/IEC 27001 (A.13.2.3: Electronic messaging)
-        - NIST 800-53 (SC-7: Boundary Protection)
-        - CIS Controls (CIS Control 9: Email and Web Browser Protections)
+      Sender Policy Framework (SPF) records are a critical component of email authentication. They help prevent email spoofing by specifying which mail servers are authorized to send emails on behalf of a domain.
     remediation: |
       **To setup SPF records for Exchange Online accepted domains:**
 
@@ -355,7 +312,7 @@ queries:
   - uid: kspec-ms365-security-third-party-apps-blocked
     title: Ensure that third party integrated applications are not allowed
     resource: ms365_authorization_policy
-    impact: 80
+    severity: high
     query: |
       !has(resource.defaultUserRolePermissions) ||
       resource.defaultUserRolePermissions.allowedToCreateApps == false
@@ -364,12 +321,7 @@ queries:
 
       **Why this matters**
 
-      Allowing third-party integrated applications to connect to your services can introduce security risks, such as unauthorized access, data leakage, or exploitation of vulnerabilities in the third-party applications. Restricting third-party integrations helps maintain control over your organization's data and reduces the attack surface.
-
-      By preventing third-party applications from connecting, organizations can ensure that only trusted and approved applications are used. This aligns with security best practices and compliance requirements, such as:
-        - ISO/IEC 27001 (A.13.1.1: Network controls)
-        - NIST 800-53 (AC-3: Access Enforcement)
-        - CIS Controls (CIS Control 14: Controlled Access Based on the Need to Know)
+      Allowing third-party integrated applications to connect to your services can introduce security risks, such as unauthorized access, data leakage, or exploitation of vulnerabilities in the third-party applications.
     remediation: |
       **To disable third-party app registration:**
 
@@ -382,7 +334,7 @@ queries:
   - uid: kspec-ms365-security-risky-users-monitored
     title: Ensure risky users are identified and monitored
     resource: ms365_risky_user
-    impact: 90
+    severity: high
     query: |
       !has(resource.riskLevel) ||
       resource.riskLevel == "none" ||
@@ -395,11 +347,6 @@ queries:
       **Why this matters**
 
       Azure AD Identity Protection identifies users whose accounts may have been compromised. Risky users with high or medium risk levels that haven't been remediated or dismissed represent potential security threats that require immediate attention.
-
-      Monitoring and addressing risky users helps:
-        - Prevent unauthorized access to sensitive data
-        - Reduce the impact of compromised accounts
-        - Maintain compliance with security standards
     remediation: |
       **To review and remediate risky users:**
 
@@ -415,7 +362,7 @@ queries:
   - uid: kspec-ms365-security-conditional-access-enabled
     title: Ensure Conditional Access policies are configured
     resource: ms365_conditional_access_policy
-    impact: 90
+    severity: high
     query: |
       has(resource.state) && resource.state == "enabled"
     docs: |
@@ -424,12 +371,6 @@ queries:
       **Why this matters**
 
       Conditional Access policies are the foundation of a Zero Trust security model. They allow organizations to enforce access controls based on specific conditions such as user risk, device compliance, location, and application sensitivity.
-
-      Without active Conditional Access policies, organizations cannot:
-        - Enforce MFA for high-risk scenarios
-        - Block access from untrusted locations
-        - Require compliant devices for sensitive data access
-        - Implement risk-based access controls
     remediation: |
       **To enable Conditional Access policies:**
 
@@ -444,7 +385,7 @@ queries:
   - uid: kspec-ms365-security-guest-access-restricted
     title: Ensure guest user access is restricted
     resource: ms365_authorization_policy
-    impact: 70
+    severity: medium
     query: |
       !has(resource.guestUserRoleId) ||
       resource.guestUserRoleId == "2af84b1e-32c8-42b7-82bc-daa82404023b" ||
@@ -454,12 +395,7 @@ queries:
 
       **Why this matters**
 
-      Guest users are external users invited to collaborate in your tenant. By default, guest users may have more access to directory information than necessary, potentially exposing sensitive organizational data.
-
-      Restricting guest access helps:
-        - Limit exposure of directory information to external parties
-        - Reduce the risk of data leakage through guest accounts
-        - Maintain principle of least privilege for external collaborators
+      Guest users are external users invited to collaborate in your tenant. By default, guest users may have more access to directory information than necessary.
 
       Guest role IDs:
         - `2af84b1e-32c8-42b7-82bc-daa82404023b` - Restricted Guest User (most restrictive)
@@ -476,7 +412,7 @@ queries:
   - uid: kspec-ms365-security-teams-external-access
     title: Ensure Teams external access is configured securely
     resource: ms365_team
-    impact: 60
+    severity: medium
     query: |
       !has(resource.guestSettings) ||
       resource.guestSettings.allowCreateUpdateChannels == false
@@ -485,12 +421,7 @@ queries:
 
       **Why this matters**
 
-      Microsoft Teams allows external collaboration through guest access. However, giving guests the ability to create or modify channels can lead to:
-        - Uncontrolled proliferation of channels
-        - Potential data exposure in misconfigured channels
-        - Difficulty in maintaining governance and compliance
-
-      Restricting guest permissions to channel management helps maintain control over your Teams environment while still enabling collaboration.
+      Microsoft Teams allows external collaboration through guest access. However, giving guests the ability to create or modify channels can lead to uncontrolled proliferation of channels and potential data exposure.
     remediation: |
       **To restrict guest permissions in Teams:**
 
@@ -501,16 +432,10 @@ queries:
         - `Allow guests to delete channels`
       4. Save your changes.
 
-      **Per-team settings:**
-
-      1. In Microsoft Teams, go to the team settings.
-      2. Select `Settings` > `Guest permissions`.
-      3. Uncheck `Allow guests to create or update channels`.
-
   - uid: kspec-ms365-security-android-encryption-enabled
     title: Ensure that Android mobile device encryption is enabled
     resource: ms365_device_configuration
-    impact: 80
+    severity: high
     query: |
       !has(resource.configurationType) ||
       resource.configurationType != "#microsoft.graph.androidGeneralDeviceConfiguration" ||
@@ -520,12 +445,7 @@ queries:
 
       **Why this matters**
 
-      Encryption ensures that sensitive data stored on mobile devices is protected from unauthorized access, even if the device is lost or stolen. Without encryption, attackers can easily access data by bypassing basic security measures.
-
-      Implementing encryption aligns with security best practices and compliance requirements, such as:
-        - ISO/IEC 27001 (A.10.1.1: Policy on the use of cryptographic controls)
-        - NIST 800-53 (SC-12: Cryptographic Key Establishment and Management)
-        - CIS Controls (CIS Control 13: Data Protection)
+      Encryption ensures that sensitive data stored on mobile devices is protected from unauthorized access, even if the device is lost or stolen.
     remediation: |
       **To enable Android device encryption via Intune:**
 
@@ -539,7 +459,7 @@ queries:
   - uid: kspec-ms365-security-minimum-password-length
     title: Ensure that minimum password length is set to prevent brute force attacks
     resource: ms365_device_configuration
-    impact: 80
+    severity: high
     query: |
       !has(resource.configurationType) ||
       (resource.configurationType != "#microsoft.graph.windows10GeneralConfiguration" &&
@@ -554,12 +474,7 @@ queries:
 
       **Why this matters**
 
-      According to NIST (SP 800-63-2), user-chosen memorized secrets should be a minimum of 8 characters long. Enforcing a minimum password length helps protect against brute force attacks and ensures stronger security for mobile devices.
-
-      Without a minimum password length, attackers can exploit weak passwords, increasing the risk of unauthorized access to sensitive data. Implementing this policy aligns with security best practices and compliance requirements, such as:
-        - ISO/IEC 27001 (A.9.4.3: Password management system)
-        - NIST 800-53 (IA-5: Authenticator Management)
-        - CIS Controls (CIS Control 16: Account Monitoring and Control)
+      According to NIST (SP 800-63-2), user-chosen memorized secrets should be a minimum of 8 characters long. Enforcing a minimum password length helps protect against brute force attacks.
     remediation: |
       **To set minimum password length via Intune:**
 
