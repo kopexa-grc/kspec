@@ -5,6 +5,7 @@ import (
 
 	"github.com/ctreminiom/go-atlassian/confluence"
 	"github.com/ctreminiom/go-atlassian/pkg/infra/models"
+
 	"github.com/kopexa-grc/kspec/core"
 )
 

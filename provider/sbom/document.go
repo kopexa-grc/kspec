@@ -31,7 +31,10 @@ func (r *SBOMDocumentResource) Fetch(ctx context.Context, asset core.Asset) ([]c
 	for _, sbom := range sboms {
 		resource := make(core.Resource)
 
-		format := sbom["_format"].(string)
+		format, ok := sbom["_format"].(string)
+		if !ok {
+			continue
+		}
 		resource["format"] = format
 		resource["file_path"] = sbom["_file_path"]
 
@@ -86,7 +89,8 @@ func (r *SBOMDocumentResource) parseCycloneDXDocument(sbom map[string]interface{
 	resource["is_cyclonedx"] = true
 	resource["is_spdx"] = false
 	resource["has_metadata"] = sbom["metadata"] != nil
-	resource["has_components"] = resource["component_count"] != nil && resource["component_count"].(int) > 0
+	componentCount, _ := resource["component_count"].(int)
+	resource["has_components"] = componentCount > 0
 }
 
 func (r *SBOMDocumentResource) parseSPDXDocument(sbom map[string]interface{}, resource core.Resource) {
@@ -122,7 +126,8 @@ func (r *SBOMDocumentResource) parseSPDXDocument(sbom map[string]interface{}, re
 	// Security flags
 	resource["is_cyclonedx"] = false
 	resource["is_spdx"] = true
-	resource["has_packages"] = resource["package_count"] != nil && resource["package_count"].(int) > 0
+	packageCount, _ := resource["package_count"].(int)
+	resource["has_packages"] = packageCount > 0
 
 	// Extract document name from path if not available
 	if resource["document_name"] == nil || resource["document_name"] == "" {

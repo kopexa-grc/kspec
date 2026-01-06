@@ -1,0 +1,73 @@
+{
+  "spdxVersion": "SPDX-2.3",
+  "dataLicense": "CC0-1.0",
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "name": "test-project",
+  "documentNamespace": "https://example.com/test-project-1.0.0",
+  "creationInfo": {
+    "created": "2024-01-15T10:30:00Z",
+    "creators": [
+      "Tool: test-tool-1.0.0"
+    ]
+  },
+  "packages": [
+    {
+      "SPDXID": "SPDXRef-Package-lodash",
+      "name": "lodash",
+      "versionInfo": "4.17.21",
+      "downloadLocation": "https://registry.npmjs.org/lodash/-/lodash-4.17.21.tgz",
+      "filesAnalyzed": false,
+      "supplier": "Person: John-David Dalton",
+      "originator": "Person: John-David Dalton",
+      "homepage": "https://lodash.com/",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "copyrightText": "Copyright JS Foundation and other contributors",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/lodash@4.17.21"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "abc123def456"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-express",
+      "name": "express",
+      "versionInfo": "4.18.0",
+      "downloadLocation": "https://registry.npmjs.org/express/-/express-4.18.0.tgz",
+      "filesAnalyzed": false,
+      "supplier": "NOASSERTION",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-unknown",
+      "name": "unknown-pkg",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION"
+    }
+  ],
+  "relationships": [
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relatedSpdxElement": "SPDXRef-Package-lodash",
+      "relationshipType": "DESCRIBES"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-lodash",
+      "relatedSpdxElement": "SPDXRef-Package-express",
+      "relationshipType": "DEPENDS_ON"
+    }
+  ]
+}

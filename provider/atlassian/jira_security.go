@@ -4,6 +4,7 @@ import (
 	"context"
 
 	v3 "github.com/ctreminiom/go-atlassian/jira/v3"
+
 	"github.com/kopexa-grc/kspec/core"
 )
 

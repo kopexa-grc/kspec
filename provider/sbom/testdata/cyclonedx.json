@@ -1,0 +1,152 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.4",
+  "serialNumber": "urn:uuid:3e671687-395b-41f5-a30f-a58921a69b79",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2024-01-15T10:30:00Z",
+    "tools": [
+      {
+        "vendor": "TestVendor",
+        "name": "TestTool",
+        "version": "1.0.0"
+      }
+    ],
+    "component": {
+      "type": "application",
+      "name": "test-app",
+      "version": "1.0.0"
+    }
+  },
+  "components": [
+    {
+      "type": "library",
+      "name": "lodash",
+      "version": "4.17.21",
+      "purl": "pkg:npm/lodash@4.17.21",
+      "bom-ref": "pkg:npm/lodash@4.17.21",
+      "description": "Lodash modular utilities",
+      "group": "npm",
+      "publisher": "John-David Dalton",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "abc123def456"
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://lodash.com/"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "express",
+      "version": "4.18.0",
+      "purl": "pkg:npm/express@4.18.0",
+      "bom-ref": "pkg:npm/express@4.18.0",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "type": "framework",
+      "name": "react",
+      "version": "18.2.0",
+      "purl": "pkg:npm/react@18.2.0",
+      "bom-ref": "pkg:npm/react@18.2.0"
+    },
+    {
+      "type": "library",
+      "name": "no-version-lib"
+    }
+  ],
+  "vulnerabilities": [
+    {
+      "id": "CVE-2021-44228",
+      "bom-ref": "CVE-2021-44228",
+      "description": "Log4j Remote Code Execution",
+      "detail": "Apache Log4j2 2.0-beta9 through 2.15.0 allows remote code execution",
+      "recommendation": "Upgrade to Log4j 2.17.0 or later",
+      "created": "2021-12-10T00:00:00Z",
+      "published": "2021-12-10T00:00:00Z",
+      "source": {
+        "name": "NVD",
+        "url": "https://nvd.nist.gov/vuln/detail/CVE-2021-44228"
+      },
+      "ratings": [
+        {
+          "source": {
+            "name": "NVD"
+          },
+          "score": 10.0,
+          "severity": "critical",
+          "method": "CVSSv3"
+        }
+      ],
+      "cwes": [20, 400],
+      "affects": [
+        {
+          "ref": "pkg:maven/org.apache.logging.log4j/log4j-core@2.14.1"
+        }
+      ],
+      "analysis": {
+        "state": "exploitable",
+        "justification": "code_not_present",
+        "detail": "Vulnerable code path exists"
+      }
+    },
+    {
+      "id": "GHSA-1234-5678-9012",
+      "bom-ref": "GHSA-1234-5678-9012",
+      "description": "High severity vulnerability",
+      "ratings": [
+        {
+          "score": 7.5,
+          "severity": "high"
+        }
+      ]
+    },
+    {
+      "id": "CVE-2022-12345",
+      "description": "Medium severity vulnerability",
+      "ratings": [
+        {
+          "score": 5.0,
+          "severity": "medium"
+        }
+      ],
+      "analysis": {
+        "state": "not_affected"
+      }
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "pkg:npm/test-app@1.0.0",
+      "dependsOn": [
+        "pkg:npm/lodash@4.17.21",
+        "pkg:npm/express@4.18.0"
+      ]
+    },
+    {
+      "ref": "pkg:npm/express@4.18.0",
+      "dependsOn": [
+        "pkg:npm/body-parser@1.20.0"
+      ]
+    }
+  ]
+}

@@ -10,6 +10,7 @@ import (
 	"github.com/ctreminiom/go-atlassian/admin"
 	"github.com/ctreminiom/go-atlassian/confluence"
 	v3 "github.com/ctreminiom/go-atlassian/jira/v3"
+
 	"github.com/kopexa-grc/kspec/core"
 )
 
@@ -136,7 +137,8 @@ func (c *AtlassianConnection) Resources() []core.ResourceSpec {
 func discoverCloudID(site, email, apiToken string) (string, error) {
 	url := fmt.Sprintf("https://%s/_edge/tenant_info", site)
 
-	req, err := http.NewRequest(http.MethodGet, url, http.NoBody)
+	ctx := context.Background()
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, http.NoBody)
 	if err != nil {
 		return "", err
 	}

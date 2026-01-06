@@ -27,8 +27,14 @@ func (r *SBOMDependencyResource) Fetch(ctx context.Context, asset core.Asset) ([
 	var resources []core.Resource
 
 	for _, sbom := range sboms {
-		format := sbom["_format"].(string)
-		filePath := sbom["_file_path"].(string)
+		format, ok := sbom["_format"].(string)
+		if !ok {
+			continue
+		}
+		filePath, ok := sbom["_file_path"].(string)
+		if !ok {
+			continue
+		}
 
 		if format == string(FormatCycloneDX) {
 			deps := r.parseCycloneDXDependencies(sbom, filePath)
@@ -77,8 +83,9 @@ func (r *SBOMDependencyResource) parseCycloneDXDependencies(sbom map[string]inte
 		}
 
 		// Security flags
-		resource["has_dependencies"] = resource["dependency_count"].(int) > 0
-		resource["is_leaf"] = resource["dependency_count"].(int) == 0
+		depCount, _ := resource["dependency_count"].(int)
+		resource["has_dependencies"] = depCount > 0
+		resource["is_leaf"] = depCount == 0
 
 		resources = append(resources, resource)
 	}

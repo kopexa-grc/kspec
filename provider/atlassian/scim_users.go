@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/ctreminiom/go-atlassian/admin"
+
 	"github.com/kopexa-grc/kspec/core"
 )
 

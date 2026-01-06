@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/ctreminiom/go-atlassian/admin"
+
 	"github.com/kopexa-grc/kspec/core"
 )
 
@@ -78,7 +79,8 @@ func (r *AdminOrganizationResource) Fetch(ctx context.Context, asset core.Asset)
 	}
 
 	// Security flags
-	resource["has_verified_domains"] = resource["verified_domain_count"] != nil && resource["verified_domain_count"].(int) > 0
+	verifiedDomainCount, _ := resource["verified_domain_count"].(int)
+	resource["has_verified_domains"] = verifiedDomainCount > 0
 
 	resources = append(resources, resource)
 

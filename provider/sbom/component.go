@@ -99,8 +99,9 @@ func (r *SBOMComponentResource) parseCycloneDXComponents(sbom map[string]interfa
 			resource["hash_count"] = len(hashes)
 			for _, h := range hashes {
 				if hash, ok := h.(map[string]interface{}); ok {
-					alg := hash["alg"].(string)
-					resource["hash_"+strings.ToLower(alg)] = hash["content"]
+					if alg, ok := hash["alg"].(string); ok {
+						resource["hash_"+strings.ToLower(alg)] = hash["content"]
+					}
 				}
 			}
 		}
@@ -113,8 +114,10 @@ func (r *SBOMComponentResource) parseCycloneDXComponents(sbom map[string]interfa
 		// Security flags
 		resource["has_purl"] = component["purl"] != nil && component["purl"] != ""
 		resource["has_version"] = component["version"] != nil && component["version"] != ""
-		resource["has_license"] = resource["license_count"] != nil && resource["license_count"].(int) > 0
-		resource["has_hashes"] = resource["hash_count"] != nil && resource["hash_count"].(int) > 0
+		licenseCount, _ := resource["license_count"].(int)
+		hashCount, _ := resource["hash_count"].(int)
+		resource["has_license"] = licenseCount > 0
+		resource["has_hashes"] = hashCount > 0
 		resource["is_library"] = component["type"] == "library"
 		resource["is_application"] = component["type"] == "application"
 		resource["is_framework"] = component["type"] == "framework"
@@ -176,8 +179,9 @@ func (r *SBOMComponentResource) parseSPDXPackages(sbom map[string]interface{}, f
 			resource["checksum_count"] = len(checksums)
 			for _, cs := range checksums {
 				if checksum, ok := cs.(map[string]interface{}); ok {
-					alg := strings.ToLower(checksum["algorithm"].(string))
-					resource["checksum_"+alg] = checksum["checksumValue"]
+					if alg, ok := checksum["algorithm"].(string); ok {
+						resource["checksum_"+strings.ToLower(alg)] = checksum["checksumValue"]
+					}
 				}
 			}
 		}
@@ -187,7 +191,8 @@ func (r *SBOMComponentResource) parseSPDXPackages(sbom map[string]interface{}, f
 		resource["has_license_concluded"] = pack["licenseConcluded"] != nil && pack["licenseConcluded"] != "" && pack["licenseConcluded"] != "NOASSERTION"
 		resource["has_license_declared"] = pack["licenseDeclared"] != nil && pack["licenseDeclared"] != "" && pack["licenseDeclared"] != "NOASSERTION"
 		resource["has_purl"] = resource["purl"] != nil && resource["purl"] != ""
-		resource["has_checksums"] = resource["checksum_count"] != nil && resource["checksum_count"].(int) > 0
+		checksumCount, _ := resource["checksum_count"].(int)
+		resource["has_checksums"] = checksumCount > 0
 		resource["has_supplier"] = pack["supplier"] != nil && pack["supplier"] != "" && pack["supplier"] != "NOASSERTION"
 		resource["is_noassertion_license"] = pack["licenseConcluded"] == "NOASSERTION" || pack["licenseDeclared"] == "NOASSERTION"
 

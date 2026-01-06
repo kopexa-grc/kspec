@@ -5,6 +5,7 @@ import (
 
 	v3 "github.com/ctreminiom/go-atlassian/jira/v3"
 	"github.com/ctreminiom/go-atlassian/pkg/infra/models"
+
 	"github.com/kopexa-grc/kspec/core"
 )
 
