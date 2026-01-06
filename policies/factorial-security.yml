@@ -1,0 +1,299 @@
+apiVersion: kopexa.io/v1alpha1
+kind: Policy
+metadata:
+  name: kopexa-factorial-security
+  title: Kopexa Factorial HR Security & Compliance
+  version: "1.0.0"
+  license: BUSL-1.1
+  tags:
+    kopexa.com/category: compliance
+    kopexa.com/platform: factorial,hris
+
+require:
+  - provider: factorial
+
+authors:
+  - name: Kopexa GmbH
+    email: security@kopexa.com
+
+groups:
+  - title: Employee Management
+    checks:
+      - uid: kopexa-factorial-employees-have-managers
+      - uid: kopexa-factorial-employees-have-email
+      - uid: kopexa-factorial-employees-assigned-teams
+      - uid: kopexa-factorial-active-employees-not-pending
+
+  - title: Contract Compliance
+    checks:
+      - uid: kopexa-factorial-contracts-have-job-title
+      - uid: kopexa-factorial-contracts-have-working-hours
+      - uid: kopexa-factorial-permanent-contracts-active
+
+  - title: Team Organization
+    checks:
+      - uid: kopexa-factorial-teams-have-leads
+      - uid: kopexa-factorial-teams-have-members
+
+  - title: Time Off Management
+    checks:
+      - uid: kopexa-factorial-leaves-not-stale
+      - uid: kopexa-factorial-allowances-configured
+
+  - title: Document Management
+    checks:
+      - uid: kopexa-factorial-documents-signed
+      - uid: kopexa-factorial-folders-active
+
+  - title: Location Management
+    checks:
+      - uid: kopexa-factorial-locations-have-address
+      - uid: kopexa-factorial-locations-have-timezone
+
+scoring_system: highest impact
+
+queries:
+  # Employee Management Checks
+  - uid: kopexa-factorial-employees-have-managers
+    title: Active employees should have assigned managers
+    resource: factorial_employee
+    severity: medium
+    query: |
+      resource.has_manager == true || resource.is_active != true
+    docs: |
+      For SOC 2 and ISO 27001 compliance, employees should have a designated
+      manager for proper oversight, performance reviews, and accountability.
+      This ensures clear reporting lines and supervisory structure.
+    remediation: |
+      1. Go to Factorial HR > Employees
+      2. Select the employee without a manager
+      3. Edit employee profile and assign a manager
+      4. Ensure the manager has appropriate permissions
+
+  - uid: kopexa-factorial-employees-have-email
+    title: Active employees must have email addresses
+    resource: factorial_employee
+    severity: high
+    query: |
+      resource.has_email == true || resource.is_active != true
+    docs: |
+      Email addresses are required for identity management, access provisioning,
+      and security notifications. GDPR and other regulations require proper
+      contact information for data subjects.
+    remediation: |
+      1. Go to Factorial HR > Employees
+      2. Select the employee without an email
+      3. Add a valid corporate email address
+      4. Consider using identity provider integration
+
+  - uid: kopexa-factorial-employees-assigned-teams
+    title: Active employees should be assigned to teams
+    resource: factorial_employee
+    severity: low
+    query: |
+      resource.has_team == true || resource.is_active != true
+    docs: |
+      Team assignments help with organizational structure, access control,
+      and resource allocation. This supports the principle of least privilege
+      by enabling team-based permission management.
+    remediation: |
+      1. Go to Factorial HR > Teams
+      2. Add the employee to an appropriate team
+      3. Ensure team lead is notified of new member
+
+  - uid: kopexa-factorial-active-employees-not-pending
+    title: Active employees should have completed their onboarding
+    resource: factorial_employee
+    severity: low
+    query: |
+      resource.has_pending_invitation != true || resource.is_active != true
+    docs: |
+      Employees with pending invitations have not completed their account
+      setup, which may indicate incomplete onboarding processes or
+      abandoned accounts that should be cleaned up.
+    remediation: |
+      1. Review employees with pending invitations
+      2. Resend invitation if employee is active
+      3. Deactivate account if employee never joined
+      4. Follow up with HR on onboarding status
+
+  # Contract Compliance Checks
+  - uid: kopexa-factorial-contracts-have-job-title
+    title: Contracts should have job titles defined
+    resource: factorial_contract
+    severity: medium
+    query: |
+      resource.has_job_title == true || resource.is_active != true
+    docs: |
+      Job titles are essential for role-based access control (RBAC),
+      compliance audits, and organizational reporting. Clear job definitions
+      support SOC 2 access control requirements.
+    remediation: |
+      1. Go to Factorial HR > Contracts
+      2. Edit the contract missing job title
+      3. Add appropriate job title from company catalog
+      4. Ensure title matches actual responsibilities
+
+  - uid: kopexa-factorial-contracts-have-working-hours
+    title: Active contracts should define working hours
+    resource: factorial_contract
+    severity: medium
+    query: |
+      resource.has_working_hours == true || resource.is_active != true
+    docs: |
+      Working hours are required for labor law compliance, overtime
+      calculations, and time tracking validation. This supports
+      EU Working Time Directive compliance.
+    remediation: |
+      1. Go to Factorial HR > Contracts
+      2. Edit the contract missing working hours
+      3. Define weekly working hours according to employment type
+      4. Ensure alignment with local labor regulations
+
+  - uid: kopexa-factorial-permanent-contracts-active
+    title: Permanent contracts should remain active
+    resource: factorial_contract
+    severity: low
+    query: |
+      resource.is_permanent != true || resource.is_active == true
+    docs: |
+      Permanent contracts without end dates should remain in active status.
+      Inactive permanent contracts may indicate data quality issues or
+      incomplete termination processes.
+    remediation: |
+      1. Review permanent contracts marked as inactive
+      2. Either set proper end date if terminated
+      3. Or reactivate if contract is still valid
+      4. Update employee status accordingly
+
+  # Team Organization Checks
+  - uid: kopexa-factorial-teams-have-leads
+    title: Teams should have designated leads
+    resource: factorial_team
+    severity: medium
+    query: |
+      resource.has_lead == true
+    docs: |
+      Team leads provide oversight, approve time off, and manage
+      team access. This supports the principle of separation of duties
+      and ensures proper approval workflows.
+    remediation: |
+      1. Go to Factorial HR > Teams
+      2. Edit the team without a lead
+      3. Assign a team lead from team members
+      4. Ensure lead has appropriate management permissions
+
+  - uid: kopexa-factorial-teams-have-members
+    title: Teams should have at least one member
+    resource: factorial_team
+    severity: low
+    query: |
+      resource.has_members == true
+    docs: |
+      Empty teams may indicate organizational cleanup needs or
+      incomplete team setup. Regular review of team structure
+      supports operational efficiency.
+    remediation: |
+      1. Review empty teams for relevance
+      2. Either add members to active teams
+      3. Or delete teams that are no longer needed
+      4. Document team purpose and membership criteria
+
+  # Time Off Management Checks
+  - uid: kopexa-factorial-leaves-not-stale
+    title: Leave requests should be processed promptly
+    resource: factorial_leave
+    severity: medium
+    query: |
+      resource.is_stale != true
+    docs: |
+      Leave requests pending for more than 7 days indicate process
+      bottlenecks or manager unavailability. Timely processing ensures
+      employee satisfaction and proper workforce planning.
+    remediation: |
+      1. Go to Factorial HR > Time Off
+      2. Review pending leave requests older than 7 days
+      3. Approve or reject with explanation
+      4. Set up manager backup approvers for future
+
+  - uid: kopexa-factorial-allowances-configured
+    title: Employees should have leave allowances configured
+    resource: factorial_allowance
+    severity: medium
+    query: |
+      resource.has_allowance == true
+    docs: |
+      Leave allowances define employee entitlements and are required
+      for proper time off tracking. Missing allowances prevent
+      employees from requesting time off.
+    remediation: |
+      1. Go to Factorial HR > Time Off > Allowances
+      2. Configure allowances for all leave types
+      3. Set appropriate allowance amounts per policy
+      4. Consider tenure-based allowance adjustments
+
+  # Document Management Checks
+  - uid: kopexa-factorial-documents-signed
+    title: Documents requiring signatures should be signed
+    resource: factorial_document
+    severity: high
+    query: |
+      resource.needs_signature != true
+    docs: |
+      Unsigned documents represent compliance gaps. Employment contracts,
+      NDAs, and policy acknowledgments must be signed for legal validity
+      and audit requirements.
+    remediation: |
+      1. Go to Factorial HR > Documents
+      2. Identify documents pending signature
+      3. Send signature reminders to employees
+      4. Escalate to managers for overdue signatures
+
+  - uid: kopexa-factorial-folders-active
+    title: Document folders should be active
+    resource: factorial_folder
+    severity: low
+    query: |
+      resource.is_active == true
+    docs: |
+      Inactive folders may contain important documents that are
+      not accessible. Regular folder maintenance ensures document
+      organization and accessibility.
+    remediation: |
+      1. Review inactive folders for content
+      2. Move important documents to active folders
+      3. Archive or delete obsolete folders
+      4. Update folder naming conventions
+
+  # Location Management Checks
+  - uid: kopexa-factorial-locations-have-address
+    title: Office locations should have complete addresses
+    resource: factorial_location
+    severity: low
+    query: |
+      resource.has_address == true
+    docs: |
+      Complete location addresses are required for payroll processing,
+      tax compliance, and emergency contacts. Missing addresses may
+      cause payroll and benefits issues.
+    remediation: |
+      1. Go to Factorial HR > Settings > Locations
+      2. Add complete address information
+      3. Include street, city, postal code, and country
+      4. Verify address accuracy with mapping services
+
+  - uid: kopexa-factorial-locations-have-timezone
+    title: Office locations should have timezone configured
+    resource: factorial_location
+    severity: low
+    query: |
+      resource.has_timezone == true
+    docs: |
+      Timezone configuration is essential for accurate time tracking,
+      shift scheduling, and meeting coordination across distributed
+      teams.
+    remediation: |
+      1. Go to Factorial HR > Settings > Locations
+      2. Set appropriate timezone for each location
+      3. Consider daylight saving time rules
+      4. Update employee profiles if needed

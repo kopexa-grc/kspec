@@ -23,6 +23,7 @@ const (
 	ProviderAtlassian  = "atlassian"
 	ProviderSBOM       = "sbom"
 	ProviderHetzner    = "hetzner"
+	ProviderFactorial  = "factorial"
 )
 
 // Asset type constants
@@ -56,7 +57,9 @@ Examples:
   kspec scan sbom file ./sbom.json -f policy.yml
   kspec scan sbom dir ./sboms/ -f policy.yml
   kspec scan hetzner project -f policy.yml
-  kspec scan hcloud project my-project --api-token <token> -f policy.yml`,
+  kspec scan hcloud project my-project --api-token <token> -f policy.yml
+  kspec scan factorial -f policy.yml
+  kspec scan factorial --api-key <key> -f policy.yml`,
 	Args: cobra.MinimumNArgs(1),
 	RunE: runScan,
 }
@@ -95,6 +98,10 @@ func init() {
 	// Hetzner-specific flags
 	scanCmd.Flags().String("hcloud-token", "", "Hetzner Cloud API token")
 	scanCmd.Flags().String("project", "", "Hetzner Cloud project name (for identification)")
+
+	// Factorial-specific flags
+	scanCmd.Flags().String("factorial-api-key", "", "Factorial HR API key")
+	scanCmd.Flags().String("access-token", "", "Factorial HR OAuth access token")
 }
 
 func runScan(cmd *cobra.Command, args []string) error {
@@ -477,6 +484,24 @@ func parseScanArgs(cmd *cobra.Command, args []string) (scanner.ScanConfig, strin
 			assetConfig["api_token"] = apiToken
 		}
 
+	case ProviderFactorial, "factorial-hr", "hris":
+		providerName = ProviderFactorial
+		assetType = "factorial-company"
+		assetName = "default"
+
+		// Get API key from flag
+		if apiKey, _ := cmd.Flags().GetString("factorial-api-key"); apiKey != "" { //nolint:errcheck // Flag is defined
+			assetConfig["api_key"] = apiKey
+		}
+		if apiKey, _ := cmd.Flags().GetString("api-key"); apiKey != "" { //nolint:errcheck // Flag is defined
+			assetConfig["api_key"] = apiKey
+		}
+
+		// Get access token from flag
+		if accessToken, _ := cmd.Flags().GetString("access-token"); accessToken != "" { //nolint:errcheck // Flag is defined
+			assetConfig["access_token"] = accessToken
+		}
+
 	default:
 		return scanner.ScanConfig{}, "", fmt.Errorf("unknown provider: %s", providerArg)
 	}
@@ -654,6 +679,28 @@ func buildProviderConfig(cmd *cobra.Command, providerName string, assetConfig ma
 		project, _ := cmd.Flags().GetString("project") //nolint:errcheck // Flag is defined
 		if project != "" {
 			providerConfig["project"] = project
+		}
+
+	case ProviderFactorial:
+		// Copy asset config to provider config
+		for k, v := range assetConfig {
+			providerConfig[k] = v
+		}
+
+		// Get API key from flag
+		factorialAPIKey, _ := cmd.Flags().GetString("factorial-api-key") //nolint:errcheck // Flag is defined
+		if factorialAPIKey != "" {
+			providerConfig["api_key"] = factorialAPIKey
+		}
+		apiKey, _ := cmd.Flags().GetString("api-key") //nolint:errcheck // Flag is defined
+		if apiKey != "" {
+			providerConfig["api_key"] = apiKey
+		}
+
+		// Get access token from flag
+		accessToken, _ := cmd.Flags().GetString("access-token") //nolint:errcheck // Flag is defined
+		if accessToken != "" {
+			providerConfig["access_token"] = accessToken
 		}
 	}
 
