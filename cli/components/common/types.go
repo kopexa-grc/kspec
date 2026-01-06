@@ -3,6 +3,7 @@ package common
 // AssetState represents the current state of an asset
 type AssetState string
 
+// AssetState constants define the possible states of an asset during scanning.
 const (
 	AssetStatePending   AssetState = "pending"
 	AssetStateDiscovery AssetState = "discovering"
@@ -27,6 +28,7 @@ type Asset struct {
 // ViewMode represents the current UI view
 type ViewMode string
 
+// ViewMode constants define the possible view modes in the CLI.
 const (
 	ViewModeDiscovery ViewMode = "discovery"
 	ViewModeOverview  ViewMode = "overview"

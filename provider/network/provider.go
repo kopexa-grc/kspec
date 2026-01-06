@@ -1,3 +1,5 @@
+// Package network provides network-related scanning capabilities including
+// TLS certificates, HTTP security headers, and DNS configuration.
 package network
 
 import (

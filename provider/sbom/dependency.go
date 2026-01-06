@@ -6,19 +6,19 @@ import (
 	"github.com/kopexa-grc/kspec/core"
 )
 
-// SBOMDependencyResource fetches SBOM dependency relationships.
-type SBOMDependencyResource struct {
+// DependencyResource fetches SBOM dependency relationships.
+type DependencyResource struct {
 	path  string
 	isDir bool
 }
 
 // Name returns the resource type name.
-func (r *SBOMDependencyResource) Name() string {
+func (r *DependencyResource) Name() string {
 	return "sbom_dependency"
 }
 
 // Fetch retrieves SBOM dependencies.
-func (r *SBOMDependencyResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
+func (r *DependencyResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
 	sboms, err := parseSBOMFiles(r.path, r.isDir)
 	if err != nil {
 		return nil, err
@@ -48,7 +48,7 @@ func (r *SBOMDependencyResource) Fetch(ctx context.Context, asset core.Asset) ([
 	return resources, nil
 }
 
-func (r *SBOMDependencyResource) parseCycloneDXDependencies(sbom map[string]interface{}, filePath string) []core.Resource {
+func (r *DependencyResource) parseCycloneDXDependencies(sbom map[string]interface{}, filePath string) []core.Resource {
 	var resources []core.Resource
 
 	dependencies, ok := sbom["dependencies"].([]interface{})
@@ -93,7 +93,7 @@ func (r *SBOMDependencyResource) parseCycloneDXDependencies(sbom map[string]inte
 	return resources
 }
 
-func (r *SBOMDependencyResource) parseSPDXRelationships(sbom map[string]interface{}, filePath string) []core.Resource {
+func (r *DependencyResource) parseSPDXRelationships(sbom map[string]interface{}, filePath string) []core.Resource {
 	var resources []core.Resource
 
 	relationships, ok := sbom["relationships"].([]interface{})

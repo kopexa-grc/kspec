@@ -1,3 +1,4 @@
+// Package detail provides the asset detail view component for the CLI.
 package detail
 
 import (

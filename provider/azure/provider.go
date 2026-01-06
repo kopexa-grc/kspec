@@ -1,3 +1,5 @@
+// Package azure provides Azure cloud resource scanning capabilities
+// for security policy evaluation.
 package azure
 
 import (

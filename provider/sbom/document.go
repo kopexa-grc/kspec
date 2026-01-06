@@ -8,19 +8,19 @@ import (
 	"github.com/kopexa-grc/kspec/core"
 )
 
-// SBOMDocumentResource fetches SBOM document metadata.
-type SBOMDocumentResource struct {
+// DocumentResource fetches SBOM document metadata.
+type DocumentResource struct {
 	path  string
 	isDir bool
 }
 
 // Name returns the resource type name.
-func (r *SBOMDocumentResource) Name() string {
+func (r *DocumentResource) Name() string {
 	return "sbom_document"
 }
 
 // Fetch retrieves SBOM document information.
-func (r *SBOMDocumentResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
+func (r *DocumentResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
 	sboms, err := parseSBOMFiles(r.path, r.isDir)
 	if err != nil {
 		return nil, err
@@ -50,7 +50,7 @@ func (r *SBOMDocumentResource) Fetch(ctx context.Context, asset core.Asset) ([]c
 	return resources, nil
 }
 
-func (r *SBOMDocumentResource) parseCycloneDXDocument(sbom map[string]interface{}, resource core.Resource) {
+func (r *DocumentResource) parseCycloneDXDocument(sbom map[string]interface{}, resource core.Resource) {
 	resource["bom_format"] = sbom["bomFormat"]
 	resource["spec_version"] = sbom["specVersion"]
 	resource["serial_number"] = sbom["serialNumber"]
@@ -93,7 +93,7 @@ func (r *SBOMDocumentResource) parseCycloneDXDocument(sbom map[string]interface{
 	resource["has_components"] = componentCount > 0
 }
 
-func (r *SBOMDocumentResource) parseSPDXDocument(sbom map[string]interface{}, resource core.Resource) {
+func (r *DocumentResource) parseSPDXDocument(sbom map[string]interface{}, resource core.Resource) {
 	resource["spdx_version"] = sbom["spdxVersion"]
 	resource["spdx_id"] = sbom["SPDXID"]
 	resource["document_name"] = sbom["name"]

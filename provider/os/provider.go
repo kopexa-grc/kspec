@@ -1,3 +1,5 @@
+// Package os provides local operating system resource scanning capabilities
+// including services, packages, files, and macOS-specific resources.
 package os
 
 import (

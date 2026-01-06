@@ -1,3 +1,5 @@
+// Package github provides GitHub repository and organization scanning
+// capabilities for security policy evaluation.
 package github
 
 import (
@@ -11,18 +13,21 @@ import (
 	"github.com/kopexa-grc/kspec/core"
 )
 
-// GithubProvider is now a factory
-type GithubProvider struct{}
+// Provider implements the core.Provider interface for GitHub.
+type Provider struct{}
 
-func NewGithubProvider() *GithubProvider {
-	return &GithubProvider{}
+// NewGithubProvider creates a new GitHub provider.
+func NewGithubProvider() *Provider {
+	return &Provider{}
 }
 
-func (p *GithubProvider) Name() string {
+// Name returns the provider name.
+func (p *Provider) Name() string {
 	return "github"
 }
 
-func (p *GithubProvider) Connect(ctx context.Context, config map[string]string) (core.Connection, error) {
+// Connect establishes a connection to GitHub APIs.
+func (p *Provider) Connect(ctx context.Context, config map[string]string) (core.Connection, error) {
 	// Try to parse credentials from config
 	var token string
 
@@ -58,15 +63,16 @@ func (p *GithubProvider) Connect(ctx context.Context, config map[string]string) 
 	}
 
 	client := github.NewClient(tc)
-	return &GithubConnection{client: client}, nil
+	return &Connection{client: client}, nil
 }
 
-// GithubConnection holds the session
-type GithubConnection struct {
+// Connection represents an active connection to GitHub APIs.
+type Connection struct {
 	client *github.Client
 }
 
-func (c *GithubConnection) Resources() []core.ResourceSpec {
+// Resources returns all available GitHub resources.
+func (c *Connection) Resources() []core.ResourceSpec {
 	return []core.ResourceSpec{
 		&RepoResource{client: c.client},
 		&TeamResource{client: c.client},

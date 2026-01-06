@@ -1,3 +1,5 @@
+// Package browser provides a hierarchical browser component for navigating
+// scan results and policy checks.
 package browser
 
 import (

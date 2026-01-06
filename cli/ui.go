@@ -1,3 +1,4 @@
+// Package cli provides the terminal user interface for kspec security scanning.
 package cli
 
 import (

@@ -1,3 +1,5 @@
+// Package core provides the fundamental types and interfaces for security policy
+// evaluation, including assets, policies, providers, and the evaluation engine.
 package core
 
 // Asset represents the target we are scanning (e.g., a Host, a Repository, a Container).

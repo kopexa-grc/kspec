@@ -12,6 +12,7 @@ type Policy struct {
 	ScoringSystem string        `yaml:"scoring_system,omitempty"`
 }
 
+// Metadata contains policy metadata like name, version, and tags.
 type Metadata struct {
 	Name    string            `yaml:"name"`
 	Version string            `yaml:"version,omitempty"`
@@ -20,21 +21,25 @@ type Metadata struct {
 	Tags    map[string]string `yaml:"tags,omitempty"`
 }
 
+// Requirement specifies a provider dependency for the policy.
 type Requirement struct {
 	Provider string `yaml:"provider"`
 }
 
+// Author represents a policy author.
 type Author struct {
 	Name  string `yaml:"name"`
 	Email string `yaml:"email,omitempty"`
 }
 
+// Group represents a collection of related checks with optional filtering.
 type Group struct {
 	Title  string  `yaml:"title"`
 	Filter string  `yaml:"filter,omitempty"` // CEL expression
 	Checks []Check `yaml:"checks"`
 }
 
+// Check represents a security check to evaluate against resources.
 type Check struct {
 	UID   string `yaml:"uid,omitempty"`
 	ID    string `yaml:"id,omitempty"`
@@ -54,6 +59,7 @@ type Check struct {
 	Props []Prop `yaml:"props,omitempty"`
 }
 
+// Prop represents a named property extraction for check results.
 type Prop struct {
 	UID   string      `yaml:"uid,omitempty"`
 	Title string      `yaml:"title,omitempty"`

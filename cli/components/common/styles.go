@@ -2,16 +2,25 @@ package common
 
 import "github.com/charmbracelet/lipgloss"
 
+// Color palette for the CLI.
 var (
-	// Color palette
-	ColorPrimary   = lipgloss.Color("#7D56F4")
-	ColorSuccess   = lipgloss.Color("#04B575")
-	ColorWarning   = lipgloss.Color("#FFAA00")
-	ColorError     = lipgloss.Color("#FF0000")
-	ColorMuted     = lipgloss.Color("#626262")
+	// ColorPrimary is the primary accent color.
+	ColorPrimary = lipgloss.Color("#7D56F4")
+	// ColorSuccess indicates success states.
+	ColorSuccess = lipgloss.Color("#04B575")
+	// ColorWarning indicates warning states.
+	ColorWarning = lipgloss.Color("#FFAA00")
+	// ColorError indicates error states.
+	ColorError = lipgloss.Color("#FF0000")
+	// ColorMuted is used for de-emphasized text.
+	ColorMuted = lipgloss.Color("#626262")
+	// ColorHighlight is used for highlighted elements.
 	ColorHighlight = lipgloss.Color("#F780E2")
+)
 
-	// Base styles
+// Base text styles.
+var (
+	// TitleStyle is used for main headings.
 	TitleStyle = lipgloss.NewStyle().
 			Bold(true).
 			Foreground(ColorPrimary).
@@ -39,8 +48,11 @@ var (
 	HelpStyle = lipgloss.NewStyle().
 			Foreground(ColorMuted).
 			MarginTop(1)
+)
 
-	// Table styles
+// Table styles.
+var (
+	// HeaderStyle is used for table headers.
 	HeaderStyle = lipgloss.NewStyle().
 			Bold(true).
 			Foreground(ColorPrimary).
@@ -48,10 +60,12 @@ var (
 			BorderBottom(true).
 			BorderForeground(ColorMuted)
 
+	// SelectedStyle is used for selected items.
 	SelectedStyle = lipgloss.NewStyle().
 			Foreground(ColorHighlight).
 			Bold(true)
 
+	// CellStyle is used for table cells.
 	CellStyle = lipgloss.NewStyle().
 			PaddingLeft(1).
 			PaddingRight(1)

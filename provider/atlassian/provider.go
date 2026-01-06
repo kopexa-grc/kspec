@@ -1,3 +1,5 @@
+// Package atlassian provides Atlassian Cloud (Jira, Confluence, Admin) scanning
+// capabilities for security policy evaluation.
 package atlassian
 
 import (
@@ -14,21 +16,21 @@ import (
 	"github.com/kopexa-grc/kspec/core"
 )
 
-// AtlassianProvider implements the core.Provider interface for Atlassian Cloud.
-type AtlassianProvider struct{}
+// Provider implements the core.Provider interface for Atlassian Cloud.
+type Provider struct{}
 
-// NewAtlassianProvider creates a new Atlassian provider.
-func NewAtlassianProvider() *AtlassianProvider {
-	return &AtlassianProvider{}
+// NewProvider creates a new Atlassian provider.
+func NewProvider() *Provider {
+	return &Provider{}
 }
 
 // Name returns the provider name.
-func (p *AtlassianProvider) Name() string {
+func (p *Provider) Name() string {
 	return "atlassian"
 }
 
 // Connect establishes a connection to Atlassian Cloud APIs.
-func (p *AtlassianProvider) Connect(ctx context.Context, config map[string]string) (core.Connection, error) {
+func (p *Provider) Connect(ctx context.Context, config map[string]string) (core.Connection, error) {
 	// Get authentication credentials
 	email := config["email"]
 	if email == "" {
@@ -87,7 +89,7 @@ func (p *AtlassianProvider) Connect(ctx context.Context, config map[string]strin
 		orgID = os.Getenv("ATLASSIAN_ORG_ID")
 	}
 
-	return &AtlassianConnection{
+	return &Connection{
 		jiraClient:       jiraClient,
 		confluenceClient: confluenceClient,
 		adminClient:      adminClient,
@@ -99,8 +101,8 @@ func (p *AtlassianProvider) Connect(ctx context.Context, config map[string]strin
 	}, nil
 }
 
-// AtlassianConnection represents an active connection to Atlassian Cloud.
-type AtlassianConnection struct {
+// Connection represents an active connection to Atlassian Cloud.
+type Connection struct {
 	jiraClient       *v3.Client
 	confluenceClient *confluence.Client
 	adminClient      *admin.Client
@@ -112,7 +114,7 @@ type AtlassianConnection struct {
 }
 
 // Resources returns all available Atlassian resources.
-func (c *AtlassianConnection) Resources() []core.ResourceSpec {
+func (c *Connection) Resources() []core.ResourceSpec {
 	return []core.ResourceSpec{
 		// Jira resources
 		&JiraProjectResource{client: c.jiraClient},

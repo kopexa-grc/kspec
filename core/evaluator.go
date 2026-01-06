@@ -11,11 +11,13 @@ import (
 	"github.com/google/cel-go/ext"
 )
 
+// Evaluator evaluates CEL expressions against resources for security checks.
 type Evaluator struct {
 	Env      *cel.Env
 	Registry map[string]ResourceSpec // Access to providers
 }
 
+// NewEvaluator creates a new evaluator with the given resource registry.
 func NewEvaluator(registry map[string]ResourceSpec) (*Evaluator, error) {
 	// We register a custom 'dns' function.
 	// It takes a string (domain) and returns a map (resource).
@@ -98,6 +100,7 @@ func NewEvaluator(registry map[string]ResourceSpec) (*Evaluator, error) {
 	return &Evaluator{Env: env, Registry: registry}, nil
 }
 
+// Evaluate runs a CEL expression against a resource and returns the boolean result.
 func (e *Evaluator) Evaluate(expression string, resource Resource, config map[string]string, props map[string]interface{}, asset Asset) (bool, error) {
 	ast, issues := e.Env.Compile(expression)
 	if issues != nil && issues.Err() != nil {

@@ -1,3 +1,4 @@
+// Package cmd provides the command-line interface for kspec security scanning.
 package cmd
 
 import (

@@ -8,14 +8,14 @@ import (
 	"github.com/kopexa-grc/kspec/core"
 )
 
-func TestAtlassianProvider_Name(t *testing.T) {
-	p := NewAtlassianProvider()
+func TestProvider_Name(t *testing.T) {
+	p := NewProvider()
 	if got := p.Name(); got != "atlassian" {
 		t.Errorf("Name() = %v, want %v", got, "atlassian")
 	}
 }
 
-func TestAtlassianProvider_Connect_MissingCredentials(t *testing.T) {
+func TestProvider_Connect_MissingCredentials(t *testing.T) {
 	// Clear any environment variables
 	os.Unsetenv("ATLASSIAN_EMAIL")
 	os.Unsetenv("ATLASSIAN_API_TOKEN")
@@ -57,7 +57,7 @@ func TestAtlassianProvider_Connect_MissingCredentials(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			p := NewAtlassianProvider()
+			p := NewProvider()
 			_, err := p.Connect(context.Background(), tt.config)
 
 			if err == nil {
@@ -72,13 +72,13 @@ func TestAtlassianProvider_Connect_MissingCredentials(t *testing.T) {
 	}
 }
 
-func TestAtlassianProvider_Connect_WithEnvVars(t *testing.T) {
+func TestProvider_Connect_WithEnvVars(t *testing.T) {
 	os.Setenv("ATLASSIAN_EMAIL", "env@example.com")
 	os.Setenv("ATLASSIAN_API_TOKEN", "env-token")
 	defer os.Unsetenv("ATLASSIAN_EMAIL")
 	defer os.Unsetenv("ATLASSIAN_API_TOKEN")
 
-	p := NewAtlassianProvider()
+	p := NewProvider()
 	_, err := p.Connect(context.Background(), map[string]string{
 		"site": "test.atlassian.net",
 	})
@@ -90,7 +90,7 @@ func TestAtlassianProvider_Connect_WithEnvVars(t *testing.T) {
 	}
 }
 
-func TestAtlassianProvider_Connect_ConfigOverridesEnv(t *testing.T) {
+func TestProvider_Connect_ConfigOverridesEnv(t *testing.T) {
 	os.Setenv("ATLASSIAN_EMAIL", "env@example.com")
 	os.Setenv("ATLASSIAN_API_TOKEN", "env-token")
 	os.Setenv("ATLASSIAN_SITE", "env.atlassian.net")
@@ -98,7 +98,7 @@ func TestAtlassianProvider_Connect_ConfigOverridesEnv(t *testing.T) {
 	defer os.Unsetenv("ATLASSIAN_API_TOKEN")
 	defer os.Unsetenv("ATLASSIAN_SITE")
 
-	p := NewAtlassianProvider()
+	p := NewProvider()
 	_, err := p.Connect(context.Background(), map[string]string{
 		"email":     "config@example.com",
 		"api_token": "config-token",
@@ -123,8 +123,8 @@ func TestDiscoverCloudID_UnreachableHost(t *testing.T) {
 // since the function uses HTTPS. The unreachable host test above verifies
 // basic error handling.
 
-func TestAtlassianConnection_Resources(t *testing.T) {
-	conn := &AtlassianConnection{
+func TestConnection_Resources(t *testing.T) {
+	conn := &Connection{
 		jiraClient:       nil,
 		confluenceClient: nil,
 		adminClient:      nil,

@@ -1,3 +1,4 @@
+// Package common provides shared types, styles, and utilities for CLI components.
 package common
 
 import "github.com/charmbracelet/bubbles/key"

@@ -1,3 +1,5 @@
+// Package cloudflare provides Cloudflare resource scanning capabilities
+// for security policy evaluation.
 package cloudflare
 
 import (
@@ -11,21 +13,21 @@ import (
 	"github.com/kopexa-grc/kspec/core"
 )
 
-// CloudflareProvider implements the core.Provider interface for Cloudflare.
-type CloudflareProvider struct{}
+// Provider implements the core.Provider interface for Cloudflare.
+type Provider struct{}
 
 // NewCloudflareProvider creates a new Cloudflare provider.
-func NewCloudflareProvider() *CloudflareProvider {
-	return &CloudflareProvider{}
+func NewCloudflareProvider() *Provider {
+	return &Provider{}
 }
 
 // Name returns the provider name.
-func (p *CloudflareProvider) Name() string {
+func (p *Provider) Name() string {
 	return "cloudflare"
 }
 
 // Connect establishes a connection to Cloudflare API.
-func (p *CloudflareProvider) Connect(ctx context.Context, config map[string]string) (core.Connection, error) {
+func (p *Provider) Connect(ctx context.Context, config map[string]string) (core.Connection, error) {
 	var opts []option.RequestOption
 
 	// Try API Token first (preferred method)
@@ -63,20 +65,20 @@ func (p *CloudflareProvider) Connect(ctx context.Context, config map[string]stri
 		accountID = os.Getenv("CLOUDFLARE_ACCOUNT_ID")
 	}
 
-	return &CloudflareConnection{
+	return &Connection{
 		client:    client,
 		accountID: accountID,
 	}, nil
 }
 
-// CloudflareConnection represents an active connection to Cloudflare.
-type CloudflareConnection struct {
+// Connection represents an active connection to Cloudflare.
+type Connection struct {
 	client    *cloudflare.Client
 	accountID string
 }
 
 // Resources returns all available Cloudflare resources.
-func (c *CloudflareConnection) Resources() []core.ResourceSpec {
+func (c *Connection) Resources() []core.ResourceSpec {
 	return []core.ResourceSpec{
 		// Account resources
 		&AccountResource{client: c.client},

@@ -1,3 +1,5 @@
+// Package discovery provides the discovery phase UI component showing
+// resource scanning progress.
 package discovery
 
 import (
@@ -19,14 +21,14 @@ type Model struct {
 	complete  bool
 }
 
-// DiscoveryUpdate is sent when a resource type is discovered
-type DiscoveryUpdate struct {
+// Update is sent when a resource type is discovered.
+type Update struct {
 	ResourceType string
 	Count        int
 }
 
-// DiscoveryComplete is sent when discovery is finished
-type DiscoveryComplete struct {
+// Complete is sent when discovery is finished.
+type Complete struct {
 	TotalResources int
 	TotalTypes     int
 }
@@ -53,11 +55,11 @@ func (m Model) Init() tea.Cmd {
 // Update handles messages
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case DiscoveryUpdate:
+	case Update:
 		m.resources[msg.ResourceType] = msg.Count
 		return m, nil
 
-	case DiscoveryComplete:
+	case Complete:
 		m.complete = true
 		return m, nil
 

@@ -7,15 +7,15 @@ import (
 	"github.com/kopexa-grc/kspec/core"
 )
 
-func TestSBOMComponentResource_Name(t *testing.T) {
-	r := &SBOMComponentResource{}
+func TestComponentResource_Name(t *testing.T) {
+	r := &ComponentResource{}
 	if got := r.Name(); got != "sbom_component" {
 		t.Errorf("Name() = %v, want %v", got, "sbom_component")
 	}
 }
 
-func TestSBOMComponentResource_FetchCycloneDX(t *testing.T) {
-	r := &SBOMComponentResource{
+func TestComponentResource_FetchCycloneDX(t *testing.T) {
+	r := &ComponentResource{
 		path:  "testdata/cyclonedx.json",
 		isDir: false,
 	}
@@ -81,8 +81,8 @@ func TestSBOMComponentResource_FetchCycloneDX(t *testing.T) {
 	}
 }
 
-func TestSBOMComponentResource_FetchSPDX(t *testing.T) {
-	r := &SBOMComponentResource{
+func TestComponentResource_FetchSPDX(t *testing.T) {
+	r := &ComponentResource{
 		path:  "testdata/spdx.json",
 		isDir: false,
 	}
@@ -139,8 +139,8 @@ func TestSBOMComponentResource_FetchSPDX(t *testing.T) {
 	}
 }
 
-func TestSBOMComponentResource_SPDXNoAssertion(t *testing.T) {
-	r := &SBOMComponentResource{
+func TestComponentResource_SPDXNoAssertion(t *testing.T) {
+	r := &ComponentResource{
 		path:  "testdata/spdx.json",
 		isDir: false,
 	}
@@ -173,8 +173,8 @@ func TestSBOMComponentResource_SPDXNoAssertion(t *testing.T) {
 	}
 }
 
-func TestSBOMComponentResource_FetchDirectory(t *testing.T) {
-	r := &SBOMComponentResource{
+func TestComponentResource_FetchDirectory(t *testing.T) {
+	r := &ComponentResource{
 		path:  "testdata",
 		isDir: true,
 	}
@@ -205,8 +205,8 @@ func TestSBOMComponentResource_FetchDirectory(t *testing.T) {
 	}
 }
 
-func TestSBOMComponentResource_ComponentTypes(t *testing.T) {
-	r := &SBOMComponentResource{
+func TestComponentResource_ComponentTypes(t *testing.T) {
+	r := &ComponentResource{
 		path:  "testdata/cyclonedx.json",
 		isDir: false,
 	}
@@ -238,8 +238,8 @@ func TestSBOMComponentResource_ComponentTypes(t *testing.T) {
 	}
 }
 
-func TestSBOMComponentResource_ComponentWithoutVersion(t *testing.T) {
-	r := &SBOMComponentResource{
+func TestComponentResource_ComponentWithoutVersion(t *testing.T) {
+	r := &ComponentResource{
 		path:  "testdata/cyclonedx.json",
 		isDir: false,
 	}

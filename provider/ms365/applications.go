@@ -1,3 +1,5 @@
+// Package ms365 provides Microsoft 365 (Microsoft Graph API) scanning
+// capabilities for security policy evaluation.
 package ms365
 
 import (

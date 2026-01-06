@@ -1,3 +1,4 @@
+// Package provider manages the registry of available security scanning providers.
 package provider
 
 import (
@@ -25,8 +26,8 @@ func GetProviders() []core.Provider {
 		azure.NewAzureProvider(),
 		ms365.NewMS365Provider(),
 		cloudflare.NewCloudflareProvider(),
-		atlassian.NewAtlassianProvider(),
-		sbom.NewSBOMProvider(),
+		atlassian.NewProvider(),
+		sbom.NewProvider(),
 		hetzner.NewProvider(),
 	}
 }
@@ -47,9 +48,9 @@ func GetProviderByName(name string) (core.Provider, error) {
 	case "cloudflare", "cf":
 		return cloudflare.NewCloudflareProvider(), nil
 	case "atlassian", "jira", "confluence":
-		return atlassian.NewAtlassianProvider(), nil
+		return atlassian.NewProvider(), nil
 	case "sbom", "bom", "cyclonedx", "spdx":
-		return sbom.NewSBOMProvider(), nil
+		return sbom.NewProvider(), nil
 	case "hetzner", "hcloud":
 		return hetzner.NewProvider(), nil
 	default:

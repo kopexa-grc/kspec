@@ -7,14 +7,14 @@ import (
 	"testing"
 )
 
-func TestSBOMProvider_Name(t *testing.T) {
-	p := NewSBOMProvider()
+func TestProvider_Name(t *testing.T) {
+	p := NewProvider()
 	if got := p.Name(); got != "sbom" {
 		t.Errorf("Name() = %v, want %v", got, "sbom")
 	}
 }
 
-func TestSBOMProvider_Connect(t *testing.T) {
+func TestProvider_Connect(t *testing.T) {
 	tests := []struct {
 		name    string
 		config  map[string]string
@@ -50,7 +50,7 @@ func TestSBOMProvider_Connect(t *testing.T) {
 				defer os.Unsetenv("SBOM_PATH")
 			}
 
-			p := NewSBOMProvider()
+			p := NewProvider()
 			conn, err := p.Connect(context.Background(), tt.config)
 
 			if (err != nil) != tt.wantErr {
@@ -65,11 +65,11 @@ func TestSBOMProvider_Connect(t *testing.T) {
 	}
 }
 
-func TestSBOMProvider_ConnectWithEnv(t *testing.T) {
+func TestProvider_ConnectWithEnv(t *testing.T) {
 	os.Setenv("SBOM_PATH", "testdata/cyclonedx.json")
 	defer os.Unsetenv("SBOM_PATH")
 
-	p := NewSBOMProvider()
+	p := NewProvider()
 	conn, err := p.Connect(context.Background(), map[string]string{})
 	if err != nil {
 		t.Fatalf("Connect() error = %v", err)
@@ -80,8 +80,8 @@ func TestSBOMProvider_ConnectWithEnv(t *testing.T) {
 	}
 }
 
-func TestSBOMConnection_Resources(t *testing.T) {
-	p := NewSBOMProvider()
+func TestConnection_Resources(t *testing.T) {
+	p := NewProvider()
 	conn, err := p.Connect(context.Background(), map[string]string{
 		"sbom_path": "testdata/cyclonedx.json",
 	})
@@ -116,7 +116,7 @@ func TestDetectFormat(t *testing.T) {
 	tests := []struct {
 		name string
 		data string
-		want SBOMFormat
+		want Format
 	}{
 		{
 			name: "CycloneDX JSON",

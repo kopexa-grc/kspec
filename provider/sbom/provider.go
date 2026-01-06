@@ -1,3 +1,5 @@
+// Package sbom provides SBOM (Software Bill of Materials) scanning capabilities
+// for security policy evaluation. It supports CycloneDX and SPDX formats.
 package sbom
 
 import (
@@ -11,21 +13,21 @@ import (
 	"github.com/kopexa-grc/kspec/core"
 )
 
-// SBOMProvider implements the core.Provider interface for SBOM (Software Bill of Materials) scanning.
-type SBOMProvider struct{}
+// Provider implements the core.Provider interface for SBOM (Software Bill of Materials) scanning.
+type Provider struct{}
 
-// NewSBOMProvider creates a new SBOM provider.
-func NewSBOMProvider() *SBOMProvider {
-	return &SBOMProvider{}
+// NewProvider creates a new SBOM provider.
+func NewProvider() *Provider {
+	return &Provider{}
 }
 
 // Name returns the provider name.
-func (p *SBOMProvider) Name() string {
+func (p *Provider) Name() string {
 	return "sbom"
 }
 
 // Connect establishes a connection to scan SBOM files.
-func (p *SBOMProvider) Connect(ctx context.Context, config map[string]string) (core.Connection, error) {
+func (p *Provider) Connect(ctx context.Context, config map[string]string) (core.Connection, error) {
 	// Get SBOM file path from config or environment
 	sbomPath := config["sbom_path"]
 	if sbomPath == "" {
@@ -42,39 +44,40 @@ func (p *SBOMProvider) Connect(ctx context.Context, config map[string]string) (c
 		return nil, fmt.Errorf("sbom: failed to access path %s: %w", sbomPath, err)
 	}
 
-	return &SBOMConnection{
+	return &Connection{
 		path:  sbomPath,
 		isDir: info.IsDir(),
 	}, nil
 }
 
-// SBOMConnection represents an active connection for SBOM scanning.
-type SBOMConnection struct {
+// Connection represents an active connection for SBOM scanning.
+type Connection struct {
 	path  string
 	isDir bool
 }
 
 // Resources returns all available SBOM resources.
-func (c *SBOMConnection) Resources() []core.ResourceSpec {
+func (c *Connection) Resources() []core.ResourceSpec {
 	return []core.ResourceSpec{
-		&SBOMDocumentResource{path: c.path, isDir: c.isDir},
-		&SBOMComponentResource{path: c.path, isDir: c.isDir},
-		&SBOMVulnerabilityResource{path: c.path, isDir: c.isDir},
-		&SBOMDependencyResource{path: c.path, isDir: c.isDir},
+		&DocumentResource{path: c.path, isDir: c.isDir},
+		&ComponentResource{path: c.path, isDir: c.isDir},
+		&VulnerabilityResource{path: c.path, isDir: c.isDir},
+		&DependencyResource{path: c.path, isDir: c.isDir},
 	}
 }
 
-// SBOMFormat represents the detected SBOM format.
-type SBOMFormat string
+// Format represents the detected SBOM format.
+type Format string
 
+// SBOM format constants.
 const (
-	FormatCycloneDX SBOMFormat = "cyclonedx"
-	FormatSPDX      SBOMFormat = "spdx"
-	FormatUnknown   SBOMFormat = "unknown"
+	FormatCycloneDX Format = "cyclonedx"
+	FormatSPDX      Format = "spdx"
+	FormatUnknown   Format = "unknown"
 )
 
 // detectFormat detects the SBOM format from file content.
-func detectFormat(data []byte) SBOMFormat {
+func detectFormat(data []byte) Format {
 	// Try to detect CycloneDX
 	if strings.Contains(string(data), `"bomFormat"`) || strings.Contains(string(data), `bomFormat=`) {
 		return FormatCycloneDX

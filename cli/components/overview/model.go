@@ -1,3 +1,4 @@
+// Package overview provides the asset overview table component for the CLI.
 package overview
 
 import (

@@ -7,19 +7,19 @@ import (
 	"github.com/kopexa-grc/kspec/core"
 )
 
-// SBOMComponentResource fetches SBOM components/packages.
-type SBOMComponentResource struct {
+// ComponentResource fetches SBOM components/packages.
+type ComponentResource struct {
 	path  string
 	isDir bool
 }
 
 // Name returns the resource type name.
-func (r *SBOMComponentResource) Name() string {
+func (r *ComponentResource) Name() string {
 	return "sbom_component"
 }
 
 // Fetch retrieves SBOM components.
-func (r *SBOMComponentResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
+func (r *ComponentResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
 	sboms, err := parseSBOMFiles(r.path, r.isDir)
 	if err != nil {
 		return nil, err
@@ -49,7 +49,7 @@ func (r *SBOMComponentResource) Fetch(ctx context.Context, asset core.Asset) ([]
 	return resources, nil
 }
 
-func (r *SBOMComponentResource) parseCycloneDXComponents(sbom map[string]interface{}, filePath string) []core.Resource {
+func (r *ComponentResource) parseCycloneDXComponents(sbom map[string]interface{}, filePath string) []core.Resource {
 	var resources []core.Resource
 
 	components, ok := sbom["components"].([]interface{})
@@ -128,7 +128,7 @@ func (r *SBOMComponentResource) parseCycloneDXComponents(sbom map[string]interfa
 	return resources
 }
 
-func (r *SBOMComponentResource) parseSPDXPackages(sbom map[string]interface{}, filePath string) []core.Resource {
+func (r *ComponentResource) parseSPDXPackages(sbom map[string]interface{}, filePath string) []core.Resource {
 	var resources []core.Resource
 
 	packages, ok := sbom["packages"].([]interface{})
