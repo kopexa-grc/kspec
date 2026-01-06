@@ -36,7 +36,7 @@ jobs:
 
   test:
     name: Test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-4c
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -47,11 +47,19 @@ jobs:
           go-version-file: go.mod
           cache: true
 
+      - name: Go Test Cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/go-build
+          key: ${{ runner.os }}-go-test-${{ hashFiles('**/*.go') }}
+          restore-keys: |
+            ${{ runner.os }}-go-test-
+
       - name: Download dependencies
         run: go mod download
 
       - name: Run tests
-        run: go test -v -race -coverprofile=coverage.out ./...
+        run: go test -v -coverprofile=coverage.out ./...
 
       - name: Upload coverage
         uses: codecov/codecov-action@v4
@@ -59,6 +67,31 @@ jobs:
           files: ./coverage.out
           fail_ci_if_error: false
         continue-on-error: true
+
+  # Race detection runs separately (slower but important)
+  test-race:
+    name: Test (Race Detection)
+    runs-on: ubuntu-4c
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Go Test Cache (Race)
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/go-build
+          key: ${{ runner.os }}-go-test-race-${{ hashFiles('**/*.go') }}
+          restore-keys: |
+            ${{ runner.os }}-go-test-race-
+
+      - name: Run tests with race detector
+        run: go test -race ./...
 
   build:
     name: Build
