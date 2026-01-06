@@ -133,7 +133,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: archive-${{ matrix.goos }}-${{ matrix.goarch }}
-          path: kspec_*.*
+          path: |
+            *.tar.gz
+            *.zip
           retention-days: 1
 
   # Create release with all artifacts
@@ -153,10 +155,16 @@ jobs:
           pattern: archive-*
           merge-multiple: true
 
+      - name: List downloaded files
+        run: |
+          echo "Contents of archives directory:"
+          find archives -type f -name "*.tar.gz" -o -name "*.zip" | sort
+
       - name: Generate checksums
         run: |
           cd archives
-          sha256sum kspec_* > checksums.txt
+          # Find all archive files and generate checksums
+          find . -type f \( -name "*.tar.gz" -o -name "*.zip" \) -exec sha256sum {} \; | sed 's|./||' > checksums.txt
           cat checksums.txt
 
       - name: Upload to release
@@ -165,5 +173,6 @@ jobs:
         run: |
           TAG="${{ needs.release-please.outputs.tag_name }}"
 
-          # Upload all archives and checksums
-          gh release upload "${TAG}" archives/* --clobber
+          # Upload all archive files and checksums
+          find archives -type f \( -name "*.tar.gz" -o -name "*.zip" \) -exec gh release upload "${TAG}" {} --clobber \;
+          gh release upload "${TAG}" archives/checksums.txt --clobber
