@@ -10,27 +10,30 @@ import (
 	"github.com/kopexa-grc/kspec/core"
 )
 
+// DirectoryRoleResource provides access to Azure AD directory roles.
 type DirectoryRoleResource struct {
 	client *msgraphsdk.GraphServiceClient
 }
 
+// Name returns the resource type identifier for directory roles.
 func (r *DirectoryRoleResource) Name() string {
 	return "ms365_directory_role"
 }
 
+// Fetch retrieves all directory roles with their members.
 func (r *DirectoryRoleResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
-	var resources []core.Resource
-
 	result, err := r.client.DirectoryRoles().Get(ctx, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get directory roles: %w", err)
 	}
 
-	if result.GetValue() == nil {
-		return resources, nil
+	roles := result.GetValue()
+	if roles == nil {
+		return []core.Resource{}, nil
 	}
 
-	for _, role := range result.GetValue() {
+	resources := make([]core.Resource, 0, len(roles))
+	for _, role := range roles {
 		data, err := json.Marshal(role)
 		if err != nil {
 			continue
@@ -82,29 +85,32 @@ func (r *DirectoryRoleResource) Fetch(ctx context.Context, asset core.Asset) ([]
 	return resources, nil
 }
 
+// RoleAssignmentResource provides access to Azure AD role assignments.
 type RoleAssignmentResource struct {
 	client *msgraphsdk.GraphServiceClient
 }
 
+// Name returns the resource type identifier for role assignments.
 func (r *RoleAssignmentResource) Name() string {
 	return "ms365_role_assignment"
 }
 
+// Fetch retrieves all role assignments from Azure AD role management.
 func (r *RoleAssignmentResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
-	var resources []core.Resource
-
 	// Get unified role assignments
 	result, err := r.client.RoleManagement().Directory().RoleAssignments().Get(ctx, nil)
 	if err != nil {
 		// Role management might not be available
-		return resources, err
+		return []core.Resource{}, err
 	}
 
-	if result.GetValue() == nil {
-		return resources, nil
+	assignments := result.GetValue()
+	if assignments == nil {
+		return []core.Resource{}, nil
 	}
 
-	for _, assignment := range result.GetValue() {
+	resources := make([]core.Resource, 0, len(assignments))
+	for _, assignment := range assignments {
 		data, err := json.Marshal(assignment)
 		if err != nil {
 			continue

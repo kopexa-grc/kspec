@@ -11,22 +11,27 @@ import (
 	"github.com/kopexa-grc/kspec/core"
 )
 
-type MS365Provider struct{}
+// Provider implements the core.Provider interface for Microsoft 365.
+type Provider struct{}
 
-func NewMS365Provider() core.Provider {
-	return &MS365Provider{}
+// NewProvider creates a new MS365 provider.
+func NewProvider() core.Provider {
+	return &Provider{}
 }
 
-func (p *MS365Provider) Name() string {
+// Name returns the provider name.
+func (p *Provider) Name() string {
 	return "ms365"
 }
 
-type MS365Connection struct {
+// Connection represents an active connection to Microsoft 365 Graph API.
+type Connection struct {
 	client   *msgraphsdk.GraphServiceClient
 	tenantID string
 }
 
-func (p *MS365Provider) Connect(ctx context.Context, config map[string]string) (core.Connection, error) {
+// Connect establishes a connection to Microsoft 365 Graph API.
+func (p *Provider) Connect(ctx context.Context, config map[string]string) (core.Connection, error) {
 	var credential azcore.TokenCredential
 	var err error
 
@@ -55,13 +60,14 @@ func (p *MS365Provider) Connect(ctx context.Context, config map[string]string) (
 		return nil, fmt.Errorf("failed to create Graph client: %w", err)
 	}
 
-	return &MS365Connection{
+	return &Connection{
 		client:   client,
 		tenantID: tenantID,
 	}, nil
 }
 
-func (c *MS365Connection) Resources() []core.ResourceSpec {
+// Resources returns all available Microsoft 365 resources.
+func (c *Connection) Resources() []core.ResourceSpec {
 	return []core.ResourceSpec{
 		// Tenant and organization
 		&TenantResource{client: c.client},

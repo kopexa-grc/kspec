@@ -8,12 +8,15 @@ import (
 	"github.com/kopexa-grc/kspec/core"
 )
 
+// FileResource provides access to file system information.
 type FileResource struct{}
 
+// Name returns the resource identifier for files.
 func (r *FileResource) Name() string {
 	return "file"
 }
 
+// Fetch retrieves file metadata for the path specified in asset configuration.
 func (r *FileResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
 	// Use config from asset
 	config := asset.Config

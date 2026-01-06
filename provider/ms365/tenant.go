@@ -10,14 +10,17 @@ import (
 	"github.com/kopexa-grc/kspec/core"
 )
 
+// TenantResource provides access to Microsoft 365 organization details.
 type TenantResource struct {
 	client *msgraphsdk.GraphServiceClient
 }
 
+// Name returns the resource type identifier for tenants.
 func (r *TenantResource) Name() string {
 	return "ms365_tenant"
 }
 
+// Fetch retrieves the organization details including domains and plans.
 func (r *TenantResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
 	// Get organization details
 	org, err := r.client.Organization().Get(ctx, nil)

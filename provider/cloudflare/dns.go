@@ -11,6 +11,12 @@ import (
 	"github.com/kopexa-grc/kspec/core"
 )
 
+// DNS record type constants
+const (
+	RecordTypeTXT = "TXT"
+	RecordTypeMX  = "MX"
+)
+
 // DNSRecordResource fetches DNS records for a zone.
 type DNSRecordResource struct {
 	client *cloudflare.Client
@@ -61,17 +67,26 @@ func (r *DNSRecordResource) Fetch(ctx context.Context, asset core.Asset) ([]core
 }
 
 func (r *DNSRecordResource) addSecurityFields(record map[string]interface{}) {
-	recordType, _ := record["type"].(string)
-	content, _ := record["content"].(string)
-	name, _ := record["name"].(string)
+	recordType := ""
+	if rt, ok := record["type"].(string); ok {
+		recordType = rt
+	}
+	content := ""
+	if c, ok := record["content"].(string); ok {
+		content = c
+	}
+	name := ""
+	if n, ok := record["name"].(string); ok {
+		name = n
+	}
 
 	// Check for email security records
-	record["is_spf"] = recordType == "TXT" && strings.HasPrefix(content, "v=spf1")
-	record["is_dkim"] = recordType == "TXT" && strings.Contains(name, "._domainkey.")
-	record["is_dmarc"] = recordType == "TXT" && strings.HasPrefix(name, "_dmarc.")
+	record["is_spf"] = recordType == RecordTypeTXT && strings.HasPrefix(content, "v=spf1")
+	record["is_dkim"] = recordType == RecordTypeTXT && strings.Contains(name, "._domainkey.")
+	record["is_dmarc"] = recordType == RecordTypeTXT && strings.HasPrefix(name, "_dmarc.")
 
 	// Check for MX records
-	record["is_mx"] = recordType == "MX"
+	record["is_mx"] = recordType == RecordTypeMX
 
 	// Check for wildcard records
 	record["is_wildcard"] = strings.HasPrefix(name, "*.")

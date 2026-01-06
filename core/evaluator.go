@@ -104,12 +104,12 @@ func NewEvaluator(registry map[string]ResourceSpec) (*Evaluator, error) {
 func (e *Evaluator) Evaluate(expression string, resource Resource, config map[string]string, props map[string]interface{}, asset Asset) (bool, error) {
 	ast, issues := e.Env.Compile(expression)
 	if issues != nil && issues.Err() != nil {
-		return false, fmt.Errorf("compile error: %s", issues.Err())
+		return false, fmt.Errorf("compile error: %w", issues.Err())
 	}
 
 	prg, err := e.Env.Program(ast)
 	if err != nil {
-		return false, fmt.Errorf("program construction error: %s", err)
+		return false, fmt.Errorf("program construction error: %w", err)
 	}
 
 	// Activation
@@ -133,7 +133,7 @@ func (e *Evaluator) Evaluate(expression string, resource Resource, config map[st
 
 	out, _, err := prg.Eval(input)
 	if err != nil {
-		return false, fmt.Errorf("evaluation error: %s", err)
+		return false, fmt.Errorf("evaluation error: %w", err)
 	}
 
 	if out == types.True {

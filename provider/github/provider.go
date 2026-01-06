@@ -16,8 +16,8 @@ import (
 // Provider implements the core.Provider interface for GitHub.
 type Provider struct{}
 
-// NewGithubProvider creates a new GitHub provider.
-func NewGithubProvider() *Provider {
+// NewProvider creates a new GitHub provider.
+func NewProvider() *Provider {
 	return &Provider{}
 }
 
@@ -38,7 +38,7 @@ func (p *Provider) Connect(ctx context.Context, config map[string]string) (core.
 		token = config["token"]
 	} else {
 		// Resolve token based on credential type
-		switch cred.Type {
+		switch cred.Type { //nolint:exhaustive // Only specific credential types are supported for GitHub
 		case core.CredentialTypeBearer:
 			token = cred.Secret
 		case core.CredentialTypeEnv:

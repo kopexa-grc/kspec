@@ -11,15 +11,18 @@ import (
 	"github.com/kopexa-grc/kspec/core"
 )
 
+// KeyVaultResource represents an Azure Key Vault resource scanner.
 type KeyVaultResource struct {
 	credential     azcore.TokenCredential
 	subscriptionID string
 }
 
+// Name returns the resource type name.
 func (r *KeyVaultResource) Name() string {
 	return "azure_keyvault_vault"
 }
 
+// Fetch retrieves Key Vaults from Azure.
 func (r *KeyVaultResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
 	if r.subscriptionID == "" {
 		return nil, fmt.Errorf("subscription_id is required")

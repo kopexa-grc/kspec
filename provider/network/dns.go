@@ -13,12 +13,15 @@ import (
 	"github.com/kopexa-grc/kspec/core"
 )
 
+// DNSResource provides access to DNS record information for a domain.
 type DNSResource struct{}
 
+// Name returns the resource type name.
 func (r *DNSResource) Name() string {
 	return "dns"
 }
 
+// Fetch retrieves DNS records for the domain specified in the asset.
 func (r *DNSResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
 	domainName := asset.FQDN
 	if domainName == "" {

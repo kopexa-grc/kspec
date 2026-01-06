@@ -25,17 +25,15 @@ func (r *AdminPolicyResource) Fetch(ctx context.Context, asset core.Asset) ([]co
 		return nil, nil
 	}
 
-	var resources []core.Resource
-
-	// Get authentication policies
 	policies, response, err := r.client.Organization.Policy.Gets(ctx, r.orgID, "", "")
 	if err != nil {
 		if response != nil && response.Code == 404 {
-			return resources, nil
+			return nil, nil
 		}
 		return nil, err
 	}
 
+	resources := make([]core.Resource, 0, len(policies.Data))
 	for _, policy := range policies.Data {
 		resource := make(core.Resource)
 		resource["id"] = policy.ID

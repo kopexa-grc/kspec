@@ -10,27 +10,30 @@ import (
 	"github.com/kopexa-grc/kspec/core"
 )
 
+// DeviceResource provides access to Azure AD registered devices.
 type DeviceResource struct {
 	client *msgraphsdk.GraphServiceClient
 }
 
+// Name returns the resource type identifier for Azure AD devices.
 func (r *DeviceResource) Name() string {
 	return "ms365_device"
 }
 
+// Fetch retrieves all devices registered in Azure AD.
 func (r *DeviceResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
-	var resources []core.Resource
-
 	result, err := r.client.Devices().Get(ctx, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get devices: %w", err)
 	}
 
-	if result.GetValue() == nil {
-		return resources, nil
+	devices := result.GetValue()
+	if devices == nil {
+		return []core.Resource{}, nil
 	}
 
-	for _, device := range result.GetValue() {
+	resources := make([]core.Resource, 0, len(devices))
+	for _, device := range devices {
 		data, err := json.Marshal(device)
 		if err != nil {
 			continue
@@ -64,29 +67,32 @@ func (r *DeviceResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Re
 	return resources, nil
 }
 
+// ManagedDeviceResource provides access to Intune managed devices.
 type ManagedDeviceResource struct {
 	client *msgraphsdk.GraphServiceClient
 }
 
+// Name returns the resource type identifier for Intune managed devices.
 func (r *ManagedDeviceResource) Name() string {
 	return "ms365_managed_device"
 }
 
+// Fetch retrieves all managed devices from Microsoft Intune.
 func (r *ManagedDeviceResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
-	var resources []core.Resource
-
 	// Get managed devices from Intune
 	result, err := r.client.DeviceManagement().ManagedDevices().Get(ctx, nil)
 	if err != nil {
 		// Intune may not be enabled
-		return resources, err
+		return []core.Resource{}, err
 	}
 
-	if result.GetValue() == nil {
-		return resources, nil
+	devices := result.GetValue()
+	if devices == nil {
+		return []core.Resource{}, nil
 	}
 
-	for _, device := range result.GetValue() {
+	resources := make([]core.Resource, 0, len(devices))
+	for _, device := range devices {
 		data, err := json.Marshal(device)
 		if err != nil {
 			continue

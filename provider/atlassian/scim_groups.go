@@ -34,17 +34,16 @@ func (r *SCIMGroupResource) Fetch(ctx context.Context, asset core.Asset) ([]core
 		return nil, nil
 	}
 
-	var resources []core.Resource
-
 	groups, response, err := r.client.SCIM.Group.Gets(ctx, directoryID, "", 1, 100)
 	if err != nil {
 		if response != nil && (response.Code == 404 || response.Code == 403) {
 			// SCIM not enabled or no access
-			return resources, nil
+			return nil, nil
 		}
 		return nil, err
 	}
 
+	resources := make([]core.Resource, 0, len(groups.Resources))
 	for _, group := range groups.Resources {
 		resource := make(core.Resource)
 		resource["id"] = group.ID

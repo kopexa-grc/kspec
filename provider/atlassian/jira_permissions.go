@@ -21,17 +21,16 @@ func (r *JiraPermissionSchemeResource) Name() string {
 
 // Fetch retrieves all Jira permission schemes.
 func (r *JiraPermissionSchemeResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
-	var resources []core.Resource
-
 	// Get all permission schemes
 	schemes, response, err := r.client.Permission.Scheme.Gets(ctx)
 	if err != nil {
 		if response != nil && response.Code == 404 {
-			return resources, nil
+			return nil, nil
 		}
 		return nil, err
 	}
 
+	resources := make([]core.Resource, 0, len(schemes.PermissionSchemes))
 	for _, scheme := range schemes.PermissionSchemes {
 		resource := make(core.Resource)
 		resource["id"] = scheme.ID

@@ -10,27 +10,30 @@ import (
 	"github.com/kopexa-grc/kspec/core"
 )
 
+// ConditionalAccessPolicyResource provides access to Azure AD conditional access policies.
 type ConditionalAccessPolicyResource struct {
 	client *msgraphsdk.GraphServiceClient
 }
 
+// Name returns the resource type identifier for conditional access policies.
 func (r *ConditionalAccessPolicyResource) Name() string {
 	return "ms365_conditional_access_policy"
 }
 
+// Fetch retrieves all conditional access policies with their conditions and controls.
 func (r *ConditionalAccessPolicyResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
-	var resources []core.Resource
-
 	result, err := r.client.Identity().ConditionalAccess().Policies().Get(ctx, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get conditional access policies: %w", err)
 	}
 
-	if result.GetValue() == nil {
-		return resources, nil
+	policies := result.GetValue()
+	if policies == nil {
+		return []core.Resource{}, nil
 	}
 
-	for _, policy := range result.GetValue() {
+	resources := make([]core.Resource, 0, len(policies))
+	for _, policy := range policies {
 		data, err := json.Marshal(policy)
 		if err != nil {
 			continue
@@ -143,27 +146,30 @@ func (r *ConditionalAccessPolicyResource) Fetch(ctx context.Context, asset core.
 	return resources, nil
 }
 
+// NamedLocationResource provides access to named locations used in conditional access.
 type NamedLocationResource struct {
 	client *msgraphsdk.GraphServiceClient
 }
 
+// Name returns the resource type identifier for named locations.
 func (r *NamedLocationResource) Name() string {
 	return "ms365_named_location"
 }
 
+// Fetch retrieves all named locations from Azure AD conditional access.
 func (r *NamedLocationResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
-	var resources []core.Resource
-
 	result, err := r.client.Identity().ConditionalAccess().NamedLocations().Get(ctx, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get named locations: %w", err)
 	}
 
-	if result.GetValue() == nil {
-		return resources, nil
+	locations := result.GetValue()
+	if locations == nil {
+		return []core.Resource{}, nil
 	}
 
-	for _, location := range result.GetValue() {
+	resources := make([]core.Resource, 0, len(locations))
+	for _, location := range locations {
 		data, err := json.Marshal(location)
 		if err != nil {
 			continue

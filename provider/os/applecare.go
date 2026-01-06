@@ -14,12 +14,15 @@ import (
 	"github.com/kopexa-grc/kspec/core"
 )
 
+// AppleCareResource provides access to Apple Care coverage information for macOS devices.
 type AppleCareResource struct{}
 
+// Name returns the resource identifier for Apple Care.
 func (r *AppleCareResource) Name() string {
 	return "apple_care"
 }
 
+// Fetch retrieves Apple Care coverage details from the local device cache.
 func (r *AppleCareResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
 	// 1. Get Serial Number
 	serial, err := getSerialNumber(ctx)
@@ -34,7 +37,7 @@ func (r *AppleCareResource) Fetch(ctx context.Context, asset core.Asset) ([]core
 	}
 
 	// Path: ~/Library/Application Support/com.apple.NewDeviceOutreach/caches/coverageDetails/<SERIAL>.json
-	jsonPath := filepath.Join(usr.HomeDir, "Library/Application Support/com.apple.NewDeviceOutreach/caches/coverageDetails", serial+".json")
+	jsonPath := filepath.Join(usr.HomeDir, "Library", "Application Support", "com.apple.NewDeviceOutreach", "caches", "coverageDetails", serial+".json")
 
 	// 3. Read and Parse
 	data, err := os.ReadFile(jsonPath)

@@ -11,15 +11,18 @@ import (
 	"github.com/kopexa-grc/kspec/core"
 )
 
+// VirtualMachineResource represents an Azure Virtual Machine resource scanner.
 type VirtualMachineResource struct {
 	credential     azcore.TokenCredential
 	subscriptionID string
 }
 
+// Name returns the resource type name.
 func (r *VirtualMachineResource) Name() string {
 	return "azure_virtual_machine"
 }
 
+// Fetch retrieves virtual machines from Azure.
 func (r *VirtualMachineResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
 	if r.subscriptionID == "" {
 		return nil, fmt.Errorf("subscription_id is required")

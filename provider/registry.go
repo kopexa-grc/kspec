@@ -21,11 +21,11 @@ import (
 func GetProviders() []core.Provider {
 	return []core.Provider{
 		os.New(),
-		network.NewNetworkProvider(),
-		github.NewGithubProvider(),
-		azure.NewAzureProvider(),
-		ms365.NewMS365Provider(),
-		cloudflare.NewCloudflareProvider(),
+		network.NewProvider(),
+		github.NewProvider(),
+		azure.NewProvider(),
+		ms365.NewProvider(),
+		cloudflare.NewProvider(),
 		atlassian.NewProvider(),
 		sbom.NewProvider(),
 		hetzner.NewProvider(),
@@ -38,15 +38,15 @@ func GetProviderByName(name string) (core.Provider, error) {
 	case "os", "local":
 		return os.New(), nil
 	case "network", "host":
-		return network.NewNetworkProvider(), nil
+		return network.NewProvider(), nil
 	case "github":
-		return github.NewGithubProvider(), nil
+		return github.NewProvider(), nil
 	case "azure":
-		return azure.NewAzureProvider(), nil
+		return azure.NewProvider(), nil
 	case "ms365", "microsoft365", "m365":
-		return ms365.NewMS365Provider(), nil
+		return ms365.NewProvider(), nil
 	case "cloudflare", "cf":
-		return cloudflare.NewCloudflareProvider(), nil
+		return cloudflare.NewProvider(), nil
 	case "atlassian", "jira", "confluence":
 		return atlassian.NewProvider(), nil
 	case "sbom", "bom", "cyclonedx", "spdx":
@@ -103,10 +103,7 @@ func InitProviders(ctx context.Context, config map[string]string) (map[string]co
 			return nil, fmt.Errorf("failed to connect to provider %s: %w", p.Name(), err)
 		}
 		for _, r := range conn.Resources() {
-			if _, exists := registry[r.Name()]; exists {
-				// Warn or Error? For now, last writer wins or error?
-				// Simple overwrite.
-			}
+			// Last writer wins for duplicate resource names
 			registry[r.Name()] = r
 		}
 	}

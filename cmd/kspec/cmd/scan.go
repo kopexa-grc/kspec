@@ -13,6 +13,29 @@ import (
 	"github.com/kopexa-grc/kspec/provider/scanner"
 )
 
+// Provider name constants
+const (
+	ProviderHost       = "host"
+	ProviderGitHub     = "github"
+	ProviderAzure      = "azure"
+	ProviderMS365      = "ms365"
+	ProviderCloudflare = "cloudflare"
+	ProviderAtlassian  = "atlassian"
+	ProviderSBOM       = "sbom"
+	ProviderHetzner    = "hetzner"
+)
+
+// Asset type constants
+const (
+	AssetTypeSBOMFile = "sbom-file"
+	AssetTypeDefault  = "default"
+)
+
+// Credential type constants
+const (
+	CredentialTypeEnv = "env"
+)
+
 // scanCmd represents the scan command
 var scanCmd = &cobra.Command{
 	Use:   "scan <provider> [resource-type] [target]",
@@ -107,7 +130,8 @@ func runScan(cmd *cobra.Command, args []string) error {
 		switch event.Type {
 		case scanner.EventTreeCreated:
 			p.Send(cli.SetTreeMsg{Tree: event.Tree})
-		case scanner.EventTreeUpdated,
+		case scanner.EventDiscoveryStarted,
+			scanner.EventTreeUpdated,
 			scanner.EventDiscoveryComplete,
 			scanner.EventScanStarted,
 			scanner.EventScanComplete,
@@ -121,7 +145,7 @@ func runScan(cmd *cobra.Command, args []string) error {
 
 	// Run scan in background
 	go func() {
-		_, _ = s.Run(ctx)
+		_, _ = s.Run(ctx) //nolint:errcheck // Intentional: Error is handled via UI events
 	}()
 
 	// Run the UI
@@ -147,21 +171,21 @@ func parseScanArgs(cmd *cobra.Command, args []string) (scanner.ScanConfig, strin
 		assetType = "local"
 		assetName = "localhost"
 
-	case "host":
+	case ProviderHost:
 		if len(args) < 2 {
 			return scanner.ScanConfig{}, "", fmt.Errorf("usage: kspec scan host <target> -f policy.yml")
 		}
 		providerName = "network"
-		assetType = "host"
+		assetType = ProviderHost
 		assetName = args[1]
 		assetConfig["target"] = assetName
 
-	case "github":
+	case ProviderGitHub:
 		if len(args) < 3 {
 			return scanner.ScanConfig{}, "", fmt.Errorf("usage: kspec scan github <org|repo> <target> -f policy.yml")
 		}
 
-		providerName = "github"
+		providerName = ProviderGitHub
 		resourceType := args[1]
 		target := args[2]
 
@@ -185,12 +209,12 @@ func parseScanArgs(cmd *cobra.Command, args []string) (scanner.ScanConfig, strin
 			return scanner.ScanConfig{}, "", fmt.Errorf("unknown github resource type: %s (use 'org' or 'repo')", resourceType)
 		}
 
-	case "azure":
+	case ProviderAzure:
 		if len(args) < 3 {
 			return scanner.ScanConfig{}, "", fmt.Errorf("usage: kspec scan azure subscription <subscription-id> -f policy.yml")
 		}
 
-		providerName = "azure"
+		providerName = ProviderAzure
 		resourceType := args[1]
 		target := args[2]
 
@@ -201,13 +225,16 @@ func parseScanArgs(cmd *cobra.Command, args []string) (scanner.ScanConfig, strin
 			assetConfig["subscription_id"] = target
 
 			// Optional: client_id, tenant_id from flags
-			if clientID, _ := cmd.Flags().GetString("client-id"); clientID != "" {
+			clientID, _ := cmd.Flags().GetString("client-id") //nolint:errcheck // Flag is defined
+			if clientID != "" {
 				assetConfig["client_id"] = clientID
 			}
-			if tenantID, _ := cmd.Flags().GetString("tenant-id"); tenantID != "" {
+			tenantID, _ := cmd.Flags().GetString("tenant-id") //nolint:errcheck // Flag is defined
+			if tenantID != "" {
 				assetConfig["tenant_id"] = tenantID
 			}
-			if resourceGroup, _ := cmd.Flags().GetString("resource-group"); resourceGroup != "" {
+			resourceGroup, _ := cmd.Flags().GetString("resource-group") //nolint:errcheck // Flag is defined
+			if resourceGroup != "" {
 				assetConfig["resource_group"] = resourceGroup
 			}
 
@@ -215,36 +242,40 @@ func parseScanArgs(cmd *cobra.Command, args []string) (scanner.ScanConfig, strin
 			return scanner.ScanConfig{}, "", fmt.Errorf("unknown azure resource type: %s (use 'subscription')", resourceType)
 		}
 
-	case "ms365", "m365", "microsoft365":
-		providerName = "ms365"
-		assetType = "ms365"
+	case ProviderMS365, "m365", "microsoft365":
+		providerName = ProviderMS365
+		assetType = ProviderMS365
 
 		// Check if tenant ID is provided
-		if len(args) >= 3 && args[1] == "tenant" {
+		switch {
+		case len(args) >= 3 && args[1] == "tenant":
 			assetName = args[2]
 			assetConfig["tenant_id"] = args[2]
-		} else if len(args) >= 2 {
+		case len(args) >= 2:
 			// Just the tenant ID directly
 			assetName = args[1]
 			assetConfig["tenant_id"] = args[1]
-		} else {
-			assetName = "default"
+		default:
+			assetName = AssetTypeDefault
 		}
 
 		// Optional: client_id, client_secret from flags
-		if clientID, _ := cmd.Flags().GetString("client-id"); clientID != "" {
+		clientID, _ := cmd.Flags().GetString("client-id") //nolint:errcheck // Flag is defined
+		if clientID != "" {
 			assetConfig["client_id"] = clientID
 		}
-		if tenantID, _ := cmd.Flags().GetString("tenant-id"); tenantID != "" {
+		tenantID, _ := cmd.Flags().GetString("tenant-id") //nolint:errcheck // Flag is defined
+		if tenantID != "" {
 			assetConfig["tenant_id"] = tenantID
 			assetName = tenantID
 		}
-		if clientSecret, _ := cmd.Flags().GetString("client-secret"); clientSecret != "" {
+		clientSecret, _ := cmd.Flags().GetString("client-secret") //nolint:errcheck // Flag is defined
+		if clientSecret != "" {
 			assetConfig["client_secret"] = clientSecret
 		}
 
-	case "cloudflare", "cf":
-		providerName = "cloudflare"
+	case ProviderCloudflare, "cf":
+		providerName = ProviderCloudflare
 
 		// Check resource type
 		if len(args) >= 2 {
@@ -275,21 +306,25 @@ func parseScanArgs(cmd *cobra.Command, args []string) (scanner.ScanConfig, strin
 		}
 
 		// Get credentials from flags
-		if apiToken, _ := cmd.Flags().GetString("api-token"); apiToken != "" {
+		apiToken, _ := cmd.Flags().GetString("api-token") //nolint:errcheck // Flag is defined
+		if apiToken != "" {
 			assetConfig["api_token"] = apiToken
 		}
-		if apiKey, _ := cmd.Flags().GetString("api-key"); apiKey != "" {
+		apiKey, _ := cmd.Flags().GetString("api-key") //nolint:errcheck // Flag is defined
+		if apiKey != "" {
 			assetConfig["api_key"] = apiKey
 		}
-		if email, _ := cmd.Flags().GetString("email"); email != "" {
+		email, _ := cmd.Flags().GetString("email") //nolint:errcheck // Flag is defined
+		if email != "" {
 			assetConfig["email"] = email
 		}
-		if accountID, _ := cmd.Flags().GetString("account-id"); accountID != "" {
+		accountID, _ := cmd.Flags().GetString("account-id") //nolint:errcheck // Flag is defined
+		if accountID != "" {
 			assetConfig["account_id"] = accountID
 		}
 
-	case "atlassian", "jira", "confluence":
-		providerName = "atlassian"
+	case ProviderAtlassian, "jira", "confluence":
+		providerName = ProviderAtlassian
 
 		// Check resource type
 		if len(args) >= 2 {
@@ -302,7 +337,7 @@ func parseScanArgs(cmd *cobra.Command, args []string) (scanner.ScanConfig, strin
 					assetConfig["site"] = args[2]
 				} else {
 					// Get site from flag
-					site, _ := cmd.Flags().GetString("site")
+					site, _ := cmd.Flags().GetString("site") //nolint:errcheck // Flag is defined
 					if site != "" {
 						assetName = site
 						assetConfig["site"] = site
@@ -323,7 +358,7 @@ func parseScanArgs(cmd *cobra.Command, args []string) (scanner.ScanConfig, strin
 		} else {
 			// Default to site scan
 			assetType = "atlassian-site"
-			site, _ := cmd.Flags().GetString("site")
+			site, _ := cmd.Flags().GetString("site") //nolint:errcheck // Flag is defined
 			if site != "" {
 				assetName = site
 				assetConfig["site"] = site
@@ -333,21 +368,21 @@ func parseScanArgs(cmd *cobra.Command, args []string) (scanner.ScanConfig, strin
 		}
 
 		// Get credentials from flags
-		if apiToken, _ := cmd.Flags().GetString("api-token"); apiToken != "" {
+		if apiToken, _ := cmd.Flags().GetString("api-token"); apiToken != "" { //nolint:errcheck // Flag is defined
 			assetConfig["api_token"] = apiToken
 		}
-		if email, _ := cmd.Flags().GetString("email"); email != "" {
+		if email, _ := cmd.Flags().GetString("email"); email != "" { //nolint:errcheck // Flag is defined
 			assetConfig["email"] = email
 		}
-		if site, _ := cmd.Flags().GetString("site"); site != "" && assetConfig["site"] == "" {
+		if site, _ := cmd.Flags().GetString("site"); site != "" && assetConfig["site"] == "" { //nolint:errcheck // Flag is defined
 			assetConfig["site"] = site
 		}
-		if orgID, _ := cmd.Flags().GetString("org-id"); orgID != "" {
+		if orgID, _ := cmd.Flags().GetString("org-id"); orgID != "" { //nolint:errcheck // Flag is defined
 			assetConfig["org_id"] = orgID
 		}
 
-	case "sbom", "bom", "cyclonedx", "spdx":
-		providerName = "sbom"
+	case ProviderSBOM, "bom", "cyclonedx", "spdx":
+		providerName = ProviderSBOM
 
 		// Check resource type
 		if len(args) >= 2 {
@@ -357,7 +392,7 @@ func parseScanArgs(cmd *cobra.Command, args []string) (scanner.ScanConfig, strin
 				if len(args) < 3 {
 					return scanner.ScanConfig{}, "", fmt.Errorf("usage: kspec scan sbom file <path> -f policy.yml")
 				}
-				assetType = "sbom-file"
+				assetType = AssetTypeSBOMFile
 				assetName = args[2]
 				assetConfig["sbom_path"] = args[2]
 			case "dir", "directory":
@@ -369,15 +404,15 @@ func parseScanArgs(cmd *cobra.Command, args []string) (scanner.ScanConfig, strin
 				assetConfig["sbom_path"] = args[2]
 			default:
 				// Assume it's a file path directly
-				assetType = "sbom-file"
+				assetType = AssetTypeSBOMFile
 				assetName = resourceType
 				assetConfig["sbom_path"] = resourceType
 			}
 		} else {
 			// Get path from flag
-			sbomPath, _ := cmd.Flags().GetString("sbom-path")
+			sbomPath, _ := cmd.Flags().GetString("sbom-path") //nolint:errcheck // Flag is defined
 			if sbomPath != "" {
-				assetType = "sbom-file"
+				assetType = AssetTypeSBOMFile
 				assetName = sbomPath
 				assetConfig["sbom_path"] = sbomPath
 			} else {
@@ -386,12 +421,12 @@ func parseScanArgs(cmd *cobra.Command, args []string) (scanner.ScanConfig, strin
 		}
 
 		// Get path from flag if not set
-		if sbomPath, _ := cmd.Flags().GetString("sbom-path"); sbomPath != "" && assetConfig["sbom_path"] == "" {
+		if sbomPath, _ := cmd.Flags().GetString("sbom-path"); sbomPath != "" && assetConfig["sbom_path"] == "" { //nolint:errcheck // Flag is defined
 			assetConfig["sbom_path"] = sbomPath
 		}
 
-	case "hetzner", "hcloud":
-		providerName = "hetzner"
+	case ProviderHetzner, "hcloud":
+		providerName = ProviderHetzner
 		assetType = "hetzner-project"
 
 		// Check if project name is provided
@@ -404,13 +439,13 @@ func parseScanArgs(cmd *cobra.Command, args []string) (scanner.ScanConfig, strin
 					assetConfig["project"] = args[2]
 				} else {
 					// Get project from flag or default
-					project, _ := cmd.Flags().GetString("project")
+					project, _ := cmd.Flags().GetString("project") //nolint:errcheck // Flag is defined
 					if project != "" {
 						assetName = project
 						assetConfig["project"] = project
 					} else {
-						assetName = "default"
-						assetConfig["project"] = "default"
+						assetName = AssetTypeDefault
+						assetConfig["project"] = AssetTypeDefault
 					}
 				}
 			default:
@@ -418,21 +453,21 @@ func parseScanArgs(cmd *cobra.Command, args []string) (scanner.ScanConfig, strin
 			}
 		} else {
 			// Default to project scan
-			project, _ := cmd.Flags().GetString("project")
+			project, _ := cmd.Flags().GetString("project") //nolint:errcheck // Flag is defined
 			if project != "" {
 				assetName = project
 				assetConfig["project"] = project
 			} else {
-				assetName = "default"
-				assetConfig["project"] = "default"
+				assetName = AssetTypeDefault
+				assetConfig["project"] = AssetTypeDefault
 			}
 		}
 
 		// Get API token from flag
-		if apiToken, _ := cmd.Flags().GetString("hcloud-token"); apiToken != "" {
+		if apiToken, _ := cmd.Flags().GetString("hcloud-token"); apiToken != "" { //nolint:errcheck // Flag is defined
 			assetConfig["api_token"] = apiToken
 		}
-		if apiToken, _ := cmd.Flags().GetString("api-token"); apiToken != "" {
+		if apiToken, _ := cmd.Flags().GetString("api-token"); apiToken != "" { //nolint:errcheck // Flag is defined
 			assetConfig["api_token"] = apiToken
 		}
 
@@ -449,7 +484,7 @@ func parseScanArgs(cmd *cobra.Command, args []string) (scanner.ScanConfig, strin
 		Name:   assetName,
 		Config: assetConfig,
 	}
-	if assetType == "host" {
+	if assetType == ProviderHost {
 		asset.FQDN = assetName
 	}
 
@@ -462,54 +497,56 @@ func parseScanArgs(cmd *cobra.Command, args []string) (scanner.ScanConfig, strin
 
 // buildProviderConfig builds provider-specific configuration from CLI flags
 func buildProviderConfig(cmd *cobra.Command, providerName string, assetConfig map[string]string) map[string]string {
-	token, _ := cmd.Flags().GetString("token")
-	credentialType, _ := cmd.Flags().GetString("credential-type")
-	envVar, _ := cmd.Flags().GetString("env-var")
+	token, _ := cmd.Flags().GetString("token")                    //nolint:errcheck // Flag is defined
+	credentialType, _ := cmd.Flags().GetString("credential-type") //nolint:errcheck // Flag is defined
+	envVar, _ := cmd.Flags().GetString("env-var")                 //nolint:errcheck // Flag is defined
 
 	providerConfig := make(map[string]string)
 
 	switch providerName {
-	case "github":
-		if token != "" {
+	case ProviderGitHub:
+		switch {
+		case token != "":
 			providerConfig["credential_type"] = "bearer"
 			providerConfig["secret"] = token
-		} else if credentialType != "" {
+		case credentialType != "":
 			providerConfig["credential_type"] = credentialType
-			if credentialType == "env" {
+			if credentialType == CredentialTypeEnv {
 				providerConfig["env_var"] = envVar
 			}
-		} else {
-			providerConfig["credential_type"] = "env"
+		default:
+			providerConfig["credential_type"] = CredentialTypeEnv
 			providerConfig["env_var"] = "GITHUB_TOKEN"
 		}
 
-	case "azure":
+	case ProviderAzure:
 		// Copy asset config to provider config
 		for k, v := range assetConfig {
 			providerConfig[k] = v
 		}
 
-		if token != "" {
+		switch {
+		case token != "":
 			providerConfig["credential_type"] = "bearer"
 			providerConfig["secret"] = token
-		} else if credentialType != "" {
+		case credentialType != "":
 			providerConfig["credential_type"] = credentialType
-			if credentialType == "env" {
+			if credentialType == CredentialTypeEnv {
 				providerConfig["env_var"] = "AZURE"
 			}
-		} else {
-			providerConfig["credential_type"] = "env"
+		default:
+			providerConfig["credential_type"] = CredentialTypeEnv
 			providerConfig["env_var"] = "AZURE"
 		}
 
-	case "ms365":
+	case ProviderMS365:
 		// Copy asset config to provider config
 		for k, v := range assetConfig {
 			providerConfig[k] = v
 		}
 
 		// Get client secret from flag
-		clientSecret, _ := cmd.Flags().GetString("client-secret")
+		clientSecret, _ := cmd.Flags().GetString("client-secret") //nolint:errcheck // Flag is defined
 		if clientSecret != "" {
 			providerConfig["client_secret"] = clientSecret
 		}
@@ -521,94 +558,94 @@ func buildProviderConfig(cmd *cobra.Command, providerName string, assetConfig ma
 			providerConfig["credential_type"] = "client_credentials"
 		}
 
-	case "cloudflare":
+	case ProviderCloudflare:
 		// Copy asset config to provider config
 		for k, v := range assetConfig {
 			providerConfig[k] = v
 		}
 
 		// Get API token from flag
-		apiToken, _ := cmd.Flags().GetString("api-token")
+		apiToken, _ := cmd.Flags().GetString("api-token") //nolint:errcheck // Flag is defined
 		if apiToken != "" {
 			providerConfig["api_token"] = apiToken
 		}
 
 		// Get API key and email from flags (legacy auth)
-		apiKey, _ := cmd.Flags().GetString("api-key")
+		apiKey, _ := cmd.Flags().GetString("api-key") //nolint:errcheck // Flag is defined
 		if apiKey != "" {
 			providerConfig["api_key"] = apiKey
 		}
-		email, _ := cmd.Flags().GetString("email")
+		email, _ := cmd.Flags().GetString("email") //nolint:errcheck // Flag is defined
 		if email != "" {
 			providerConfig["email"] = email
 		}
 
 		// Get account ID from flag
-		accountID, _ := cmd.Flags().GetString("account-id")
+		accountID, _ := cmd.Flags().GetString("account-id") //nolint:errcheck // Flag is defined
 		if accountID != "" {
 			providerConfig["account_id"] = accountID
 		}
 
-	case "atlassian":
+	case ProviderAtlassian:
 		// Copy asset config to provider config
 		for k, v := range assetConfig {
 			providerConfig[k] = v
 		}
 
 		// Get API token from flag
-		apiToken, _ := cmd.Flags().GetString("api-token")
+		apiToken, _ := cmd.Flags().GetString("api-token") //nolint:errcheck // Flag is defined
 		if apiToken != "" {
 			providerConfig["api_token"] = apiToken
 		}
 
 		// Get email from flag
-		email, _ := cmd.Flags().GetString("email")
+		email, _ := cmd.Flags().GetString("email") //nolint:errcheck // Flag is defined
 		if email != "" {
 			providerConfig["email"] = email
 		}
 
 		// Get site from flag
-		site, _ := cmd.Flags().GetString("site")
+		site, _ := cmd.Flags().GetString("site") //nolint:errcheck // Flag is defined
 		if site != "" {
 			providerConfig["site"] = site
 		}
 
 		// Get org ID from flag
-		orgID, _ := cmd.Flags().GetString("org-id")
+		orgID, _ := cmd.Flags().GetString("org-id") //nolint:errcheck // Flag is defined
 		if orgID != "" {
 			providerConfig["org_id"] = orgID
 		}
 
-	case "sbom":
+	case ProviderSBOM:
 		// Copy asset config to provider config
 		for k, v := range assetConfig {
 			providerConfig[k] = v
 		}
 
 		// Get SBOM path from flag
-		sbomPath, _ := cmd.Flags().GetString("sbom-path")
+		sbomPath, _ := cmd.Flags().GetString("sbom-path") //nolint:errcheck // Flag is defined
 		if sbomPath != "" {
 			providerConfig["sbom_path"] = sbomPath
 		}
 
-	case "hetzner":
+	case ProviderHetzner:
 		// Copy asset config to provider config
 		for k, v := range assetConfig {
 			providerConfig[k] = v
 		}
 
 		// Get API token from flag
-		hcloudToken, _ := cmd.Flags().GetString("hcloud-token")
+		hcloudToken, _ := cmd.Flags().GetString("hcloud-token") //nolint:errcheck // Flag is defined
 		if hcloudToken != "" {
 			providerConfig["api_token"] = hcloudToken
 		}
-		apiToken, _ := cmd.Flags().GetString("api-token")
+		apiToken, _ := cmd.Flags().GetString("api-token") //nolint:errcheck // Flag is defined
 		if apiToken != "" {
 			providerConfig["api_token"] = apiToken
 		}
 
 		// Get project from flag
-		project, _ := cmd.Flags().GetString("project")
+		project, _ := cmd.Flags().GetString("project") //nolint:errcheck // Flag is defined
 		if project != "" {
 			providerConfig["project"] = project
 		}
@@ -619,8 +656,8 @@ func buildProviderConfig(cmd *cobra.Command, providerName string, assetConfig ma
 
 // loadAndFilterPolicies loads policies and filters them for the given provider
 func loadAndFilterPolicies(cmd *cobra.Command, providerName, providerAlias string) ([]core.Policy, error) {
-	policyFile, _ := cmd.Flags().GetString("policy")
-	policyDir, _ := cmd.Flags().GetString("policy-dir")
+	policyFile, _ := cmd.Flags().GetString("policy")    //nolint:errcheck // Flag is defined
+	policyDir, _ := cmd.Flags().GetString("policy-dir") //nolint:errcheck // Flag is defined
 
 	if policyFile == "" && policyDir == "" {
 		return nil, fmt.Errorf("policy file (-f) or directory (-d) is required")

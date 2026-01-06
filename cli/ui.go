@@ -42,7 +42,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// Update tree reference and forward to browser
 		m.tree = msg.Tree
 		updated, cmd := m.browser.Update(browser.UpdateTreeMsg{Tree: msg.Tree})
-		m.browser = updated.(browser.Model)
+		if b, ok := updated.(browser.Model); ok {
+			m.browser = b
+		}
 		return m, cmd
 
 	case SetTreeMsg:
@@ -55,7 +57,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	// Route to browser
 	updated, cmd := m.browser.Update(msg)
-	m.browser = updated.(browser.Model)
+	if b, ok := updated.(browser.Model); ok {
+		m.browser = b
+	}
 	return m, cmd
 }
 

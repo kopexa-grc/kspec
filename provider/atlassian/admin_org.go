@@ -79,7 +79,10 @@ func (r *AdminOrganizationResource) Fetch(ctx context.Context, asset core.Asset)
 	}
 
 	// Security flags
-	verifiedDomainCount, _ := resource["verified_domain_count"].(int)
+	verifiedDomainCount := 0
+	if vdc, ok := resource["verified_domain_count"].(int); ok {
+		verifiedDomainCount = vdc
+	}
 	resource["has_verified_domains"] = verifiedDomainCount > 0
 
 	resources = append(resources, resource)

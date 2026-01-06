@@ -11,15 +11,18 @@ import (
 	"github.com/kopexa-grc/kspec/core"
 )
 
+// SqlServerResource represents an Azure SQL Server resource scanner.
 type SqlServerResource struct {
 	credential     azcore.TokenCredential
 	subscriptionID string
 }
 
+// Name returns the resource type name.
 func (r *SqlServerResource) Name() string {
 	return "azure_sql_server"
 }
 
+// Fetch retrieves SQL servers from Azure.
 func (r *SqlServerResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
 	if r.subscriptionID == "" {
 		return nil, fmt.Errorf("subscription_id is required")
@@ -63,10 +66,13 @@ func (r *SqlServerResource) Fetch(ctx context.Context, asset core.Asset) ([]core
 					if err == nil {
 						auditPolicy, err := auditingClient.Get(ctx, resourceGroup, *server.Name, nil)
 						if err == nil {
-							auditData, _ := json.Marshal(auditPolicy)
-							var auditMap map[string]interface{}
-							json.Unmarshal(auditData, &auditMap)
-							resourceMap["auditingPolicy"] = auditMap
+							auditData, marshalErr := json.Marshal(auditPolicy)
+							if marshalErr == nil {
+								var auditMap map[string]interface{}
+								if unmarshalErr := json.Unmarshal(auditData, &auditMap); unmarshalErr == nil {
+									resourceMap["auditingPolicy"] = auditMap
+								}
+							}
 						}
 					}
 				}
@@ -79,8 +85,7 @@ func (r *SqlServerResource) Fetch(ctx context.Context, asset core.Asset) ([]core
 	return resources, nil
 }
 
-// SubResources implements core.SubResourceProvider
-// This allows SQL Server to dynamically register SQL Database as a sub-resource
+// SubResources returns the sub-resources associated with SQL servers.
 func (r *SqlServerResource) SubResources() []core.ResourceSpec {
 	return []core.ResourceSpec{
 		&SqlDatabaseResource{

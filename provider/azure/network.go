@@ -11,15 +11,18 @@ import (
 	"github.com/kopexa-grc/kspec/core"
 )
 
+// NetworkSecurityGroupResource represents an Azure Network Security Group resource scanner.
 type NetworkSecurityGroupResource struct {
 	credential     azcore.TokenCredential
 	subscriptionID string
 }
 
+// Name returns the resource type name.
 func (r *NetworkSecurityGroupResource) Name() string {
 	return "azure_network_security_group"
 }
 
+// Fetch retrieves Network Security Groups from Azure.
 func (r *NetworkSecurityGroupResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
 	if r.subscriptionID == "" {
 		return nil, fmt.Errorf("subscription_id is required")

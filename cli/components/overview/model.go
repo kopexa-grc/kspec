@@ -89,9 +89,8 @@ func (m Model) Init() tea.Cmd {
 
 // Update handles messages
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.String() {
+	if keyMsg, ok := msg.(tea.KeyMsg); ok {
+		switch keyMsg.String() {
 		case "enter":
 			// Drill down to selected asset
 			selectedIdx := m.table.Cursor()
@@ -129,29 +128,30 @@ func (m Model) View() string {
 // UpdateAsset updates a specific asset's state
 func (m *Model) UpdateAsset(assetID string, asset common.Asset) {
 	for i, a := range m.assets {
-		if a.ID == assetID {
-			m.assets[i] = asset
-
-			// Update table row
-			status := string(asset.State)
-			statusStyled := common.StatusStyle(status).Render(status)
-
-			results := fmt.Sprintf("✓%d ✗%d ⊘%d",
-				asset.ChecksPassed,
-				asset.ChecksFailed,
-				asset.ChecksSkipped,
-			)
-
-			m.table.SetRows([]table.Row{
-				{
-					asset.Type,
-					asset.Name,
-					fmt.Sprintf("%d", asset.ResourceCount),
-					statusStyled,
-					results,
-				},
-			})
-			break
+		if a.ID != assetID {
+			continue
 		}
+		m.assets[i] = asset
+
+		// Update table row
+		status := string(asset.State)
+		statusStyled := common.StatusStyle(status).Render(status)
+
+		results := fmt.Sprintf("✓%d ✗%d ⊘%d",
+			asset.ChecksPassed,
+			asset.ChecksFailed,
+			asset.ChecksSkipped,
+		)
+
+		m.table.SetRows([]table.Row{
+			{
+				asset.Type,
+				asset.Name,
+				fmt.Sprintf("%d", asset.ResourceCount),
+				statusStyled,
+				results,
+			},
+		})
+		break
 	}
 }

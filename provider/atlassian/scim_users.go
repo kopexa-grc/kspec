@@ -34,17 +34,16 @@ func (r *SCIMUserResource) Fetch(ctx context.Context, asset core.Asset) ([]core.
 		return nil, nil
 	}
 
-	var resources []core.Resource
-
 	users, response, err := r.client.SCIM.User.Gets(ctx, directoryID, nil, 1, 100)
 	if err != nil {
 		if response != nil && (response.Code == 404 || response.Code == 403) {
 			// SCIM not enabled or no access
-			return resources, nil
+			return nil, nil
 		}
 		return nil, err
 	}
 
+	resources := make([]core.Resource, 0, len(users.Resources))
 	for _, user := range users.Resources {
 		resource := make(core.Resource)
 		resource["id"] = user.ID

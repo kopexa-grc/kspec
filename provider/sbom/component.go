@@ -7,6 +7,11 @@ import (
 	"github.com/kopexa-grc/kspec/core"
 )
 
+// SPDX constants
+const (
+	SPDXNoAssertion = "NOASSERTION"
+)
+
 // ComponentResource fetches SBOM components/packages.
 type ComponentResource struct {
 	path  string
@@ -50,13 +55,12 @@ func (r *ComponentResource) Fetch(ctx context.Context, asset core.Asset) ([]core
 }
 
 func (r *ComponentResource) parseCycloneDXComponents(sbom map[string]interface{}, filePath string) []core.Resource {
-	var resources []core.Resource
-
 	components, ok := sbom["components"].([]interface{})
 	if !ok {
-		return resources
+		return nil
 	}
 
+	resources := make([]core.Resource, 0, len(components))
 	for _, comp := range components {
 		component, ok := comp.(map[string]interface{})
 		if !ok {
@@ -65,7 +69,7 @@ func (r *ComponentResource) parseCycloneDXComponents(sbom map[string]interface{}
 
 		resource := make(core.Resource)
 		resource["source_file"] = filePath
-		resource["format"] = "cyclonedx"
+		resource["format"] = string(FormatCycloneDX)
 
 		resource["name"] = component["name"]
 		resource["version"] = component["version"]
@@ -114,8 +118,14 @@ func (r *ComponentResource) parseCycloneDXComponents(sbom map[string]interface{}
 		// Security flags
 		resource["has_purl"] = component["purl"] != nil && component["purl"] != ""
 		resource["has_version"] = component["version"] != nil && component["version"] != ""
-		licenseCount, _ := resource["license_count"].(int)
-		hashCount, _ := resource["hash_count"].(int)
+		licenseCount := 0
+		if lc, ok := resource["license_count"].(int); ok {
+			licenseCount = lc
+		}
+		hashCount := 0
+		if hc, ok := resource["hash_count"].(int); ok {
+			hashCount = hc
+		}
 		resource["has_license"] = licenseCount > 0
 		resource["has_hashes"] = hashCount > 0
 		resource["is_library"] = component["type"] == "library"
@@ -129,13 +139,12 @@ func (r *ComponentResource) parseCycloneDXComponents(sbom map[string]interface{}
 }
 
 func (r *ComponentResource) parseSPDXPackages(sbom map[string]interface{}, filePath string) []core.Resource {
-	var resources []core.Resource
-
 	packages, ok := sbom["packages"].([]interface{})
 	if !ok {
-		return resources
+		return nil
 	}
 
+	resources := make([]core.Resource, 0, len(packages))
 	for _, pkg := range packages {
 		pack, ok := pkg.(map[string]interface{})
 		if !ok {
@@ -144,7 +153,7 @@ func (r *ComponentResource) parseSPDXPackages(sbom map[string]interface{}, fileP
 
 		resource := make(core.Resource)
 		resource["source_file"] = filePath
-		resource["format"] = "spdx"
+		resource["format"] = string(FormatSPDX)
 
 		resource["spdx_id"] = pack["SPDXID"]
 		resource["name"] = pack["name"]
@@ -188,13 +197,16 @@ func (r *ComponentResource) parseSPDXPackages(sbom map[string]interface{}, fileP
 
 		// Security flags
 		resource["has_version"] = pack["versionInfo"] != nil && pack["versionInfo"] != ""
-		resource["has_license_concluded"] = pack["licenseConcluded"] != nil && pack["licenseConcluded"] != "" && pack["licenseConcluded"] != "NOASSERTION"
-		resource["has_license_declared"] = pack["licenseDeclared"] != nil && pack["licenseDeclared"] != "" && pack["licenseDeclared"] != "NOASSERTION"
+		resource["has_license_concluded"] = pack["licenseConcluded"] != nil && pack["licenseConcluded"] != "" && pack["licenseConcluded"] != SPDXNoAssertion
+		resource["has_license_declared"] = pack["licenseDeclared"] != nil && pack["licenseDeclared"] != "" && pack["licenseDeclared"] != SPDXNoAssertion
 		resource["has_purl"] = resource["purl"] != nil && resource["purl"] != ""
-		checksumCount, _ := resource["checksum_count"].(int)
+		checksumCount := 0
+		if cc, ok := resource["checksum_count"].(int); ok {
+			checksumCount = cc
+		}
 		resource["has_checksums"] = checksumCount > 0
-		resource["has_supplier"] = pack["supplier"] != nil && pack["supplier"] != "" && pack["supplier"] != "NOASSERTION"
-		resource["is_noassertion_license"] = pack["licenseConcluded"] == "NOASSERTION" || pack["licenseDeclared"] == "NOASSERTION"
+		resource["has_supplier"] = pack["supplier"] != nil && pack["supplier"] != "" && pack["supplier"] != SPDXNoAssertion
+		resource["is_noassertion_license"] = pack["licenseConcluded"] == SPDXNoAssertion || pack["licenseDeclared"] == SPDXNoAssertion
 
 		resources = append(resources, resource)
 	}

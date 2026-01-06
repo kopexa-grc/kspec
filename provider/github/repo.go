@@ -10,6 +10,7 @@ import (
 	"github.com/kopexa-grc/kspec/core"
 )
 
+// RepoResource fetches GitHub repository data and metadata.
 type RepoResource struct {
 	client *github.Client
 }
@@ -22,10 +23,12 @@ func (r *RepoResource) SubResources() []core.ResourceSpec {
 	}
 }
 
+// Name returns the resource type identifier for GitHub repositories.
 func (r *RepoResource) Name() string {
 	return "github_repo"
 }
 
+// Fetch retrieves repository data for a single repo or all repos in an organization.
 func (r *RepoResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
 	config := asset.Config
 	owner, ok := config["owner"]

@@ -10,14 +10,17 @@ import (
 	"github.com/kopexa-grc/kspec/core"
 )
 
+// BranchResource fetches GitHub branch data and protection rules.
 type BranchResource struct {
 	client *github.Client
 }
 
+// Name returns the resource type identifier for GitHub branches.
 func (r *BranchResource) Name() string {
 	return "github_branch"
 }
 
+// Fetch retrieves branch data for a repository or all repositories in an organization.
 func (r *BranchResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
 	config := asset.Config
 	owner, ok := config["owner"]

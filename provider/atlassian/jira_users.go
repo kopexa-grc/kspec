@@ -8,6 +8,13 @@ import (
 	"github.com/kopexa-grc/kspec/core"
 )
 
+// Account type constants
+const (
+	AccountTypeAtlassian = "atlassian"
+	AccountTypeApp       = "app"
+	AccountTypeCustomer  = "customer"
+)
+
 // JiraUserResource fetches Jira users.
 type JiraUserResource struct {
 	client *v3.Client
@@ -51,9 +58,9 @@ func (r *JiraUserResource) Fetch(ctx context.Context, asset core.Asset) ([]core.
 
 			// Security flags
 			resource["is_active"] = user.Active
-			resource["is_atlassian_account"] = user.AccountType == "atlassian"
-			resource["is_app_account"] = user.AccountType == "app"
-			resource["is_customer_account"] = user.AccountType == "customer"
+			resource["is_atlassian_account"] = user.AccountType == AccountTypeAtlassian
+			resource["is_app_account"] = user.AccountType == AccountTypeApp
+			resource["is_customer_account"] = user.AccountType == AccountTypeCustomer
 			resource["has_email"] = user.EmailAddress != ""
 
 			resources = append(resources, resource)

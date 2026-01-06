@@ -11,17 +11,18 @@ import (
 	"github.com/kopexa-grc/kspec/core"
 )
 
+// GroupResource provides access to Microsoft 365 group resources via the Graph API.
 type GroupResource struct {
 	client *msgraphsdk.GraphServiceClient
 }
 
+// Name returns the resource type identifier for MS365 groups.
 func (r *GroupResource) Name() string {
 	return "ms365_group"
 }
 
+// Fetch retrieves all groups from Microsoft 365 with their properties and membership details.
 func (r *GroupResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
-	var resources []core.Resource
-
 	requestConfig := &groups.GroupsRequestBuilderGetRequestConfiguration{
 		QueryParameters: &groups.GroupsRequestBuilderGetQueryParameters{
 			Select: []string{
@@ -38,11 +39,13 @@ func (r *GroupResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Res
 		return nil, fmt.Errorf("failed to get groups: %w", err)
 	}
 
-	if result.GetValue() == nil {
-		return resources, nil
+	groupList := result.GetValue()
+	if groupList == nil {
+		return []core.Resource{}, nil
 	}
 
-	for _, group := range result.GetValue() {
+	resources := make([]core.Resource, 0, len(groupList))
+	for _, group := range groupList {
 		data, err := json.Marshal(group)
 		if err != nil {
 			continue
@@ -106,23 +109,25 @@ type GroupLifecyclePolicyResource struct {
 	client *msgraphsdk.GraphServiceClient
 }
 
+// Name returns the resource type identifier for group lifecycle policies.
 func (r *GroupLifecyclePolicyResource) Name() string {
 	return "ms365_group_lifecycle_policy"
 }
 
+// Fetch retrieves all group lifecycle policies from Microsoft 365.
 func (r *GroupLifecyclePolicyResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
-	var resources []core.Resource
-
 	result, err := r.client.GroupLifecyclePolicies().Get(ctx, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get group lifecycle policies: %w", err)
 	}
 
-	if result.GetValue() == nil {
-		return resources, nil
+	policies := result.GetValue()
+	if policies == nil {
+		return []core.Resource{}, nil
 	}
 
-	for _, policy := range result.GetValue() {
+	resources := make([]core.Resource, 0, len(policies))
+	for _, policy := range policies {
 		data, err := json.Marshal(policy)
 		if err != nil {
 			continue

@@ -19,15 +19,18 @@ import (
 	"github.com/kopexa-grc/kspec/core"
 )
 
+// SubscriptionResource represents an Azure Subscription resource scanner.
 type SubscriptionResource struct {
 	credential     azcore.TokenCredential
 	subscriptionID string
 }
 
+// Name returns the resource type name.
 func (r *SubscriptionResource) Name() string {
 	return "azure_subscription"
 }
 
+// Fetch retrieves subscription-level resources from Azure.
 func (r *SubscriptionResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
 	if r.subscriptionID == "" {
 		return nil, fmt.Errorf("subscription_id is required")
@@ -120,8 +123,7 @@ func (r *SubscriptionResource) Fetch(ctx context.Context, asset core.Asset) ([]c
 	return []core.Resource{resourceMap}, nil
 }
 
-// Discover implements core.DiscoveryResource
-// Scans the subscription and discovers what resource types are present
+// Discover scans the subscription and discovers what resource types are present.
 func (r *SubscriptionResource) Discover(ctx context.Context, asset core.Asset) (map[string]int, error) {
 	if r.subscriptionID == "" {
 		return nil, fmt.Errorf("subscription_id is required")

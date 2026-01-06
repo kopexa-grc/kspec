@@ -2,8 +2,6 @@ package cloudflare
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 
 	"github.com/cloudflare/cloudflare-go/v4"
 	"github.com/cloudflare/cloudflare-go/v4/workers"
@@ -24,44 +22,19 @@ func (r *WorkerResource) Name() string {
 
 // Fetch retrieves all Workers scripts for the account.
 func (r *WorkerResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
-	accountID := r.accountID
-	if accountID == "" {
-		accountID = asset.Config["account_id"]
-	}
-	if accountID == "" {
-		return nil, fmt.Errorf("account_id is required for Workers scanning")
+	accountID, err := resolveAccountID(r.accountID, asset, "Workers")
+	if err != nil {
+		return nil, err
 	}
 
-	var resources []core.Resource
-
-	// List all Workers scripts
 	result, err := r.client.Workers.Scripts.List(ctx, workers.ScriptListParams{
 		AccountID: cloudflare.F(accountID),
 	})
 	if err != nil {
-		return resources, err
+		return nil, err
 	}
 
-	for _, script := range result.Result {
-		data, err := json.Marshal(script)
-		if err != nil {
-			continue
-		}
-
-		var resourceMap map[string]interface{}
-		if err := json.Unmarshal(data, &resourceMap); err != nil {
-			continue
-		}
-
-		resourceMap["account_id"] = accountID
-
-		// Add computed fields
-		r.addComputedFields(resourceMap)
-
-		resources = append(resources, resourceMap)
-	}
-
-	return resources, nil
+	return itemsToResources(result.Result, accountID, r.addComputedFields), nil
 }
 
 func (r *WorkerResource) addComputedFields(worker map[string]interface{}) {

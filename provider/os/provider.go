@@ -8,24 +8,30 @@ import (
 	"github.com/kopexa-grc/kspec/core"
 )
 
-type OSProvider struct{}
+// Provider implements the Provider interface for local operating system resources.
+type Provider struct{}
 
-func New() *OSProvider {
-	return &OSProvider{}
+// New creates a new Provider instance.
+func New() *Provider {
+	return &Provider{}
 }
 
-func (p *OSProvider) Name() string {
+// Name returns the provider identifier.
+func (p *Provider) Name() string {
 	return "os"
 }
 
-func (p *OSProvider) Connect(ctx context.Context, config map[string]string) (core.Connection, error) {
+// Connect establishes a connection to the local operating system.
+func (p *Provider) Connect(ctx context.Context, config map[string]string) (core.Connection, error) {
 	// OS provider usually operates on local system so no real connection setup
-	return &OSConnection{}, nil
+	return &Connection{}, nil
 }
 
-type OSConnection struct{}
+// Connection represents a connection to the local operating system.
+type Connection struct{}
 
-func (c *OSConnection) Resources() []core.ResourceSpec {
+// Resources returns the list of available OS resource types.
+func (c *Connection) Resources() []core.ResourceSpec {
 	return []core.ResourceSpec{
 		&AppleCareResource{},
 		&FileResource{},
@@ -34,6 +40,7 @@ func (c *OSConnection) Resources() []core.ResourceSpec {
 	}
 }
 
-func (p *OSProvider) Shutdown() error {
+// Shutdown releases any resources held by the provider.
+func (p *Provider) Shutdown() error {
 	return nil
 }

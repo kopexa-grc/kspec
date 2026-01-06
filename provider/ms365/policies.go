@@ -10,14 +10,17 @@ import (
 	"github.com/kopexa-grc/kspec/core"
 )
 
+// AuthorizationPolicyResource provides access to Azure AD authorization policies.
 type AuthorizationPolicyResource struct {
 	client *msgraphsdk.GraphServiceClient
 }
 
+// Name returns the resource type identifier for authorization policies.
 func (r *AuthorizationPolicyResource) Name() string {
 	return "ms365_authorization_policy"
 }
 
+// Fetch retrieves the tenant authorization policy with user permissions.
 func (r *AuthorizationPolicyResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
 	var resources []core.Resource
 
@@ -64,14 +67,17 @@ func (r *AuthorizationPolicyResource) Fetch(ctx context.Context, asset core.Asse
 	return resources, nil
 }
 
+// AuthenticationMethodPolicyResource provides access to authentication method policies.
 type AuthenticationMethodPolicyResource struct {
 	client *msgraphsdk.GraphServiceClient
 }
 
+// Name returns the resource type identifier for authentication method policies.
 func (r *AuthenticationMethodPolicyResource) Name() string {
 	return "ms365_authentication_method_policy"
 }
 
+// Fetch retrieves the authentication methods policy with method configurations.
 func (r *AuthenticationMethodPolicyResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
 	var resources []core.Resource
 
@@ -131,14 +137,17 @@ func (r *AuthenticationMethodPolicyResource) Fetch(ctx context.Context, asset co
 	return resources, nil
 }
 
+// IdentitySecurityDefaultsEnforcementPolicyResource provides access to security defaults.
 type IdentitySecurityDefaultsEnforcementPolicyResource struct {
 	client *msgraphsdk.GraphServiceClient
 }
 
+// Name returns the resource type identifier for security defaults policy.
 func (r *IdentitySecurityDefaultsEnforcementPolicyResource) Name() string {
 	return "ms365_security_defaults_policy"
 }
 
+// Fetch retrieves the security defaults enforcement policy.
 func (r *IdentitySecurityDefaultsEnforcementPolicyResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
 	var resources []core.Resource
 

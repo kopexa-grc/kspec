@@ -49,13 +49,12 @@ func (r *DependencyResource) Fetch(ctx context.Context, asset core.Asset) ([]cor
 }
 
 func (r *DependencyResource) parseCycloneDXDependencies(sbom map[string]interface{}, filePath string) []core.Resource {
-	var resources []core.Resource
-
 	dependencies, ok := sbom["dependencies"].([]interface{})
 	if !ok {
-		return resources
+		return nil
 	}
 
+	resources := make([]core.Resource, 0, len(dependencies))
 	for _, dep := range dependencies {
 		dependency, ok := dep.(map[string]interface{})
 		if !ok {
@@ -83,7 +82,10 @@ func (r *DependencyResource) parseCycloneDXDependencies(sbom map[string]interfac
 		}
 
 		// Security flags
-		depCount, _ := resource["dependency_count"].(int)
+		depCount := 0
+		if dc, ok := resource["dependency_count"].(int); ok {
+			depCount = dc
+		}
 		resource["has_dependencies"] = depCount > 0
 		resource["is_leaf"] = depCount == 0
 
@@ -94,13 +96,12 @@ func (r *DependencyResource) parseCycloneDXDependencies(sbom map[string]interfac
 }
 
 func (r *DependencyResource) parseSPDXRelationships(sbom map[string]interface{}, filePath string) []core.Resource {
-	var resources []core.Resource
-
 	relationships, ok := sbom["relationships"].([]interface{})
 	if !ok {
-		return resources
+		return nil
 	}
 
+	resources := make([]core.Resource, 0, len(relationships))
 	for _, rel := range relationships {
 		relationship, ok := rel.(map[string]interface{})
 		if !ok {
@@ -117,7 +118,10 @@ func (r *DependencyResource) parseSPDXRelationships(sbom map[string]interface{},
 		resource["comment"] = relationship["comment"]
 
 		// Security flags
-		relType, _ := relationship["relationshipType"].(string)
+		relType := ""
+		if rt, ok := relationship["relationshipType"].(string); ok {
+			relType = rt
+		}
 		resource["is_depends_on"] = relType == "DEPENDS_ON"
 		resource["is_dependency_of"] = relType == "DEPENDENCY_OF"
 		resource["is_contains"] = relType == "CONTAINS"

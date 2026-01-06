@@ -26,7 +26,7 @@ func (r *DocumentResource) Fetch(ctx context.Context, asset core.Asset) ([]core.
 		return nil, err
 	}
 
-	var resources []core.Resource
+	resources := make([]core.Resource, 0, len(sboms))
 
 	for _, sbom := range sboms {
 		resource := make(core.Resource)
@@ -89,7 +89,10 @@ func (r *DocumentResource) parseCycloneDXDocument(sbom map[string]interface{}, r
 	resource["is_cyclonedx"] = true
 	resource["is_spdx"] = false
 	resource["has_metadata"] = sbom["metadata"] != nil
-	componentCount, _ := resource["component_count"].(int)
+	componentCount := 0
+	if cc, ok := resource["component_count"].(int); ok {
+		componentCount = cc
+	}
 	resource["has_components"] = componentCount > 0
 }
 
@@ -126,7 +129,10 @@ func (r *DocumentResource) parseSPDXDocument(sbom map[string]interface{}, resour
 	// Security flags
 	resource["is_cyclonedx"] = false
 	resource["is_spdx"] = true
-	packageCount, _ := resource["package_count"].(int)
+	packageCount := 0
+	if pc, ok := resource["package_count"].(int); ok {
+		packageCount = pc
+	}
 	resource["has_packages"] = packageCount > 0
 
 	// Extract document name from path if not available

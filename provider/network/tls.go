@@ -12,12 +12,15 @@ import (
 	"github.com/kopexa-grc/kspec/core"
 )
 
+// TLSResource provides access to TLS configuration details including supported versions and ciphers.
 type TLSResource struct{}
 
+// Name returns the resource type name.
 func (r *TLSResource) Name() string {
 	return "tls"
 }
 
+// Fetch retrieves TLS configuration from the target host specified in the asset.
 func (r *TLSResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
 	config := asset.Config
 	domainName := asset.FQDN
@@ -77,7 +80,7 @@ func (r *TLSResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resou
 		if err != nil {
 			return nil, err
 		}
-		defer conn.Close()
+		defer func() { _ = conn.Close() }() //nolint:errcheck // Intentional: Close error is not actionable here
 		tlsConn, ok := conn.(*tls.Conn)
 		if !ok {
 			return nil, fmt.Errorf("connection is not a TLS connection")

@@ -11,15 +11,18 @@ import (
 	"github.com/kopexa-grc/kspec/core"
 )
 
+// AppServiceResource represents an Azure App Service resource scanner.
 type AppServiceResource struct {
 	credential     azcore.TokenCredential
 	subscriptionID string
 }
 
+// Name returns the resource type name.
 func (r *AppServiceResource) Name() string {
 	return "azure_app_service"
 }
 
+// Fetch retrieves App Service web apps from Azure.
 func (r *AppServiceResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
 	if r.subscriptionID == "" {
 		return nil, fmt.Errorf("subscription_id is required")
@@ -62,10 +65,13 @@ func (r *AppServiceResource) Fetch(ctx context.Context, asset core.Asset) ([]cor
 					if err == nil {
 						config, err := configClient.GetConfiguration(ctx, resourceGroup, *app.Name, nil)
 						if err == nil {
-							configData, _ := json.Marshal(config)
-							var configMap map[string]interface{}
-							json.Unmarshal(configData, &configMap)
-							resourceMap["configuration"] = configMap
+							configData, marshalErr := json.Marshal(config)
+							if marshalErr == nil {
+								var configMap map[string]interface{}
+								if unmarshalErr := json.Unmarshal(configData, &configMap); unmarshalErr == nil {
+									resourceMap["configuration"] = configMap
+								}
+							}
 						}
 					}
 				}

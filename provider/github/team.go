@@ -10,14 +10,17 @@ import (
 	"github.com/kopexa-grc/kspec/core"
 )
 
+// TeamResource fetches GitHub team data for an organization.
 type TeamResource struct {
 	client *github.Client
 }
 
+// Name returns the resource type identifier for GitHub teams.
 func (r *TeamResource) Name() string {
 	return "github_team"
 }
 
+// Fetch retrieves all teams for an organization.
 func (r *TeamResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
 	config := asset.Config
 	org, ok := config["org"]
@@ -36,7 +39,7 @@ func (r *TeamResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Reso
 		return nil, fmt.Errorf("failed to list teams for org %s: %w", org, err)
 	}
 
-	var resources []core.Resource
+	resources := make([]core.Resource, 0, len(teams))
 
 	for _, team := range teams {
 		// Convert to map

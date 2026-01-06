@@ -19,9 +19,25 @@ const (
 	HeaderHeight       = 3
 )
 
+// Status symbols
+const (
+	SymbolPending = "○"
+	SymbolCheck   = "✓"
+	SymbolCross   = "✗"
+	SymbolSkipped = "⊘"
+)
+
+// Status strings
+const (
+	StatusPassed  = "passed"
+	StatusFailed  = "failed"
+	StatusSkipped = "skipped"
+)
+
 // Panel represents which panel is focused
 type Panel int
 
+// Panel constants represent the available panels in the split view.
 const (
 	PanelLeft Panel = iota
 	PanelRight
@@ -202,6 +218,10 @@ func (m Model) renderHeader() string {
 	var statusStyle lipgloss.Style
 
 	switch m.tree.Root.State {
+	case common.AssetStatePending:
+		statusIcon = SymbolPending
+		statusText = "Ready"
+		statusStyle = lipgloss.NewStyle().Foreground(common.ColorMuted)
 	case common.AssetStateDiscovery:
 		statusIcon = m.spinner.View()
 		statusText = "Discovering..."
@@ -211,17 +231,13 @@ func (m Model) renderHeader() string {
 		statusText = "Scanning..."
 		statusStyle = lipgloss.NewStyle().Foreground(common.ColorWarning)
 	case common.AssetStateComplete:
-		statusIcon = "✓"
+		statusIcon = SymbolCheck
 		statusText = "Complete"
 		statusStyle = lipgloss.NewStyle().Foreground(common.ColorSuccess)
 	case common.AssetStateError:
-		statusIcon = "✗"
+		statusIcon = SymbolCross
 		statusText = "Error"
 		statusStyle = lipgloss.NewStyle().Foreground(common.ColorError)
-	default:
-		statusIcon = "○"
-		statusText = "Ready"
-		statusStyle = lipgloss.NewStyle().Foreground(common.ColorMuted)
 	}
 
 	status := fmt.Sprintf("%s %s", statusIcon, statusText)
@@ -239,8 +255,7 @@ func (m Model) renderResourceTree(width, height int) string {
 		Bold(true).
 		Foreground(common.ColorPrimary).
 		MarginBottom(1)
-	lines = append(lines, titleStyle.Render("📁 Resources"))
-	lines = append(lines, "")
+	lines = append(lines, titleStyle.Render("📁 Resources"), "")
 
 	// Get children to display
 	children := m.tree.GetCurrentChildren()
@@ -290,8 +305,11 @@ func (m Model) renderTreeItem(node *common.ResourceNode, selected bool, maxWidth
 
 	switch node.State {
 	case common.AssetStatePending:
-		icon = "○"
+		icon = SymbolPending
 		iconStyle = lipgloss.NewStyle().Foreground(common.ColorMuted)
+	case common.AssetStateDiscovery:
+		icon = "◐"
+		iconStyle = lipgloss.NewStyle().Foreground(common.ColorWarning)
 	case common.AssetStateScanning:
 		icon = "◐"
 		iconStyle = lipgloss.NewStyle().Foreground(common.ColorWarning)
@@ -299,11 +317,8 @@ func (m Model) renderTreeItem(node *common.ResourceNode, selected bool, maxWidth
 		icon = "●"
 		iconStyle = lipgloss.NewStyle().Foreground(common.ColorSuccess)
 	case common.AssetStateError:
-		icon = "✗"
+		icon = SymbolCross
 		iconStyle = lipgloss.NewStyle().Foreground(common.ColorError)
-	default:
-		icon = "○"
-		iconStyle = lipgloss.NewStyle().Foreground(common.ColorMuted)
 	}
 
 	// Resource name - prefer actual name over type for instances
@@ -357,15 +372,14 @@ func (m Model) renderTreeItem(node *common.ResourceNode, selected bool, maxWidth
 
 // renderCheckPanel renders the right panel with check results
 func (m Model) renderCheckPanel(width, height int) string {
-	var lines []string
+	lines := make([]string, 0, height)
 
 	// Panel title
 	titleStyle := lipgloss.NewStyle().
 		Bold(true).
 		Foreground(common.ColorPrimary).
 		MarginBottom(1)
-	lines = append(lines, titleStyle.Render("🔍 Checks"))
-	lines = append(lines, "")
+	lines = append(lines, titleStyle.Render("🔍 Checks"), "")
 
 	// Get selected node
 	children := m.tree.GetCurrentChildren()
@@ -381,8 +395,7 @@ func (m Model) renderCheckPanel(width, height int) string {
 	lines = append(lines, infoStyle.Render(fmt.Sprintf("Resource: %s", selectedNode.Name)))
 
 	if selectedNode.State == common.AssetStateScanning {
-		lines = append(lines, "")
-		lines = append(lines, m.styles.StatusPending.Render(m.spinner.View()+" Scanning..."))
+		lines = append(lines, "", m.styles.StatusPending.Render(m.spinner.View()+" Scanning..."))
 		return strings.Join(lines, "\n")
 	}
 
@@ -405,11 +418,11 @@ func (m Model) renderCheckPanel(width, height int) string {
 	passed, failed, skipped := 0, 0, 0
 	for _, c := range checks {
 		switch c.Status {
-		case "passed":
+		case StatusPassed:
 			passed++
-		case "failed":
+		case StatusFailed:
 			failed++
-		case "skipped":
+		case StatusSkipped:
 			skipped++
 		}
 	}
@@ -418,9 +431,7 @@ func (m Model) renderCheckPanel(width, height int) string {
 	summaryLine += m.styles.CheckPassed.Render(fmt.Sprintf("✓ %d", passed)) + "  "
 	summaryLine += m.styles.CheckFailed.Render(fmt.Sprintf("✗ %d", failed)) + "  "
 	summaryLine += m.styles.CheckSkipped.Render(fmt.Sprintf("⊘ %d", skipped))
-	lines = append(lines, summaryLine)
-	lines = append(lines, strings.Repeat("─", width-2))
-	lines = append(lines, "")
+	lines = append(lines, summaryLine, strings.Repeat("─", width-2), "")
 
 	// Check list
 	visibleChecks := height - 10
@@ -451,14 +462,14 @@ func (m Model) renderCheckItem(check common.CheckResult, selected bool, maxWidth
 	var statusStyle lipgloss.Style
 
 	switch check.Status {
-	case "passed":
-		icon = "✓"
+	case StatusPassed:
+		icon = SymbolCheck
 		statusStyle = m.styles.CheckPassed
-	case "failed":
-		icon = "✗"
+	case StatusFailed:
+		icon = SymbolCross
 		statusStyle = m.styles.CheckFailed
-	case "skipped":
-		icon = "⊘"
+	case StatusSkipped:
+		icon = SymbolSkipped
 		statusStyle = m.styles.CheckSkipped
 	default:
 		icon = "?"
@@ -514,9 +525,11 @@ func (m Model) renderStatusBar(width int) string {
 	leftParts := []string{}
 
 	if total > 0 {
-		leftParts = append(leftParts, fmt.Sprintf("Checks: %d", total))
-		leftParts = append(leftParts, m.styles.StatusSuccess.Render(fmt.Sprintf("✓ %d", passed)))
-		leftParts = append(leftParts, m.styles.StatusError.Render(fmt.Sprintf("✗ %d", failed)))
+		leftParts = append(leftParts,
+			fmt.Sprintf("Checks: %d", total),
+			m.styles.StatusSuccess.Render(fmt.Sprintf("✓ %d", passed)),
+			m.styles.StatusError.Render(fmt.Sprintf("✗ %d", failed)),
+		)
 		if skipped > 0 {
 			leftParts = append(leftParts, common.MutedStyle.Render(fmt.Sprintf("⊘ %d", skipped)))
 		}

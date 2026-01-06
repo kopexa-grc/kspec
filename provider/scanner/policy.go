@@ -1,3 +1,4 @@
+// Package scanner provides policy evaluation capabilities for security scanning.
 package scanner
 
 import (
@@ -10,6 +11,13 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/kopexa-grc/kspec/core"
+)
+
+// Check status constants.
+const (
+	StatusPassed  = "passed"
+	StatusFailed  = "failed"
+	StatusSkipped = "skipped"
 )
 
 // LoadPolicies loads policies from a file or directory
@@ -212,25 +220,24 @@ func EvaluatePolicies(
 					asset,
 				)
 
-				status := "skipped"
-				var details string
+				var status, details string
 
-				if err != nil {
+				switch {
+				case err != nil:
 					errStr := err.Error()
 					if strings.Contains(errStr, "compile error") ||
 						strings.Contains(errStr, "Syntax error") ||
 						strings.Contains(errStr, "undeclared reference") {
-						status = "skipped"
+						status = StatusSkipped
 						details = "Query uses syntax not supported by CEL evaluator"
 					} else {
-						status = "failed"
+						status = StatusFailed
 						details = fmt.Sprintf("Evaluation error: %s", errStr)
 					}
-				} else if passed {
-					status = "passed"
-					details = ""
-				} else {
-					status = "failed"
+				case passed:
+					status = StatusPassed
+				default:
+					status = StatusFailed
 					details = check.Remediation
 				}
 

@@ -10,27 +10,30 @@ import (
 	"github.com/kopexa-grc/kspec/core"
 )
 
+// DomainResource provides access to Azure AD verified domains.
 type DomainResource struct {
 	client *msgraphsdk.GraphServiceClient
 }
 
+// Name returns the resource type identifier for domains.
 func (r *DomainResource) Name() string {
 	return "ms365_domain"
 }
 
+// Fetch retrieves all verified domains with their configuration.
 func (r *DomainResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
-	var resources []core.Resource
-
 	result, err := r.client.Domains().Get(ctx, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get domains: %w", err)
 	}
 
-	if result.GetValue() == nil {
-		return resources, nil
+	domains := result.GetValue()
+	if domains == nil {
+		return []core.Resource{}, nil
 	}
 
-	for _, domain := range result.GetValue() {
+	resources := make([]core.Resource, 0, len(domains))
+	for _, domain := range domains {
 		data, err := json.Marshal(domain)
 		if err != nil {
 			continue

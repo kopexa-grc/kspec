@@ -36,7 +36,7 @@ const (
 
 // String returns the string representation of the credential type
 func (ct CredentialType) String() string {
-	switch ct {
+	switch ct { //nolint:exhaustive // CredentialTypeUndefined handled in default
 	case CredentialTypePassword:
 		return "password"
 	case CredentialTypePrivateKey:
@@ -125,7 +125,7 @@ type Credential struct {
 
 // Validate checks if the credential is valid based on its type
 func (c *Credential) Validate() error {
-	switch c.Type {
+	switch c.Type { //nolint:exhaustive // Unhandled types fall through to default error
 	case CredentialTypePassword:
 		if c.User == "" {
 			return fmt.Errorf("username is required for password authentication")
@@ -175,7 +175,7 @@ func (c *Credential) Validate() error {
 
 // ResolveSecret returns the actual secret value, resolving environment variables if needed
 func (c *Credential) ResolveSecret() (string, error) {
-	switch c.Type {
+	switch c.Type { //nolint:exhaustive // Only certain credential types support ResolveSecret
 	case CredentialTypeEnv:
 		if c.EnvVarName == "" {
 			return "", fmt.Errorf("environment variable name not set")
@@ -215,7 +215,7 @@ func ParseCredentialFromConfig(config map[string]string) (*Credential, error) {
 		Type: credType,
 	}
 
-	switch credType {
+	switch credType { //nolint:exhaustive // Unhandled types fall through to default error
 	case CredentialTypePassword:
 		cred.User = config["user"]
 		cred.Secret = config["secret"]

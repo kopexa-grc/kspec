@@ -21,8 +21,6 @@ func (r *ConfluencePageResource) Name() string {
 
 // Fetch retrieves Confluence pages.
 func (r *ConfluencePageResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
-	var resources []core.Resource
-
 	// Get pages using CQL search
 	options := &models.SearchContentOptions{
 		Expand: []string{"space", "version"},
@@ -32,11 +30,12 @@ func (r *ConfluencePageResource) Fetch(ctx context.Context, asset core.Asset) ([
 	results, response, err := r.client.Search.Content(ctx, "type=page", options)
 	if err != nil {
 		if response != nil && response.Code == 404 {
-			return resources, nil
+			return nil, nil
 		}
 		return nil, err
 	}
 
+	resources := make([]core.Resource, 0, len(results.Results))
 	for _, result := range results.Results {
 		if result.Content == nil {
 			continue

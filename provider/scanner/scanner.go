@@ -206,7 +206,7 @@ func (s *Scanner) scanResources(ctx context.Context, tree *common.ResourceTree, 
 	asset := s.config.Asset
 
 	// Build resource order from tree children
-	var resourceOrder []string
+	resourceOrder := make([]string, 0, len(tree.Root.Children))
 	for _, child := range tree.Root.Children {
 		resourceOrder = append(resourceOrder, child.ResourceType)
 	}

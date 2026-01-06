@@ -19,10 +19,12 @@ type SqlDatabaseResource struct {
 	resourceGroup  string
 }
 
+// Name returns the resource type name.
 func (r *SqlDatabaseResource) Name() string {
 	return "azure_sql_database"
 }
 
+// Fetch retrieves SQL databases from Azure.
 func (r *SqlDatabaseResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
 	if r.subscriptionID == "" {
 		return nil, fmt.Errorf("subscription_id is required")
@@ -69,10 +71,13 @@ func (r *SqlDatabaseResource) Fetch(ctx context.Context, asset core.Asset) ([]co
 				if err == nil {
 					tde, err := tdeClient.Get(ctx, r.resourceGroup, r.serverName, *db.Name, armsql.TransparentDataEncryptionNameCurrent, nil)
 					if err == nil {
-						tdeData, _ := json.Marshal(tde)
-						var tdeMap map[string]interface{}
-						json.Unmarshal(tdeData, &tdeMap)
-						resourceMap["transparentDataEncryption"] = tdeMap
+						tdeData, marshalErr := json.Marshal(tde)
+						if marshalErr == nil {
+							var tdeMap map[string]interface{}
+							if unmarshalErr := json.Unmarshal(tdeData, &tdeMap); unmarshalErr == nil {
+								resourceMap["transparentDataEncryption"] = tdeMap
+							}
+						}
 					}
 				}
 			}

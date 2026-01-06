@@ -2,6 +2,7 @@ package os
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os/exec"
 	"strings"
@@ -9,12 +10,15 @@ import (
 	"github.com/kopexa-grc/kspec/core"
 )
 
+// PackageResource provides access to installed package information via Homebrew.
 type PackageResource struct{}
 
+// Name returns the resource identifier for packages.
 func (r *PackageResource) Name() string {
 	return "package"
 }
 
+// Fetch retrieves installed packages from Homebrew, optionally filtered by name.
 func (r *PackageResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
 	// Use config from asset
 	config := asset.Config
@@ -37,12 +41,12 @@ func (r *PackageResource) Fetch(ctx context.Context, asset core.Asset) ([]core.R
 	out, err := cmd.Output()
 	if err != nil {
 		// If specific package not found, brew returns exit status 1
-		if exitErr, ok := err.(*exec.ExitError); ok && targetName != "" {
+		var exitErr *exec.ExitError
+		if errors.As(err, &exitErr) && targetName != "" {
 			// Return empty list if specific package requested but not found?
 			// Or return resource with installed=false?
 			// Unlike File resource, package managers usually just Error or Empty.
 			// Let's return empty list for "not found".
-			_ = exitErr
 			return []core.Resource{}, nil
 		}
 		return nil, fmt.Errorf("failed to run brew list: %w", err)

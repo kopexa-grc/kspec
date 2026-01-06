@@ -88,7 +88,7 @@ func TestCertificatesFetch(t *testing.T) {
 	}
 }
 
-func generateSelfSignedCert() ([]byte, []byte, error) {
+func generateSelfSignedCert() (certPEM, keyPEM []byte, err error) {
 	priv, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		return nil, nil, err
@@ -113,8 +113,8 @@ func generateSelfSignedCert() ([]byte, []byte, error) {
 		return nil, nil, err
 	}
 
-	certPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: derBytes})
-	keyPEM := pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(priv)})
+	certPEM = pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: derBytes})
+	keyPEM = pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(priv)})
 
 	return certPEM, keyPEM, nil
 }

@@ -11,17 +11,18 @@ import (
 	"github.com/kopexa-grc/kspec/core"
 )
 
+// UserResource provides access to Microsoft 365 user accounts.
 type UserResource struct {
 	client *msgraphsdk.GraphServiceClient
 }
 
+// Name returns the resource type identifier for MS365 users.
 func (r *UserResource) Name() string {
 	return "ms365_user"
 }
 
+// Fetch retrieves all users with their properties, licenses, and authentication methods.
 func (r *UserResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
-	var resources []core.Resource
-
 	// Request specific properties for users
 	requestConfig := &users.UsersRequestBuilderGetRequestConfiguration{
 		QueryParameters: &users.UsersRequestBuilderGetQueryParameters{
@@ -40,9 +41,10 @@ func (r *UserResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Reso
 	}
 
 	if result.GetValue() == nil {
-		return resources, nil
+		return nil, nil
 	}
 
+	resources := make([]core.Resource, 0, len(result.GetValue()))
 	for _, user := range result.GetValue() {
 		// Convert to map
 		data, err := json.Marshal(user)

@@ -27,8 +27,6 @@ func (r *WAFRuleResource) Fetch(ctx context.Context, asset core.Asset) ([]core.R
 		return nil, nil
 	}
 
-	var resources []core.Resource
-
 	// List zone rulesets
 	result, err := r.client.Rulesets.List(ctx, rulesets.RulesetListParams{
 		ZoneID: cloudflare.F(zoneID),
@@ -37,6 +35,7 @@ func (r *WAFRuleResource) Fetch(ctx context.Context, asset core.Asset) ([]core.R
 		return nil, err
 	}
 
+	resources := make([]core.Resource, 0, len(result.Result))
 	for _, ruleset := range result.Result {
 		data, err := json.Marshal(ruleset)
 		if err != nil {
@@ -58,8 +57,14 @@ func (r *WAFRuleResource) Fetch(ctx context.Context, asset core.Asset) ([]core.R
 }
 
 func (r *WAFRuleResource) addSecurityFlags(ruleset map[string]interface{}) {
-	kind, _ := ruleset["kind"].(string)
-	phase, _ := ruleset["phase"].(string)
+	kind := ""
+	if k, ok := ruleset["kind"].(string); ok {
+		kind = k
+	}
+	phase := ""
+	if p, ok := ruleset["phase"].(string); ok {
+		phase = p
+	}
 
 	// Identify WAF managed rulesets
 	ruleset["is_managed"] = kind == "managed"

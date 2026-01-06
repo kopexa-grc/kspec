@@ -12,26 +12,28 @@ import (
 	"github.com/kopexa-grc/kspec/core"
 )
 
+// ApplicationResource provides access to Azure AD application registrations.
 type ApplicationResource struct {
 	client *msgraphsdk.GraphServiceClient
 }
 
+// Name returns the resource type identifier for applications.
 func (r *ApplicationResource) Name() string {
 	return "ms365_application"
 }
 
+// Fetch retrieves all application registrations with their credentials and permissions.
 func (r *ApplicationResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
-	var resources []core.Resource
-
 	result, err := r.client.Applications().Get(ctx, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get applications: %w", err)
 	}
 
 	if result.GetValue() == nil {
-		return resources, nil
+		return nil, nil
 	}
 
+	resources := make([]core.Resource, 0, len(result.GetValue()))
 	for _, app := range result.GetValue() {
 		data, err := json.Marshal(app)
 		if err != nil {
@@ -127,26 +129,28 @@ func (r *ApplicationResource) Fetch(ctx context.Context, asset core.Asset) ([]co
 	return resources, nil
 }
 
+// ServicePrincipalResource provides access to Azure AD service principals.
 type ServicePrincipalResource struct {
 	client *msgraphsdk.GraphServiceClient
 }
 
+// Name returns the resource type identifier for service principals.
 func (r *ServicePrincipalResource) Name() string {
 	return "ms365_service_principal"
 }
 
+// Fetch retrieves all service principals with their permissions and role assignments.
 func (r *ServicePrincipalResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
-	var resources []core.Resource
-
 	result, err := r.client.ServicePrincipals().Get(ctx, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get service principals: %w", err)
 	}
 
 	if result.GetValue() == nil {
-		return resources, nil
+		return nil, nil
 	}
 
+	resources := make([]core.Resource, 0, len(result.GetValue()))
 	for _, sp := range result.GetValue() {
 		data, err := json.Marshal(sp)
 		if err != nil {

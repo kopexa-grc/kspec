@@ -15,6 +15,7 @@ import (
 // ViewMode represents the current view mode
 type ViewMode string
 
+// ViewMode constants represent the available view modes for the browser.
 const (
 	ViewModeList        ViewMode = "list"         // Show children/sub-resources
 	ViewModeChecks      ViewMode = "checks"       // Show check results
@@ -39,9 +40,13 @@ type Model struct {
 	checkCursor  int // Cursor position in right panel (checks)
 }
 
-// Messages
+// NavigateDownMsg requests navigation into a child node.
 type NavigateDownMsg struct{ NodeID string }
+
+// NavigateUpMsg requests navigation to the parent node.
 type NavigateUpMsg struct{}
+
+// UpdateTreeMsg updates the browser with a new resource tree.
 type UpdateTreeMsg struct{ Tree *common.ResourceTree }
 
 // New creates a new browser model
@@ -280,16 +285,16 @@ func (m Model) renderCheckDetailView() string {
 	var statusIcon, statusText string
 	var statusStyle lipgloss.Style
 	switch check.Status {
-	case "passed":
-		statusIcon = "✓"
+	case StatusPassed:
+		statusIcon = SymbolCheck
 		statusText = "PASSED"
 		statusStyle = lipgloss.NewStyle().Foreground(common.ColorSuccess).Bold(true)
-	case "failed":
-		statusIcon = "✗"
+	case StatusFailed:
+		statusIcon = SymbolCross
 		statusText = "FAILED"
 		statusStyle = lipgloss.NewStyle().Foreground(common.ColorError).Bold(true)
-	case "skipped":
-		statusIcon = "⊘"
+	case StatusSkipped:
+		statusIcon = SymbolSkipped
 		statusText = "SKIPPED"
 		statusStyle = lipgloss.NewStyle().Foreground(common.ColorMuted)
 	default:
@@ -480,15 +485,12 @@ func (m *Model) buildChecksTable() {
 		var statusDisplay string
 
 		switch check.Status {
-		case "passed":
-			// statusStyle = lipgloss.NewStyle().Foreground(common.ColorSuccess)
-			statusDisplay = "✓ passed"
-		case "failed":
-			// statusStyle = lipgloss.NewStyle().Foreground(common.ColorError)
-			statusDisplay = "✗ failed"
-		case "skipped":
-			// statusStyle = lipgloss.NewStyle().Foreground(common.ColorMuted)
-			statusDisplay = "⊘ skipped"
+		case StatusPassed:
+			statusDisplay = SymbolCheck + " " + StatusPassed
+		case StatusFailed:
+			statusDisplay = SymbolCross + " " + StatusFailed
+		case StatusSkipped:
+			statusDisplay = SymbolSkipped + " " + StatusSkipped
 		default:
 			statusDisplay = check.Status
 		}
@@ -528,12 +530,4 @@ func (m *Model) buildChecksTable() {
 // getDisplayItems returns the items to display in the list view
 func (m *Model) getDisplayItems() []*common.ResourceNode {
 	return m.tree.GetCurrentChildren()
-}
-
-// min returns the minimum of two integers
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
 }

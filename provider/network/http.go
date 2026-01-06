@@ -10,12 +10,15 @@ import (
 	"github.com/kopexa-grc/kspec/core"
 )
 
+// HTTPResource provides access to HTTP response information including headers and status.
 type HTTPResource struct{}
 
+// Name returns the resource type name.
 func (r *HTTPResource) Name() string {
 	return "http"
 }
 
+// Fetch retrieves HTTP response data from the target URL specified in the asset.
 func (r *HTTPResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
 	domainName := asset.FQDN
 	if domainName == "" {
@@ -35,7 +38,7 @@ func (r *HTTPResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Reso
 		targetURL = "https://" + targetURL
 	}
 
-	req, err := http.NewRequestWithContext(ctx, "GET", targetURL, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", targetURL, http.NoBody)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}

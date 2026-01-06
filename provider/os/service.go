@@ -9,12 +9,15 @@ import (
 	"github.com/kopexa-grc/kspec/core"
 )
 
+// ServiceResource provides access to launchctl service information on macOS.
 type ServiceResource struct{}
 
+// Name returns the resource identifier for services.
 func (r *ServiceResource) Name() string {
 	return "service"
 }
 
+// Fetch retrieves launchctl services, optionally filtered by label.
 func (r *ServiceResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
 	// launchctl list returns: PID Status Label
 	// If name/label is specified, we could grep it, but listing all is fast enough usually.

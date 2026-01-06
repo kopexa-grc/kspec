@@ -12,22 +12,27 @@ import (
 	"github.com/kopexa-grc/kspec/core"
 )
 
-type AzureProvider struct{}
+// Provider implements the core.Provider interface for Azure cloud resources.
+type Provider struct{}
 
-func NewAzureProvider() core.Provider {
-	return &AzureProvider{}
+// NewProvider creates a new Azure provider instance for scanning Azure resources.
+func NewProvider() core.Provider {
+	return &Provider{}
 }
 
-func (p *AzureProvider) Name() string {
+// Name returns the provider name identifier.
+func (p *Provider) Name() string {
 	return "azure"
 }
 
-type AzureConnection struct {
+// Connection represents an authenticated connection to Azure services.
+type Connection struct {
 	credential     azcore.TokenCredential
 	subscriptionID string
 }
 
-func (p *AzureProvider) Connect(ctx context.Context, config map[string]string) (core.Connection, error) {
+// Connect establishes a connection to Azure using the provided configuration.
+func (p *Provider) Connect(ctx context.Context, config map[string]string) (core.Connection, error) {
 	// Get subscription ID from config (support both formats)
 	subscriptionID, ok := config["subscription_id"]
 	if !ok {
@@ -71,13 +76,14 @@ func (p *AzureProvider) Connect(ctx context.Context, config map[string]string) (
 		}
 	}
 
-	return &AzureConnection{
+	return &Connection{
 		credential:     azureCred,
 		subscriptionID: subscriptionID,
 	}, nil
 }
 
-func (c *AzureConnection) Resources() []core.ResourceSpec {
+// Resources returns the list of available Azure resource types that can be scanned.
+func (c *Connection) Resources() []core.ResourceSpec {
 	return []core.ResourceSpec{
 		&StorageAccountResource{
 			credential:     c.credential,

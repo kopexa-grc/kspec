@@ -16,8 +16,8 @@ import (
 // Provider implements the core.Provider interface for Cloudflare.
 type Provider struct{}
 
-// NewCloudflareProvider creates a new Cloudflare provider.
-func NewCloudflareProvider() *Provider {
+// NewProvider creates a new Cloudflare provider.
+func NewProvider() *Provider {
 	return &Provider{}
 }
 

@@ -9,28 +9,30 @@ import (
 	"github.com/kopexa-grc/kspec/core"
 )
 
+// DirectorySettingResource provides access to Azure AD directory settings.
 type DirectorySettingResource struct {
 	client *msgraphsdk.GraphServiceClient
 }
 
+// Name returns the resource type identifier for directory settings.
 func (r *DirectorySettingResource) Name() string {
 	return "ms365_directory_setting"
 }
 
+// Fetch retrieves all directory settings including group creation and guest access policies.
 func (r *DirectorySettingResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
-	var resources []core.Resource
-
 	// Get group settings
 	result, err := r.client.GroupSettings().Get(ctx, nil)
 	if err != nil {
 		// Group settings might not be configured
-		return resources, err
+		return nil, err
 	}
 
 	if result.GetValue() == nil {
-		return resources, nil
+		return nil, nil
 	}
 
+	resources := make([]core.Resource, 0, len(result.GetValue()))
 	for _, setting := range result.GetValue() {
 		data, err := json.Marshal(setting)
 		if err != nil {
@@ -107,14 +109,17 @@ func (r *DirectorySettingResource) Fetch(ctx context.Context, asset core.Asset) 
 	return resources, nil
 }
 
+// ExternalIdentityPolicyResource provides access to cross-tenant access policies.
 type ExternalIdentityPolicyResource struct {
 	client *msgraphsdk.GraphServiceClient
 }
 
+// Name returns the resource type identifier for external identity policies.
 func (r *ExternalIdentityPolicyResource) Name() string {
 	return "ms365_external_identity_policy"
 }
 
+// Fetch retrieves cross-tenant access policies for B2B collaboration settings.
 func (r *ExternalIdentityPolicyResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
 	var resources []core.Resource
 

@@ -10,14 +10,17 @@ import (
 	"github.com/kopexa-grc/kspec/core"
 )
 
+// OrganizationResource fetches GitHub organization data and settings.
 type OrganizationResource struct {
 	client *github.Client
 }
 
+// Name returns the resource type identifier for GitHub organizations.
 func (r *OrganizationResource) Name() string {
 	return "github_organization"
 }
 
+// Fetch retrieves organization details including security settings.
 func (r *OrganizationResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
 	config := asset.Config
 	orgName, ok := config["owner"]

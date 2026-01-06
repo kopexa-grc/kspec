@@ -16,12 +16,15 @@ import (
 	"github.com/kopexa-grc/kspec/core"
 )
 
+// CertificatesResource provides access to TLS certificate information from remote hosts.
 type CertificatesResource struct{}
 
+// Name returns the resource type name.
 func (r *CertificatesResource) Name() string {
 	return "certificate"
 }
 
+// Fetch retrieves TLS certificates from the target host specified in the asset.
 func (r *CertificatesResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
 	domainName := asset.FQDN
 	if domainName == "" {
@@ -55,7 +58,7 @@ func (r *CertificatesResource) Fetch(ctx context.Context, asset core.Asset) ([]c
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to %s: %w", target, err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }() //nolint:errcheck // Intentional: Close error is not actionable here
 
 	tlsConn, ok := conn.(*tls.Conn)
 	if !ok {
@@ -64,7 +67,7 @@ func (r *CertificatesResource) Fetch(ctx context.Context, asset core.Asset) ([]c
 	state := tlsConn.ConnectionState()
 	certs := state.PeerCertificates
 
-	var resources []core.Resource
+	resources := make([]core.Resource, 0, len(certs))
 
 	// Provide all certificates in the chain? Or just leaf?
 	// Usually 'certificate' resource might be a collection where we return each cert in the chain as a resource?
@@ -167,7 +170,7 @@ func parseKeyUsage(ku x509.KeyUsage) []string {
 func parseExtKeyUsage(eku []x509.ExtKeyUsage) []string {
 	var usages []string
 	for _, u := range eku {
-		switch u {
+		switch u { //nolint:exhaustive // x509.ExtKeyUsageAny handled in default as unknown
 		case x509.ExtKeyUsageServerAuth:
 			usages = append(usages, "ServerAuth")
 		case x509.ExtKeyUsageClientAuth:
@@ -202,7 +205,7 @@ func parseExtKeyUsage(eku []x509.ExtKeyUsage) []string {
 }
 
 func ipsToStrings(ips []net.IP) []string {
-	var res []string
+	res := make([]string, 0, len(ips))
 	for _, ip := range ips {
 		res = append(res, ip.String())
 	}
@@ -210,7 +213,7 @@ func ipsToStrings(ips []net.IP) []string {
 }
 
 func urisToStrings(uris []*url.URL) []string {
-	var res []string
+	res := make([]string, 0, len(uris))
 	for _, u := range uris {
 		res = append(res, u.String())
 	}

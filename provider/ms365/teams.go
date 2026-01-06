@@ -10,17 +10,18 @@ import (
 	"github.com/kopexa-grc/kspec/core"
 )
 
+// TeamResource provides access to Microsoft Teams resources.
 type TeamResource struct {
 	client *msgraphsdk.GraphServiceClient
 }
 
+// Name returns the resource type identifier for Microsoft Teams.
 func (r *TeamResource) Name() string {
 	return "ms365_team"
 }
 
+// Fetch retrieves all Microsoft Teams with their settings and membership details.
 func (r *TeamResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
-	var resources []core.Resource
-
 	// Get all teams (groups with Teams enabled)
 	result, err := r.client.Teams().Get(ctx, nil)
 	if err != nil {
@@ -28,9 +29,10 @@ func (r *TeamResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Reso
 	}
 
 	if result.GetValue() == nil {
-		return resources, nil
+		return nil, nil
 	}
 
+	resources := make([]core.Resource, 0, len(result.GetValue()))
 	for _, team := range result.GetValue() {
 		data, err := json.Marshal(team)
 		if err != nil {
@@ -135,14 +137,17 @@ func (r *TeamResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Reso
 	return resources, nil
 }
 
+// TeamSettingsResource provides access to tenant-wide Microsoft Teams settings.
 type TeamSettingsResource struct {
 	client *msgraphsdk.GraphServiceClient
 }
 
+// Name returns the resource type identifier for Teams settings.
 func (r *TeamSettingsResource) Name() string {
 	return "ms365_teams_settings"
 }
 
+// Fetch retrieves tenant-wide Microsoft Teams configuration settings.
 func (r *TeamSettingsResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
 	var resources []core.Resource
 
