@@ -4,7 +4,6 @@ metadata:
   name: kopexa-github-security
   title: Kopexa GitHub Security
   version: 1.0.0
-  license: BUSL-1.1
   tags:
     kopexa.io/category: security
     kopexa.io/platform: github

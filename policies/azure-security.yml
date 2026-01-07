@@ -4,7 +4,6 @@ metadata:
   name: kopexa-azure-security
   title: Kopexa Microsoft Azure Security
   version: 2.0.3
-  license: BUSL-1.1
   tags:
     kopexa.com/category: security
     kopexa.com/platform: azure,cloud

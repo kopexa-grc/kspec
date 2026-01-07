@@ -4,7 +4,6 @@ metadata:
   name: kopexa-factorial-security
   title: Kopexa Factorial HR Security & Compliance
   version: "1.0.0"
-  license: BUSL-1.1
   tags:
     kopexa.com/category: compliance
     kopexa.com/platform: factorial,hris

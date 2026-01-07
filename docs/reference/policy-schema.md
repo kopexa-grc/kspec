@@ -28,7 +28,7 @@ metadata:
   name: my-security-policy
   title: My Security Policy
   version: 1.0.0
-  license: BUSL-1.1
+  license: ELv2
   tags:
     category: security
     platform: azure

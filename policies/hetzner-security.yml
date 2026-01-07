@@ -4,7 +4,6 @@ metadata:
   name: kopexa-hetzner-security
   title: Kopexa Hetzner Cloud Security
   version: 1.0.0
-  license: BUSL-1.1
   tags:
     kopexa.com/category: security
     kopexa.com/platform: hetzner,cloud
