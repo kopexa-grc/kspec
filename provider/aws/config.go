@@ -56,7 +56,7 @@ func (r *ConfigRecorderResource) Fetch(ctx context.Context, asset core.Asset) ([
 				resource["all_supported"] = rg.AllSupported
 				resource["include_global_resources"] = rg.IncludeGlobalResourceTypes
 
-				var resourceTypes []string
+				resourceTypes := make([]string, 0, len(rg.ResourceTypes))
 				for _, rt := range rg.ResourceTypes {
 					resourceTypes = append(resourceTypes, string(rt))
 				}

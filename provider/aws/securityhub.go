@@ -55,8 +55,8 @@ func (r *SecurityHubResource) Fetch(ctx context.Context, asset core.Asset) ([]co
 		// Get enabled standards
 		standardsResp, err := client.GetEnabledStandards(ctx, &securityhub.GetEnabledStandardsInput{})
 		if err == nil {
-			var enabledStandards []string
-			var standardsArns []string
+			enabledStandards := make([]string, 0, len(standardsResp.StandardsSubscriptions))
+			standardsArns := make([]string, 0, len(standardsResp.StandardsSubscriptions))
 			for _, sub := range standardsResp.StandardsSubscriptions {
 				enabledStandards = append(enabledStandards, aws.ToString(sub.StandardsArn))
 				standardsArns = append(standardsArns, aws.ToString(sub.StandardsSubscriptionArn))
@@ -110,7 +110,7 @@ func (r *SecurityHubResource) Fetch(ctx context.Context, asset core.Asset) ([]co
 		membersResp, err := client.ListMembers(ctx, &securityhub.ListMembersInput{})
 		if err == nil {
 			resource["member_count"] = len(membersResp.Members)
-			var memberAccountIDs []string
+			memberAccountIDs := make([]string, 0, len(membersResp.Members))
 			for _, member := range membersResp.Members {
 				memberAccountIDs = append(memberAccountIDs, aws.ToString(member.AccountId))
 			}
@@ -238,7 +238,7 @@ func (r *SecurityHubFindingResource) Fetch(ctx context.Context, asset core.Asset
 				resource["is_warning"] = finding.Compliance.Status == types.ComplianceStatusWarning
 				resource["is_not_available"] = finding.Compliance.Status == types.ComplianceStatusNotAvailable
 
-				var relatedRequirements []string
+				relatedRequirements := make([]string, 0, len(finding.Compliance.RelatedRequirements))
 				relatedRequirements = append(relatedRequirements, finding.Compliance.RelatedRequirements...)
 				resource["related_requirements"] = relatedRequirements
 			}
@@ -257,8 +257,8 @@ func (r *SecurityHubFindingResource) Fetch(ctx context.Context, asset core.Asset
 
 			// Resources
 			if len(finding.Resources) > 0 {
-				var resourceTypes []string
-				var resourceIds []string
+				resourceTypes := make([]string, 0, len(finding.Resources))
+				resourceIds := make([]string, 0, len(finding.Resources))
 				for _, res := range finding.Resources {
 					resourceTypes = append(resourceTypes, aws.ToString(res.Type))
 					resourceIds = append(resourceIds, aws.ToString(res.Id))

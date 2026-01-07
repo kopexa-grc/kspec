@@ -197,7 +197,7 @@ func (r *ElastiCacheReplicationGroupResource) Fetch(ctx context.Context, asset c
 
 				// Node groups (shards)
 				resource["node_group_count"] = len(rg.NodeGroups)
-				var shardInfo []map[string]interface{}
+				shardInfo := make([]map[string]interface{}, 0, len(rg.NodeGroups))
 				totalNodes := 0
 				for _, ng := range rg.NodeGroups {
 					shard := map[string]interface{}{
@@ -261,7 +261,7 @@ func (r *ElastiCacheReplicationGroupResource) Fetch(ctx context.Context, asset c
 				resource["has_user_groups"] = len(rg.UserGroupIds) > 0
 
 				// Log delivery
-				var logTypes []string
+				logTypes := make([]string, 0, len(rg.LogDeliveryConfigurations))
 				for _, ld := range rg.LogDeliveryConfigurations {
 					logTypes = append(logTypes, string(ld.LogType))
 				}

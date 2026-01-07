@@ -136,14 +136,14 @@ func (r *ACMCertificateResource) Fetch(ctx context.Context, asset core.Asset) ([
 				}
 
 				// Extended key usage
-				var keyUsages []string
+				keyUsages := make([]string, 0, len(cert.ExtendedKeyUsages))
 				for _, ku := range cert.ExtendedKeyUsages {
 					keyUsages = append(keyUsages, string(ku.Name))
 				}
 				resource["extended_key_usages"] = keyUsages
 
 				// Key usages
-				var usages []string
+				usages := make([]string, 0, len(cert.KeyUsages))
 				for _, ku := range cert.KeyUsages {
 					usages = append(usages, string(ku.Name))
 				}

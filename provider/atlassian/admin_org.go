@@ -26,7 +26,7 @@ func (r *AdminOrganizationResource) Fetch(ctx context.Context, asset core.Asset)
 		return nil, nil
 	}
 
-	var resources []core.Resource
+	resources := make([]core.Resource, 0, 1)
 
 	// Get organization details
 	org, response, err := r.client.Organization.Get(ctx, r.orgID)

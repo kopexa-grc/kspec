@@ -82,7 +82,7 @@ func (r *CloudWatchLogGroupResource) Fetch(ctx context.Context, asset core.Asset
 					resource["subscription_filter_count"] = len(subsResp.SubscriptionFilters)
 					resource["has_subscription_filters"] = len(subsResp.SubscriptionFilters) > 0
 
-					var filterDestinations []string
+					filterDestinations := make([]string, 0, len(subsResp.SubscriptionFilters))
 					for _, sf := range subsResp.SubscriptionFilters {
 						filterDestinations = append(filterDestinations, aws.ToString(sf.DestinationArn))
 					}
@@ -166,7 +166,7 @@ func (r *CloudWatchAlarmResource) Fetch(ctx context.Context, asset core.Asset) (
 				resource["has_ok_actions"] = len(alarm.OKActions) > 0
 
 				// Dimensions
-				var dimensions []map[string]string
+				dimensions := make([]map[string]string, 0, len(alarm.Dimensions))
 				for _, dim := range alarm.Dimensions {
 					dimensions = append(dimensions, map[string]string{
 						"name":  aws.ToString(dim.Name),
@@ -264,14 +264,14 @@ func (r *CloudWatchMetricStreamResource) Fetch(ctx context.Context, asset core.A
 			resource["output_format"] = string(detailResp.OutputFormat)
 
 			// Include/Exclude filters
-			var includeFilters []string
+			includeFilters := make([]string, 0, len(detailResp.IncludeFilters))
 			for _, f := range detailResp.IncludeFilters {
 				includeFilters = append(includeFilters, aws.ToString(f.Namespace))
 			}
 			resource["include_filters"] = includeFilters
 			resource["include_filter_count"] = len(includeFilters)
 
-			var excludeFilters []string
+			excludeFilters := make([]string, 0, len(detailResp.ExcludeFilters))
 			for _, f := range detailResp.ExcludeFilters {
 				excludeFilters = append(excludeFilters, aws.ToString(f.Namespace))
 			}

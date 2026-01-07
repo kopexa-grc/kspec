@@ -123,7 +123,7 @@ func (r *CloudTrailResource) Fetch(ctx context.Context, asset core.Asset) ([]cor
 			if err == nil {
 				// Basic event selectors
 				if len(selectorsResp.EventSelectors) > 0 {
-					var selectors []map[string]any
+					selectors := make([]map[string]any, 0, len(selectorsResp.EventSelectors))
 					var logsManagementEvents, logsDataEvents bool
 					var readWriteType string
 
@@ -140,7 +140,7 @@ func (r *CloudTrailResource) Fetch(ctx context.Context, asset core.Asset) ([]cor
 						readWriteType = string(es.ReadWriteType)
 
 						// Data resources
-						var dataResources []map[string]any
+						dataResources := make([]map[string]any, 0, len(es.DataResources))
 						for _, dr := range es.DataResources {
 							dataResource := map[string]any{
 								"type":   aws.ToString(dr.Type),
@@ -180,7 +180,7 @@ func (r *CloudTrailResource) Fetch(ctx context.Context, asset core.Asset) ([]cor
 			})
 			if err == nil && len(insightsResp.InsightSelectors) > 0 {
 				resource["has_insights"] = true
-				var insightTypes []string
+				insightTypes := make([]string, 0, len(insightsResp.InsightSelectors))
 				for _, is := range insightsResp.InsightSelectors {
 					insightTypes = append(insightTypes, string(is.InsightType))
 				}

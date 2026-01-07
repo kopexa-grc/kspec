@@ -195,7 +195,7 @@ func (m Model) renderLayout() string {
 
 // renderHeader renders the header with breadcrumb and scan status
 func (m Model) renderHeader() string {
-	var parts []string
+	parts := make([]string, 0, 4)
 
 	// Logo/Title
 	titleStyle := lipgloss.NewStyle().

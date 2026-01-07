@@ -139,8 +139,8 @@ func (r *SNSTopicResource) Fetch(ctx context.Context, asset core.Asset) ([]core.
 					TopicArn: topic.TopicArn,
 				})
 				if err == nil {
-					var protocols []string
-					var endpoints []string
+					protocols := make([]string, 0, len(subsResp.Subscriptions))
+					endpoints := make([]string, 0, len(subsResp.Subscriptions))
 					for _, sub := range subsResp.Subscriptions {
 						protocols = append(protocols, aws.ToString(sub.Protocol))
 						endpoints = append(endpoints, aws.ToString(sub.Endpoint))

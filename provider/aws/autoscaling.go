@@ -107,7 +107,7 @@ func (r *AutoScalingGroupResource) Fetch(ctx context.Context, asset core.Asset) 
 				resource["termination_policies"] = asg.TerminationPolicies
 
 				// Metrics
-				var enabledMetrics []string
+				enabledMetrics := make([]string, 0, len(asg.EnabledMetrics))
 				for _, metric := range asg.EnabledMetrics {
 					enabledMetrics = append(enabledMetrics, aws.ToString(metric.Metric))
 				}
@@ -115,7 +115,7 @@ func (r *AutoScalingGroupResource) Fetch(ctx context.Context, asset core.Asset) 
 				resource["has_detailed_monitoring"] = len(enabledMetrics) > 0
 
 				// Suspended processes
-				var suspendedProcesses []string
+				suspendedProcesses := make([]string, 0, len(asg.SuspendedProcesses))
 				for _, sp := range asg.SuspendedProcesses {
 					suspendedProcesses = append(suspendedProcesses, aws.ToString(sp.ProcessName))
 				}
@@ -179,7 +179,7 @@ func (r *AutoScalingGroupResource) Fetch(ctx context.Context, asset core.Asset) 
 				resource["tags"] = tags
 
 				// Instances detail
-				var instanceIDs []string
+				instanceIDs := make([]string, 0, len(asg.Instances))
 				healthyCount := 0
 				unhealthyCount := 0
 				for _, instance := range asg.Instances {

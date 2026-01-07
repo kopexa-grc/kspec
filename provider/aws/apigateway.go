@@ -58,7 +58,7 @@ func (r *APIGatewayRestAPIResource) Fetch(ctx context.Context, asset core.Asset)
 					resource["has_vpc_endpoints"] = len(api.EndpointConfiguration.VpcEndpointIds) > 0
 
 					// Endpoint types
-					var types []string
+					types := make([]string, 0, len(api.EndpointConfiguration.Types))
 					for _, t := range api.EndpointConfiguration.Types {
 						types = append(types, string(t))
 					}
@@ -82,7 +82,7 @@ func (r *APIGatewayRestAPIResource) Fetch(ctx context.Context, asset core.Asset)
 					RestApiId: api.Id,
 				})
 				if err == nil {
-					var stageNames []string
+					stageNames := make([]string, 0, len(stagesResp.Item))
 					hasLogging := false
 					hasTracing := false
 					hasClientCert := false
@@ -334,7 +334,7 @@ func (r *APIGatewayV2APIResource) Fetch(ctx context.Context, asset core.Asset) (
 				ApiId: api.ApiId,
 			})
 			if err == nil {
-				var stageNames []string
+				stageNames := make([]string, 0, len(stagesResp.Items))
 				hasLogging := false
 				hasThrottling := false
 
@@ -386,7 +386,7 @@ func (r *APIGatewayV2APIResource) Fetch(ctx context.Context, asset core.Asset) (
 				ApiId: api.ApiId,
 			})
 			if err == nil {
-				var authorizerNames []string
+				authorizerNames := make([]string, 0, len(authorizersResp.Items))
 				for _, auth := range authorizersResp.Items {
 					authorizerNames = append(authorizerNames, aws.ToString(auth.Name))
 				}

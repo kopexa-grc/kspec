@@ -153,7 +153,7 @@ func (r *SSMParameterResource) Fetch(ctx context.Context, asset core.Asset) ([]c
 				resource["last_modified_user"] = aws.ToString(param.LastModifiedUser)
 
 				// Policies
-				var policyNames []string
+				policyNames := make([]string, 0, len(param.Policies))
 				for _, policy := range param.Policies {
 					policyNames = append(policyNames, aws.ToString(policy.PolicyType))
 				}
@@ -231,14 +231,14 @@ func (r *SSMDocumentResource) Fetch(ctx context.Context, asset core.Asset) ([]co
 				resource["target_type"] = aws.ToString(doc.TargetType)
 
 				// Platform types
-				var platforms []string
+				platforms := make([]string, 0, len(doc.PlatformTypes))
 				for _, p := range doc.PlatformTypes {
 					platforms = append(platforms, string(p))
 				}
 				resource["platform_types"] = platforms
 
 				// Requires
-				var requires []string
+				requires := make([]string, 0, len(doc.Requires))
 				for _, req := range doc.Requires {
 					requires = append(requires, aws.ToString(req.Name))
 				}

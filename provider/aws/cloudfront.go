@@ -64,8 +64,8 @@ func (r *CloudFrontDistributionResource) Fetch(ctx context.Context, asset core.A
 
 			// Origins
 			if dist.Origins != nil {
-				var originIDs []string
-				var originDomains []string
+				originIDs := make([]string, 0, len(dist.Origins.Items))
+				originDomains := make([]string, 0, len(dist.Origins.Items))
 				hasS3Origin := false
 				hasCustomOrigin := false
 
