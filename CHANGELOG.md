@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.5](https://github.com/kopexa-grc/kspec/compare/v0.1.4...v0.1.5) (2026-01-07)
+
+
+### Features
+
+* **aws:** add comprehensive AWS provider for security scanning ([51e4383](https://github.com/kopexa-grc/kspec/commit/51e4383a9b87eeda52863c3340d09e14c1d3a07b))
+
+
+### Bug Fixes
+
+* resolve linter issues and add provider documentation ([ae67317](https://github.com/kopexa-grc/kspec/commit/ae67317f36f08a185d6ecff52b3714181f9dc6ee))
+
 ## [0.1.4](https://github.com/kopexa-grc/kspec/compare/v0.1.3...v0.1.4) (2026-01-06)
 
 
