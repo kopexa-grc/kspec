@@ -13,7 +13,8 @@ import (
 
 // EC2InstanceResource fetches EC2 instances.
 type EC2InstanceResource struct {
-	conn *Connection
+	conn   *Connection
+	client EC2API // optional, for testing
 }
 
 // Name returns the resource type name.
@@ -21,12 +22,20 @@ func (r *EC2InstanceResource) Name() string {
 	return "aws_ec2_instance"
 }
 
+// getClient returns the EC2 client for the given region.
+func (r *EC2InstanceResource) getClient(region string) EC2API {
+	if r.client != nil {
+		return r.client
+	}
+	return ec2.NewFromConfig(r.conn.ConfigForRegion(region))
+}
+
 // Fetch retrieves all EC2 instances across configured regions.
 func (r *EC2InstanceResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
 	var resources []core.Resource
 
 	for _, region := range r.conn.regions {
-		client := ec2.NewFromConfig(r.conn.ConfigForRegion(region))
+		client := r.getClient(region)
 
 		paginator := ec2.NewDescribeInstancesPaginator(client, &ec2.DescribeInstancesInput{})
 
@@ -175,7 +184,8 @@ func (r *EC2InstanceResource) Fetch(ctx context.Context, asset core.Asset) ([]co
 
 // EC2VolumeResource fetches EBS volumes.
 type EC2VolumeResource struct {
-	conn *Connection
+	conn   *Connection
+	client EC2API // optional, for testing
 }
 
 // Name returns the resource type name.
@@ -183,12 +193,20 @@ func (r *EC2VolumeResource) Name() string {
 	return "aws_ec2_volume"
 }
 
+// getClient returns the EC2 client for the given region.
+func (r *EC2VolumeResource) getClient(region string) EC2API {
+	if r.client != nil {
+		return r.client
+	}
+	return ec2.NewFromConfig(r.conn.ConfigForRegion(region))
+}
+
 // Fetch retrieves all EBS volumes across configured regions.
 func (r *EC2VolumeResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
 	var resources []core.Resource
 
 	for _, region := range r.conn.regions {
-		client := ec2.NewFromConfig(r.conn.ConfigForRegion(region))
+		client := r.getClient(region)
 
 		paginator := ec2.NewDescribeVolumesPaginator(client, &ec2.DescribeVolumesInput{})
 
@@ -278,7 +296,8 @@ func (r *EC2VolumeResource) Fetch(ctx context.Context, asset core.Asset) ([]core
 
 // EC2SnapshotResource fetches EBS snapshots.
 type EC2SnapshotResource struct {
-	conn *Connection
+	conn   *Connection
+	client EC2API // optional, for testing
 }
 
 // Name returns the resource type name.
@@ -286,12 +305,20 @@ func (r *EC2SnapshotResource) Name() string {
 	return "aws_ec2_snapshot"
 }
 
+// getClient returns the EC2 client for the given region.
+func (r *EC2SnapshotResource) getClient(region string) EC2API {
+	if r.client != nil {
+		return r.client
+	}
+	return ec2.NewFromConfig(r.conn.ConfigForRegion(region))
+}
+
 // Fetch retrieves all EBS snapshots owned by the account.
 func (r *EC2SnapshotResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
 	var resources []core.Resource
 
 	for _, region := range r.conn.regions {
-		client := ec2.NewFromConfig(r.conn.ConfigForRegion(region))
+		client := r.getClient(region)
 
 		paginator := ec2.NewDescribeSnapshotsPaginator(client, &ec2.DescribeSnapshotsInput{
 			OwnerIds: []string{"self"}, // Only our snapshots

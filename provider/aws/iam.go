@@ -16,7 +16,8 @@ import (
 
 // IAMUserResource fetches IAM users.
 type IAMUserResource struct {
-	conn *Connection
+	conn   *Connection
+	client IAMAPI // optional, for testing
 }
 
 // Name returns the resource type name.
@@ -24,9 +25,17 @@ func (r *IAMUserResource) Name() string {
 	return "aws_iam_user"
 }
 
+// getClient returns the IAM client, using the injected mock if available.
+func (r *IAMUserResource) getClient() IAMAPI {
+	if r.client != nil {
+		return r.client
+	}
+	return iam.NewFromConfig(r.conn.cfg)
+}
+
 // Fetch retrieves all IAM users with their security details.
 func (r *IAMUserResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
-	client := iam.NewFromConfig(r.conn.cfg)
+	client := r.getClient()
 
 	var resources []core.Resource
 	paginator := iam.NewListUsersPaginator(client, &iam.ListUsersInput{})
@@ -167,7 +176,8 @@ func (r *IAMUserResource) Fetch(ctx context.Context, asset core.Asset) ([]core.R
 
 // IAMRoleResource fetches IAM roles.
 type IAMRoleResource struct {
-	conn *Connection
+	conn   *Connection
+	client IAMAPI // optional, for testing
 }
 
 // Name returns the resource type name.
@@ -175,9 +185,17 @@ func (r *IAMRoleResource) Name() string {
 	return "aws_iam_role"
 }
 
+// getClient returns the IAM client, using the injected mock if available.
+func (r *IAMRoleResource) getClient() IAMAPI {
+	if r.client != nil {
+		return r.client
+	}
+	return iam.NewFromConfig(r.conn.cfg)
+}
+
 // Fetch retrieves all IAM roles.
 func (r *IAMRoleResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
-	client := iam.NewFromConfig(r.conn.cfg)
+	client := r.getClient()
 
 	var resources []core.Resource
 	paginator := iam.NewListRolesPaginator(client, &iam.ListRolesInput{})
@@ -267,7 +285,8 @@ func (r *IAMRoleResource) Fetch(ctx context.Context, asset core.Asset) ([]core.R
 
 // IAMGroupResource fetches IAM groups.
 type IAMGroupResource struct {
-	conn *Connection
+	conn   *Connection
+	client IAMAPI // optional, for testing
 }
 
 // Name returns the resource type name.
@@ -275,9 +294,17 @@ func (r *IAMGroupResource) Name() string {
 	return "aws_iam_group"
 }
 
+// getClient returns the IAM client, using the injected mock if available.
+func (r *IAMGroupResource) getClient() IAMAPI {
+	if r.client != nil {
+		return r.client
+	}
+	return iam.NewFromConfig(r.conn.cfg)
+}
+
 // Fetch retrieves all IAM groups.
 func (r *IAMGroupResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
-	client := iam.NewFromConfig(r.conn.cfg)
+	client := r.getClient()
 
 	var resources []core.Resource
 	paginator := iam.NewListGroupsPaginator(client, &iam.ListGroupsInput{})
@@ -351,7 +378,8 @@ func (r *IAMGroupResource) Fetch(ctx context.Context, asset core.Asset) ([]core.
 
 // IAMPolicyResource fetches IAM policies.
 type IAMPolicyResource struct {
-	conn *Connection
+	conn   *Connection
+	client IAMAPI // optional, for testing
 }
 
 // Name returns the resource type name.
@@ -359,9 +387,17 @@ func (r *IAMPolicyResource) Name() string {
 	return "aws_iam_policy"
 }
 
+// getClient returns the IAM client, using the injected mock if available.
+func (r *IAMPolicyResource) getClient() IAMAPI {
+	if r.client != nil {
+		return r.client
+	}
+	return iam.NewFromConfig(r.conn.cfg)
+}
+
 // Fetch retrieves all customer-managed IAM policies.
 func (r *IAMPolicyResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
-	client := iam.NewFromConfig(r.conn.cfg)
+	client := r.getClient()
 
 	var resources []core.Resource
 	paginator := iam.NewListPoliciesPaginator(client, &iam.ListPoliciesInput{

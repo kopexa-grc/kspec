@@ -12,7 +12,8 @@ import (
 
 // RDSInstanceResource fetches RDS DB instances.
 type RDSInstanceResource struct {
-	conn *Connection
+	conn   *Connection
+	client RDSAPI // optional, for testing
 }
 
 // Name returns the resource type name.
@@ -20,12 +21,20 @@ func (r *RDSInstanceResource) Name() string {
 	return "aws_rds_instance"
 }
 
+// getClient returns the RDS client for the given region.
+func (r *RDSInstanceResource) getClient(region string) RDSAPI {
+	if r.client != nil {
+		return r.client
+	}
+	return rds.NewFromConfig(r.conn.ConfigForRegion(region))
+}
+
 // Fetch retrieves all RDS DB instances across configured regions.
 func (r *RDSInstanceResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
 	var resources []core.Resource
 
 	for _, region := range r.conn.regions {
-		client := rds.NewFromConfig(r.conn.ConfigForRegion(region))
+		client := r.getClient(region)
 
 		paginator := rds.NewDescribeDBInstancesPaginator(client, &rds.DescribeDBInstancesInput{})
 
@@ -134,7 +143,8 @@ func (r *RDSInstanceResource) Fetch(ctx context.Context, asset core.Asset) ([]co
 
 // RDSClusterResource fetches RDS Aurora clusters.
 type RDSClusterResource struct {
-	conn *Connection
+	conn   *Connection
+	client RDSAPI // optional, for testing
 }
 
 // Name returns the resource type name.
@@ -142,12 +152,20 @@ func (r *RDSClusterResource) Name() string {
 	return "aws_rds_cluster"
 }
 
+// getClient returns the RDS client for the given region.
+func (r *RDSClusterResource) getClient(region string) RDSAPI {
+	if r.client != nil {
+		return r.client
+	}
+	return rds.NewFromConfig(r.conn.ConfigForRegion(region))
+}
+
 // Fetch retrieves all RDS Aurora clusters across configured regions.
 func (r *RDSClusterResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
 	var resources []core.Resource
 
 	for _, region := range r.conn.regions {
-		client := rds.NewFromConfig(r.conn.ConfigForRegion(region))
+		client := r.getClient(region)
 
 		paginator := rds.NewDescribeDBClustersPaginator(client, &rds.DescribeDBClustersInput{})
 

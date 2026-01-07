@@ -14,7 +14,8 @@ import (
 
 // ELBLoadBalancerResource fetches Application/Network Load Balancers.
 type ELBLoadBalancerResource struct {
-	conn *Connection
+	conn   *Connection
+	client ELBv2API // optional, for testing
 }
 
 // Name returns the resource type name.
@@ -22,12 +23,20 @@ func (r *ELBLoadBalancerResource) Name() string {
 	return "aws_elb_loadbalancer"
 }
 
+// getClient returns the ELBv2 client for the given region.
+func (r *ELBLoadBalancerResource) getClient(region string) ELBv2API {
+	if r.client != nil {
+		return r.client
+	}
+	return elasticloadbalancingv2.NewFromConfig(r.conn.ConfigForRegion(region))
+}
+
 // Fetch retrieves all ALBs/NLBs across configured regions.
 func (r *ELBLoadBalancerResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
 	var resources []core.Resource
 
 	for _, region := range r.conn.regions {
-		client := elasticloadbalancingv2.NewFromConfig(r.conn.ConfigForRegion(region))
+		client := r.getClient(region)
 
 		paginator := elasticloadbalancingv2.NewDescribeLoadBalancersPaginator(client, &elasticloadbalancingv2.DescribeLoadBalancersInput{})
 
@@ -159,7 +168,8 @@ func (r *ELBLoadBalancerResource) Fetch(ctx context.Context, asset core.Asset) (
 
 // ELBTargetGroupResource fetches ELB target groups.
 type ELBTargetGroupResource struct {
-	conn *Connection
+	conn   *Connection
+	client ELBv2API // optional, for testing
 }
 
 // Name returns the resource type name.
@@ -167,12 +177,20 @@ func (r *ELBTargetGroupResource) Name() string {
 	return "aws_elb_targetgroup"
 }
 
+// getClient returns the ELBv2 client for the given region.
+func (r *ELBTargetGroupResource) getClient(region string) ELBv2API {
+	if r.client != nil {
+		return r.client
+	}
+	return elasticloadbalancingv2.NewFromConfig(r.conn.ConfigForRegion(region))
+}
+
 // Fetch retrieves all target groups across configured regions.
 func (r *ELBTargetGroupResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
 	var resources []core.Resource
 
 	for _, region := range r.conn.regions {
-		client := elasticloadbalancingv2.NewFromConfig(r.conn.ConfigForRegion(region))
+		client := r.getClient(region)
 
 		paginator := elasticloadbalancingv2.NewDescribeTargetGroupsPaginator(client, &elasticloadbalancingv2.DescribeTargetGroupsInput{})
 
@@ -291,7 +309,8 @@ func (r *ELBTargetGroupResource) Fetch(ctx context.Context, asset core.Asset) ([
 
 // ELBListenerResource fetches ELB listeners.
 type ELBListenerResource struct {
-	conn *Connection
+	conn   *Connection
+	client ELBv2API // optional, for testing
 }
 
 // Name returns the resource type name.
@@ -299,12 +318,20 @@ func (r *ELBListenerResource) Name() string {
 	return "aws_elb_listener"
 }
 
+// getClient returns the ELBv2 client for the given region.
+func (r *ELBListenerResource) getClient(region string) ELBv2API {
+	if r.client != nil {
+		return r.client
+	}
+	return elasticloadbalancingv2.NewFromConfig(r.conn.ConfigForRegion(region))
+}
+
 // Fetch retrieves all listeners across configured regions.
 func (r *ELBListenerResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
 	var resources []core.Resource
 
 	for _, region := range r.conn.regions {
-		client := elasticloadbalancingv2.NewFromConfig(r.conn.ConfigForRegion(region))
+		client := r.getClient(region)
 
 		// First get all load balancers
 		lbPaginator := elasticloadbalancingv2.NewDescribeLoadBalancersPaginator(client, &elasticloadbalancingv2.DescribeLoadBalancersInput{})

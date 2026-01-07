@@ -11,7 +11,8 @@ import (
 
 // LambdaFunctionResource fetches Lambda functions.
 type LambdaFunctionResource struct {
-	conn *Connection
+	conn   *Connection
+	client LambdaAPI // optional, for testing
 }
 
 // Name returns the resource type name.
@@ -19,12 +20,20 @@ func (r *LambdaFunctionResource) Name() string {
 	return "aws_lambda_function"
 }
 
+// getClient returns the Lambda client for the given region.
+func (r *LambdaFunctionResource) getClient(region string) LambdaAPI {
+	if r.client != nil {
+		return r.client
+	}
+	return lambda.NewFromConfig(r.conn.ConfigForRegion(region))
+}
+
 // Fetch retrieves all Lambda functions across configured regions.
 func (r *LambdaFunctionResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
 	var resources []core.Resource
 
 	for _, region := range r.conn.regions {
-		client := lambda.NewFromConfig(r.conn.ConfigForRegion(region))
+		client := r.getClient(region)
 
 		paginator := lambda.NewListFunctionsPaginator(client, &lambda.ListFunctionsInput{})
 

@@ -12,7 +12,8 @@ import (
 
 // EC2SecurityGroupResource fetches EC2 security groups.
 type EC2SecurityGroupResource struct {
-	conn *Connection
+	conn   *Connection
+	client EC2API // optional, for testing
 }
 
 // Name returns the resource type name.
@@ -20,12 +21,20 @@ func (r *EC2SecurityGroupResource) Name() string {
 	return "aws_ec2_securitygroup"
 }
 
+// getClient returns the EC2 client for the given region.
+func (r *EC2SecurityGroupResource) getClient(region string) EC2API {
+	if r.client != nil {
+		return r.client
+	}
+	return ec2.NewFromConfig(r.conn.ConfigForRegion(region))
+}
+
 // Fetch retrieves all EC2 security groups across configured regions.
 func (r *EC2SecurityGroupResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
 	var resources []core.Resource
 
 	for _, region := range r.conn.regions {
-		client := ec2.NewFromConfig(r.conn.ConfigForRegion(region))
+		client := r.getClient(region)
 
 		paginator := ec2.NewDescribeSecurityGroupsPaginator(client, &ec2.DescribeSecurityGroupsInput{})
 
@@ -220,7 +229,8 @@ func (r *EC2SecurityGroupResource) Fetch(ctx context.Context, asset core.Asset) 
 
 // EC2KeyPairResource fetches EC2 key pairs.
 type EC2KeyPairResource struct {
-	conn *Connection
+	conn   *Connection
+	client EC2API // optional, for testing
 }
 
 // Name returns the resource type name.
@@ -228,12 +238,20 @@ func (r *EC2KeyPairResource) Name() string {
 	return "aws_ec2_keypair"
 }
 
+// getClient returns the EC2 client for the given region.
+func (r *EC2KeyPairResource) getClient(region string) EC2API {
+	if r.client != nil {
+		return r.client
+	}
+	return ec2.NewFromConfig(r.conn.ConfigForRegion(region))
+}
+
 // Fetch retrieves all EC2 key pairs across configured regions.
 func (r *EC2KeyPairResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
 	var resources []core.Resource
 
 	for _, region := range r.conn.regions {
-		client := ec2.NewFromConfig(r.conn.ConfigForRegion(region))
+		client := r.getClient(region)
 
 		resp, err := client.DescribeKeyPairs(ctx, &ec2.DescribeKeyPairsInput{
 			IncludePublicKey: aws.Bool(true),
