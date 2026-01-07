@@ -91,7 +91,7 @@ func (r *LambdaFunctionResource) Fetch(ctx context.Context, asset core.Asset) ([
 				}
 
 				// Layers
-				var layerArns []string
+				layerArns := make([]string, 0, len(fn.Layers))
 				for _, layer := range fn.Layers {
 					layerArns = append(layerArns, aws.ToString(layer.Arn))
 				}
@@ -99,7 +99,7 @@ func (r *LambdaFunctionResource) Fetch(ctx context.Context, asset core.Asset) ([
 				resource["layer_count"] = len(layerArns)
 
 				// Architectures
-				var archs []string
+				archs := make([]string, 0, len(fn.Architectures))
 				for _, arch := range fn.Architectures {
 					archs = append(archs, string(arch))
 				}

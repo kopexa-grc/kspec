@@ -257,6 +257,176 @@ func TestParseSBOMFile_InvalidJSON(t *testing.T) {
 	}
 }
 
+// FuzzDetectFormat tests format detection with random input.
+func FuzzDetectFormat(f *testing.F) {
+	// Seed corpus
+	seeds := []string{
+		`{"bomFormat": "CycloneDX", "specVersion": "1.4"}`,
+		`{"spdxVersion": "SPDX-2.3"}`,
+		`bomFormat=CycloneDX`,
+		`SPDXVersion: SPDX-2.3`,
+		`{"name": "some-package"}`,
+		``,
+		`{}`,
+		`[]`,
+		`null`,
+		`"bomFormat"`,
+		`"spdxVersion"`,
+		string(make([]byte, 1000)),
+		`{"bomFormat": null}`,
+		`{"spdxVersion": 123}`,
+		`<<<>>>`,
+		`\x00\x01\x02`,
+	}
+
+	for _, seed := range seeds {
+		f.Add(seed)
+	}
+
+	f.Fuzz(func(t *testing.T, data string) {
+		// Should never panic
+		result := detectFormat([]byte(data))
+
+		// Result should always be one of the known formats
+		if result != FormatCycloneDX && result != FormatSPDX && result != FormatUnknown {
+			t.Errorf("detectFormat() returned unexpected format: %v", result)
+		}
+	})
+}
+
+// FuzzParseSBOMContent tests SBOM JSON parsing with random input.
+func FuzzParseSBOMContent(f *testing.F) {
+	// Seed corpus with various JSON structures
+	seeds := []string{
+		`{"bomFormat": "CycloneDX", "specVersion": "1.4", "components": []}`,
+		`{"spdxVersion": "SPDX-2.3", "SPDXID": "SPDXRef-DOCUMENT", "packages": []}`,
+		`{}`,
+		`[]`,
+		`null`,
+		`{"key": "value"}`,
+		`{"bomFormat": "CycloneDX", "components": [{"name": "test", "version": "1.0"}]}`,
+		`{"deeply": {"nested": {"structure": {"here": true}}}}`,
+		`{"array": [1, 2, 3, "four", null, true, {"obj": "val"}]}`,
+		`{"special": "chars: \n\t\r"}`,
+		`{"unicode": "日本語テスト"}`,
+		`{"numbers": [0, -1, 1.5, 1e10, -1.5e-10]}`,
+		`{"empty": "", "null": null, "bool": false}`,
+	}
+
+	for _, seed := range seeds {
+		f.Add(seed)
+	}
+
+	f.Fuzz(func(t *testing.T, content string) {
+		// Create temp file with fuzzed content
+		tmpDir := t.TempDir()
+		tmpFile := filepath.Join(tmpDir, "fuzz-sbom.json")
+
+		// Add a format marker so it's recognized
+		var markedContent string
+		if len(content) > 1 && content[0] == '{' {
+			// Insert format marker into existing JSON object
+			markedContent = `{"bomFormat": "CycloneDX", ` + content[1:]
+		} else {
+			// Wrap content in a valid JSON structure with format marker
+			markedContent = `{"bomFormat": "CycloneDX", "data": "` + escapeJSONString(content) + `"}`
+		}
+
+		if err := os.WriteFile(tmpFile, []byte(markedContent), 0o644); err != nil {
+			t.Skip("Failed to write temp file")
+		}
+
+		// Should never panic
+		_, _ = parseSBOMFile(tmpFile)
+	})
+}
+
+// escapeJSONString escapes a string for use in JSON.
+func escapeJSONString(s string) string {
+	var result []byte
+	for i := 0; i < len(s); i++ {
+		switch s[i] {
+		case '\\':
+			result = append(result, '\\', '\\')
+		case '"':
+			result = append(result, '\\', '"')
+		case '\n':
+			result = append(result, '\\', 'n')
+		case '\r':
+			result = append(result, '\\', 'r')
+		case '\t':
+			result = append(result, '\\', 't')
+		default:
+			if s[i] < 32 {
+				// Control character - skip or escape
+				result = append(result, ' ')
+			} else {
+				result = append(result, s[i])
+			}
+		}
+	}
+	return string(result)
+}
+
+// TestDetectFormat_EdgeCases tests edge cases in format detection.
+func TestDetectFormat_EdgeCases(t *testing.T) {
+	tests := []struct {
+		name string
+		data string
+		want Format
+	}{
+		{
+			name: "bomFormat in middle of string",
+			data: `some text "bomFormat" more text`,
+			want: FormatCycloneDX,
+		},
+		{
+			name: "spdxVersion case sensitive",
+			data: `{"SPDXVERSION": "2.3"}`,
+			want: FormatUnknown, // Case sensitive match
+		},
+		{
+			name: "bomFormat case sensitive",
+			data: `{"BOMFORMAT": "CycloneDX"}`,
+			want: FormatUnknown, // Case sensitive match
+		},
+		{
+			name: "very long content with format at end",
+			data: string(make([]byte, 10000)) + `"bomFormat"`,
+			want: FormatCycloneDX,
+		},
+		{
+			name: "binary-like content",
+			data: "\x00\x01\x02\x03",
+			want: FormatUnknown,
+		},
+		{
+			name: "unicode content",
+			data: `{"名前": "bomFormat"}`,
+			want: FormatCycloneDX,
+		},
+		{
+			name: "escaped quotes around bomFormat",
+			data: `{"key": "\"bomFormat\""}`,
+			want: FormatUnknown, // Escaped quotes means it's just a string value, not a key
+		},
+		{
+			name: "bomFormat as actual key",
+			data: `{"key": "value", "bomFormat": "CycloneDX"}`,
+			want: FormatCycloneDX,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := detectFormat([]byte(tt.data))
+			if got != tt.want {
+				t.Errorf("detectFormat() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestParseSBOMFile_UnknownFormat(t *testing.T) {
 	// Create a temp file with unknown format
 	tmpDir := t.TempDir()

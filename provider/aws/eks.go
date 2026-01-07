@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/eks"
 
 	"github.com/kopexa-grc/kspec/core"
+	"github.com/kopexa-grc/kspec/pkg/ptr"
 )
 
 // EKSClusterResource fetches EKS clusters.
@@ -87,7 +88,7 @@ func (r *EKSClusterResource) Fetch(ctx context.Context, asset core.Asset) ([]cor
 				if cluster.Logging != nil {
 					var enabledLogs []string
 					for _, logSetup := range cluster.Logging.ClusterLogging {
-						if logSetup.Enabled != nil && *logSetup.Enabled {
+						if ptr.Deref(logSetup.Enabled, false) {
 							for _, logType := range logSetup.Types {
 								enabledLogs = append(enabledLogs, string(logType))
 							}

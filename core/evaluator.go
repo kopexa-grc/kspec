@@ -73,9 +73,20 @@ func NewEvaluator(registry map[string]ResourceSpec) (*Evaluator, error) {
 					if !ok {
 						return types.NewErr("reverseIP() argument must be a string")
 					}
+					// Trim whitespace
+					ipStr = strings.TrimSpace(ipStr)
+					if ipStr == "" {
+						return types.NewErr("reverseIP() argument cannot be empty")
+					}
 					parts := strings.Split(ipStr, ".")
 					if len(parts) != 4 {
 						return types.NewErr("invalid IPv4 address: %s", ipStr)
+					}
+					// Validate each octet is non-empty
+					for i, part := range parts {
+						if part == "" {
+							return types.NewErr("invalid IPv4 address: empty octet at position %d", i)
+						}
 					}
 					// Reverse
 					return types.String(fmt.Sprintf("%s.%s.%s.%s.in-addr.arpa", parts[3], parts[2], parts[1], parts[0]))

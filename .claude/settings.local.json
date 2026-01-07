@@ -37,7 +37,9 @@
       "WebFetch(domain:apidoc.factorialhr.com)",
       "Bash(head:*)",
       "Bash(git checkout:*)",
-      "Bash(xxd:*)"
+      "Bash(xxd:*)",
+      "Bash(make lint:*)",
+      "WebFetch(domain:raw.githubusercontent.com)"
     ]
   }
 }

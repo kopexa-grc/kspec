@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2/types"
 
 	"github.com/kopexa-grc/kspec/core"
+	"github.com/kopexa-grc/kspec/pkg/ptr"
 )
 
 // ELBLoadBalancerResource fetches Application/Network Load Balancers.
@@ -54,8 +55,8 @@ func (r *ELBLoadBalancerResource) Fetch(ctx context.Context, asset core.Asset) (
 				resource["ip_address_type"] = string(lb.IpAddressType)
 
 				// Availability zones
-				var azs []string
-				var subnets []string
+				azs := make([]string, 0, len(lb.AvailabilityZones))
+				subnets := make([]string, 0, len(lb.AvailabilityZones))
 				for _, az := range lb.AvailabilityZones {
 					azs = append(azs, aws.ToString(az.ZoneName))
 					subnets = append(subnets, aws.ToString(az.SubnetId))
@@ -85,15 +86,17 @@ func (r *ELBLoadBalancerResource) Fetch(ctx context.Context, asset core.Asset) (
 
 						switch key {
 						case "access_logs.s3.enabled":
-							resource["access_logs_enabled"] = value == valueTrue
-							resource["has_access_logs"] = value == valueTrue
+							accessLogs := value == valueTrue
+							resource["access_logs_enabled"] = accessLogs
+							resource["has_access_logs"] = accessLogs
 						case "access_logs.s3.bucket":
 							resource["access_logs_bucket"] = value
 						case "access_logs.s3.prefix":
 							resource["access_logs_prefix"] = value
 						case "deletion_protection.enabled":
-							resource["deletion_protection"] = value == valueTrue
-							resource["has_deletion_protection"] = value == valueTrue
+							deletionProtection := value == valueTrue
+							resource["deletion_protection"] = deletionProtection
+							resource["has_deletion_protection"] = deletionProtection
 						case "idle_timeout.timeout_seconds":
 							resource["idle_timeout"] = value
 						case "routing.http.drop_invalid_header_fields.enabled":
@@ -115,13 +118,11 @@ func (r *ELBLoadBalancerResource) Fetch(ctx context.Context, asset core.Asset) (
 					LoadBalancerArn: lb.LoadBalancerArn,
 				})
 				if err == nil {
-					var listenerPorts []int32
+					listenerPorts := make([]int32, 0, len(listenersResp.Listeners))
 					hasHTTPS := false
 					hasHTTP := false
 					for _, listener := range listenersResp.Listeners {
-						if listener.Port != nil {
-							listenerPorts = append(listenerPorts, *listener.Port)
-						}
+						listenerPorts = append(listenerPorts, ptr.Deref(listener.Port, 0))
 						if listener.Protocol == types.ProtocolEnumHttps || listener.Protocol == types.ProtocolEnumTls {
 							hasHTTPS = true
 						}
@@ -194,7 +195,7 @@ func (r *ELBTargetGroupResource) Fetch(ctx context.Context, asset core.Asset) ([
 				resource["vpc_id"] = aws.ToString(tg.VpcId)
 
 				// Health check
-				resource["health_check_enabled"] = tg.HealthCheckEnabled != nil && *tg.HealthCheckEnabled
+				resource["health_check_enabled"] = ptr.Deref(tg.HealthCheckEnabled, false)
 				resource["health_check_protocol"] = string(tg.HealthCheckProtocol)
 				resource["health_check_port"] = aws.ToString(tg.HealthCheckPort)
 				resource["health_check_path"] = aws.ToString(tg.HealthCheckPath)
@@ -349,7 +350,7 @@ func (r *ELBListenerResource) Fetch(ctx context.Context, asset core.Asset) ([]co
 					resource["has_modern_ssl_policy"] = strings.Contains(sslPolicy, "TLS13")
 
 					// Default actions
-					var defaultActionTypes []string
+					defaultActionTypes := make([]string, 0, len(listener.DefaultActions))
 					for _, action := range listener.DefaultActions {
 						defaultActionTypes = append(defaultActionTypes, string(action.Type))
 					}

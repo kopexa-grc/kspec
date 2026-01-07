@@ -455,6 +455,300 @@ func TestNewEvaluator(t *testing.T) {
 	}
 }
 
+// FuzzEvaluate tests the evaluator with random CEL expressions.
+// This helps find crashes, panics, or unexpected behavior with malformed input.
+func FuzzEvaluate(f *testing.F) {
+	// Seed corpus with valid and edge-case expressions
+	seeds := []string{
+		"true",
+		"false",
+		"resource.name == 'test'",
+		"has(resource.field)",
+		"resource.count > 10",
+		"size(resource.list) == 0",
+		"resource.status in ['a', 'b']",
+		"!resource.enabled",
+		"resource.a && resource.b",
+		"resource.a || resource.b",
+		"resource.x ? resource.y : resource.z",
+		"",
+		"   ",
+		"(((((",
+		")))))",
+		"resource.",
+		".resource",
+		"resource..name",
+		"'unclosed string",
+		"resource['key']",
+		"resource.name.contains('')",
+		"resource.name.startsWith('')",
+		"resource.name.endsWith('')",
+	}
+
+	for _, seed := range seeds {
+		f.Add(seed)
+	}
+
+	evaluator, err := NewEvaluator(nil)
+	if err != nil {
+		f.Fatalf("Failed to create evaluator: %v", err)
+	}
+
+	f.Fuzz(func(t *testing.T, expression string) {
+		// The evaluator should never panic, regardless of input
+		// Errors are expected for invalid expressions
+		resource := Resource{
+			"name":    "test",
+			"count":   10,
+			"enabled": true,
+			"list":    []string{"a", "b"},
+			"status":  "active",
+			"a":       true,
+			"b":       false,
+			"x":       true,
+			"y":       "yes",
+			"z":       "no",
+		}
+
+		// This should not panic
+		_, _ = evaluator.Evaluate(expression, resource, nil, nil, Asset{})
+	})
+}
+
+// FuzzReverseIP tests the reverseIP function with random input strings.
+func FuzzReverseIP(f *testing.F) {
+	// Seed corpus
+	seeds := []string{
+		"192.168.1.1",
+		"10.0.0.1",
+		"255.255.255.255",
+		"0.0.0.0",
+		"",
+		"...",
+		"1.2.3",
+		"1.2.3.4.5",
+		"abc.def.ghi.jkl",
+		"-1.-1.-1.-1",
+		"256.256.256.256",
+		"1",
+		"1.2",
+		"1.2.3.4.",
+		".1.2.3.4",
+		"    ",
+		"1 .2 .3 .4",
+	}
+
+	for _, seed := range seeds {
+		f.Add(seed)
+	}
+
+	evaluator, err := NewEvaluator(nil)
+	if err != nil {
+		f.Fatalf("Failed to create evaluator: %v", err)
+	}
+
+	f.Fuzz(func(t *testing.T, ip string) {
+		// Build expression that uses reverseIP
+		// The evaluator should handle any input gracefully
+		expr := "reverseIP('" + escapeString(ip) + "') == 'test'"
+
+		// This should not panic
+		_, _ = evaluator.Evaluate(expr, Resource{}, nil, nil, Asset{})
+	})
+}
+
+// escapeString escapes special characters for CEL string literals.
+func escapeString(s string) string {
+	var result []byte
+	for i := 0; i < len(s); i++ {
+		switch s[i] {
+		case '\\':
+			result = append(result, '\\', '\\')
+		case '\'':
+			result = append(result, '\\', '\'')
+		case '\n':
+			result = append(result, '\\', 'n')
+		case '\r':
+			result = append(result, '\\', 'r')
+		case '\t':
+			result = append(result, '\\', 't')
+		default:
+			result = append(result, s[i])
+		}
+	}
+	return string(result)
+}
+
+// TestEvaluator_EdgeCases tests edge cases that might cause issues.
+func TestEvaluator_EdgeCases(t *testing.T) {
+	evaluator, err := NewEvaluator(nil)
+	if err != nil {
+		t.Fatalf("Failed to create evaluator: %v", err)
+	}
+
+	tests := []struct {
+		name       string
+		expression string
+		resource   Resource
+		wantErr    bool
+	}{
+		{
+			name:       "Empty expression",
+			expression: "",
+			resource:   Resource{},
+			wantErr:    true,
+		},
+		{
+			name:       "Whitespace only",
+			expression: "   ",
+			resource:   Resource{},
+			wantErr:    true,
+		},
+		{
+			name:       "Very long expression",
+			expression: "resource.name == '" + string(make([]byte, 10000)) + "'",
+			resource:   Resource{"name": "test"},
+			wantErr:    false,
+		},
+		{
+			name:       "Deeply nested access",
+			expression: "resource.a.b.c.d.e.f.g == true",
+			resource: Resource{
+				"a": map[string]interface{}{
+					"b": map[string]interface{}{
+						"c": map[string]interface{}{
+							"d": map[string]interface{}{
+								"e": map[string]interface{}{
+									"f": map[string]interface{}{
+										"g": true,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name:       "Null value comparison",
+			expression: "resource.value == null",
+			resource:   Resource{"value": nil},
+			wantErr:    false,
+		},
+		{
+			name:       "Empty string comparison",
+			expression: "resource.name == ''",
+			resource:   Resource{"name": ""},
+			wantErr:    false,
+		},
+		{
+			name:       "Unicode in expression",
+			expression: "resource.name == '日本語'",
+			resource:   Resource{"name": "日本語"},
+			wantErr:    false,
+		},
+		{
+			name:       "Special characters in string",
+			expression: "resource.name == 'test\\nwith\\nnewlines'",
+			resource:   Resource{"name": "test\nwith\nnewlines"},
+			wantErr:    false,
+		},
+		{
+			name:       "Number as string field",
+			expression: "resource.id == '123'",
+			resource:   Resource{"id": "123"},
+			wantErr:    false,
+		},
+		{
+			name:       "Boolean string comparison",
+			expression: "resource.flag == 'true'",
+			resource:   Resource{"flag": "true"},
+			wantErr:    false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := evaluator.Evaluate(tt.expression, tt.resource, nil, nil, Asset{})
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Evaluate(%q) error = %v, wantErr %v", tt.expression, err, tt.wantErr)
+			}
+		})
+	}
+}
+
+// TestEvaluator_ReverseIPEdgeCases tests edge cases for reverseIP.
+func TestEvaluator_ReverseIPEdgeCases(t *testing.T) {
+	evaluator, err := NewEvaluator(nil)
+	if err != nil {
+		t.Fatalf("Failed to create evaluator: %v", err)
+	}
+
+	tests := []struct {
+		name    string
+		policy  string
+		wantErr bool
+	}{
+		{
+			name:    "Empty IP",
+			policy:  "reverseIP('')",
+			wantErr: true,
+		},
+		{
+			name:    "Too few octets",
+			policy:  "reverseIP('1.2.3')",
+			wantErr: true,
+		},
+		{
+			name:    "Too many octets",
+			policy:  "reverseIP('1.2.3.4.5')",
+			wantErr: true,
+		},
+		{
+			name:    "Non-numeric octets",
+			policy:  "reverseIP('a.b.c.d')",
+			wantErr: false, // Current implementation doesn't validate numeric values
+		},
+		{
+			name:    "Just dots",
+			policy:  "reverseIP('...')",
+			wantErr: true,
+		},
+		{
+			name:    "Leading dot",
+			policy:  "reverseIP('.1.2.3.4')",
+			wantErr: true,
+		},
+		{
+			name:    "Trailing dot",
+			policy:  "reverseIP('1.2.3.4.')",
+			wantErr: true,
+		},
+		{
+			name:    "Whitespace around IP (trimmed)",
+			policy:  "reverseIP(' 1.2.3.4 ')",
+			wantErr: false, // Whitespace is trimmed, so this is valid
+		},
+		{
+			name:    "Whitespace within IP",
+			policy:  "reverseIP('1. 2.3.4')",
+			wantErr: false, // Current implementation doesn't validate octet content
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Wrap in a comparison to get boolean result
+			expr := tt.policy + " == 'test'"
+			_, err := evaluator.Evaluate(expr, Resource{}, nil, nil, Asset{})
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Evaluate(%q) error = %v, wantErr %v", tt.policy, err, tt.wantErr)
+			}
+		})
+	}
+}
+
 func TestEvaluator_NestedMapAccess(t *testing.T) {
 	evaluator, err := NewEvaluator(nil)
 	if err != nil {

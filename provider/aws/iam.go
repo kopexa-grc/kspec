@@ -67,7 +67,7 @@ func (r *IAMUserResource) Fetch(ctx context.Context, asset core.Asset) ([]core.R
 				resource["has_mfa"] = len(mfaResp.MFADevices) > 0
 				resource["mfa_device_count"] = len(mfaResp.MFADevices)
 
-				var mfaTypes []string
+				mfaTypes := make([]string, 0, len(mfaResp.MFADevices))
 				for _, device := range mfaResp.MFADevices {
 					serial := aws.ToString(device.SerialNumber)
 					if strings.Contains(serial, "mfa/") {
@@ -116,7 +116,7 @@ func (r *IAMUserResource) Fetch(ctx context.Context, asset core.Asset) ([]core.R
 				UserName: user.UserName,
 			})
 			if err == nil {
-				var groupNames []string
+				groupNames := make([]string, 0, len(groupsResp.Groups))
 				for _, group := range groupsResp.Groups {
 					groupNames = append(groupNames, aws.ToString(group.GroupName))
 				}
@@ -129,7 +129,7 @@ func (r *IAMUserResource) Fetch(ctx context.Context, asset core.Asset) ([]core.R
 				UserName: user.UserName,
 			})
 			if err == nil {
-				var policyArns []string
+				policyArns := make([]string, 0, len(attachedPolicies.AttachedPolicies))
 				var isAdmin bool
 				for _, policy := range attachedPolicies.AttachedPolicies {
 					arn := aws.ToString(policy.PolicyArn)
@@ -254,8 +254,9 @@ func (r *IAMRoleResource) Fetch(ctx context.Context, asset core.Asset) ([]core.R
 			}
 
 			// Computed fields
-			resource["is_service_role"] = strings.HasPrefix(aws.ToString(role.Path), "/aws-service-role/")
-			resource["is_service_linked_role"] = strings.HasPrefix(aws.ToString(role.Path), "/aws-service-role/")
+			isServiceLinkedRole := strings.HasPrefix(aws.ToString(role.Path), "/aws-service-role/")
+			resource["is_service_role"] = isServiceLinkedRole
+			resource["is_service_linked_role"] = isServiceLinkedRole
 
 			resources = append(resources, resource)
 		}

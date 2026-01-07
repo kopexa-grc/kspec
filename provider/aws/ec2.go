@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 
 	"github.com/kopexa-grc/kspec/core"
+	"github.com/kopexa-grc/kspec/pkg/ptr"
 )
 
 // EC2InstanceResource fetches EC2 instances.
@@ -75,7 +76,7 @@ func (r *EC2InstanceResource) Fetch(ctx context.Context, asset core.Asset) ([]co
 					}
 
 					// Security groups
-					var sgIDs []string
+					sgIDs := make([]string, 0, len(instance.SecurityGroups))
 					for _, sg := range instance.SecurityGroups {
 						sgIDs = append(sgIDs, aws.ToString(sg.GroupId))
 					}
@@ -108,15 +109,15 @@ func (r *EC2InstanceResource) Fetch(ctx context.Context, asset core.Asset) ([]co
 					}
 
 					// EBS optimization
-					resource["ebs_optimized"] = instance.EbsOptimized != nil && *instance.EbsOptimized
+					resource["ebs_optimized"] = ptr.Deref(instance.EbsOptimized, false)
 
 					// Root device
 					resource["root_device_type"] = string(instance.RootDeviceType)
 					resource["root_device_name"] = aws.ToString(instance.RootDeviceName)
 
 					// Block device mappings (volumes)
-					var volumeIDs []string
-					var allVolumesEncrypted = true
+					volumeIDs := make([]string, 0, len(instance.BlockDeviceMappings))
+					allVolumesEncrypted := true
 					for _, bdm := range instance.BlockDeviceMappings {
 						if bdm.Ebs != nil {
 							volumeIDs = append(volumeIDs, aws.ToString(bdm.Ebs.VolumeId))
@@ -132,7 +133,7 @@ func (r *EC2InstanceResource) Fetch(ctx context.Context, asset core.Asset) ([]co
 						})
 						if err == nil {
 							for _, vol := range volumesResp.Volumes {
-								if vol.Encrypted == nil || !*vol.Encrypted {
+								if !ptr.Deref(vol.Encrypted, false) {
 									allVolumesEncrypted = false
 									break
 								}
@@ -142,11 +143,11 @@ func (r *EC2InstanceResource) Fetch(ctx context.Context, asset core.Asset) ([]co
 					resource["has_ebs_encryption"] = allVolumesEncrypted && len(volumeIDs) > 0
 
 					// Source/dest check
-					resource["source_dest_check"] = instance.SourceDestCheck != nil && *instance.SourceDestCheck
+					resource["source_dest_check"] = ptr.Deref(instance.SourceDestCheck, false)
 
 					// Hibernation
 					if instance.HibernationOptions != nil {
-						resource["hibernation_configured"] = instance.HibernationOptions.Configured != nil && *instance.HibernationOptions.Configured
+						resource["hibernation_configured"] = ptr.Deref(instance.HibernationOptions.Configured, false)
 					} else {
 						resource["hibernation_configured"] = false
 					}
@@ -219,12 +220,13 @@ func (r *EC2VolumeResource) Fetch(ctx context.Context, asset core.Asset) ([]core
 				resource["throughput"] = volume.Throughput
 
 				// Encryption
-				resource["encrypted"] = volume.Encrypted != nil && *volume.Encrypted
+				encrypted := ptr.Deref(volume.Encrypted, false)
+				resource["encrypted"] = encrypted
 				resource["kms_key_id"] = aws.ToString(volume.KmsKeyId)
-				resource["has_encryption"] = volume.Encrypted != nil && *volume.Encrypted
+				resource["has_encryption"] = encrypted
 
 				// Multi-attach
-				resource["multi_attach_enabled"] = volume.MultiAttachEnabled != nil && *volume.MultiAttachEnabled
+				resource["multi_attach_enabled"] = ptr.Deref(volume.MultiAttachEnabled, false)
 
 				// Snapshot
 				resource["snapshot_id"] = aws.ToString(volume.SnapshotId)
@@ -236,7 +238,7 @@ func (r *EC2VolumeResource) Fetch(ctx context.Context, asset core.Asset) ([]core
 				}
 
 				// Attachments
-				var attachedInstances []string
+				attachedInstances := make([]string, 0, len(volume.Attachments))
 				for _, attachment := range volume.Attachments {
 					attachedInstances = append(attachedInstances, aws.ToString(attachment.InstanceId))
 				}
@@ -323,9 +325,10 @@ func (r *EC2SnapshotResource) Fetch(ctx context.Context, asset core.Asset) ([]co
 				resource["owner_id"] = aws.ToString(snapshot.OwnerId)
 
 				// Encryption
-				resource["encrypted"] = snapshot.Encrypted != nil && *snapshot.Encrypted
+				encrypted := ptr.Deref(snapshot.Encrypted, false)
+				resource["encrypted"] = encrypted
 				resource["kms_key_id"] = aws.ToString(snapshot.KmsKeyId)
-				resource["has_encryption"] = snapshot.Encrypted != nil && *snapshot.Encrypted
+				resource["has_encryption"] = encrypted
 
 				// Start time
 				if snapshot.StartTime != nil {

@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/rds"
 
 	"github.com/kopexa-grc/kspec/core"
+	"github.com/kopexa-grc/kspec/pkg/ptr"
 )
 
 // RDSInstanceResource fetches RDS DB instances.
@@ -49,8 +50,9 @@ func (r *RDSInstanceResource) Fetch(ctx context.Context, asset core.Asset) ([]co
 
 				// Availability
 				resource["availability_zone"] = aws.ToString(instance.AvailabilityZone)
-				resource["multi_az"] = instance.MultiAZ != nil && *instance.MultiAZ
-				resource["has_multi_az"] = instance.MultiAZ != nil && *instance.MultiAZ
+				multiAZ := ptr.Deref(instance.MultiAZ, false)
+				resource["multi_az"] = multiAZ
+				resource["has_multi_az"] = multiAZ
 
 				// Network
 				resource["vpc_id"] = ""
@@ -58,38 +60,46 @@ func (r *RDSInstanceResource) Fetch(ctx context.Context, asset core.Asset) ([]co
 					resource["vpc_id"] = aws.ToString(instance.DBSubnetGroup.VpcId)
 					resource["subnet_group"] = aws.ToString(instance.DBSubnetGroup.DBSubnetGroupName)
 				}
-				resource["publicly_accessible"] = instance.PubliclyAccessible != nil && *instance.PubliclyAccessible
-				resource["is_public"] = instance.PubliclyAccessible != nil && *instance.PubliclyAccessible
+				publiclyAccessible := ptr.Deref(instance.PubliclyAccessible, false)
+				resource["publicly_accessible"] = publiclyAccessible
+				resource["is_public"] = publiclyAccessible
 
 				// Security
-				resource["storage_encrypted"] = instance.StorageEncrypted != nil && *instance.StorageEncrypted
-				resource["is_encrypted"] = instance.StorageEncrypted != nil && *instance.StorageEncrypted
+				storageEncrypted := ptr.Deref(instance.StorageEncrypted, false)
+				resource["storage_encrypted"] = storageEncrypted
+				resource["is_encrypted"] = storageEncrypted
 				resource["kms_key_id"] = aws.ToString(instance.KmsKeyId)
 
 				// IAM auth
-				resource["iam_database_authentication_enabled"] = instance.IAMDatabaseAuthenticationEnabled != nil && *instance.IAMDatabaseAuthenticationEnabled
-				resource["has_iam_auth"] = instance.IAMDatabaseAuthenticationEnabled != nil && *instance.IAMDatabaseAuthenticationEnabled
+				iamAuth := ptr.Deref(instance.IAMDatabaseAuthenticationEnabled, false)
+				resource["iam_database_authentication_enabled"] = iamAuth
+				resource["has_iam_auth"] = iamAuth
 
 				// Deletion protection
-				resource["deletion_protection"] = instance.DeletionProtection != nil && *instance.DeletionProtection
-				resource["has_deletion_protection"] = instance.DeletionProtection != nil && *instance.DeletionProtection
+				deletionProtection := ptr.Deref(instance.DeletionProtection, false)
+				resource["deletion_protection"] = deletionProtection
+				resource["has_deletion_protection"] = deletionProtection
 
 				// Auto minor version upgrade
-				resource["auto_minor_version_upgrade"] = instance.AutoMinorVersionUpgrade != nil && *instance.AutoMinorVersionUpgrade
-				resource["has_auto_minor_upgrade"] = instance.AutoMinorVersionUpgrade != nil && *instance.AutoMinorVersionUpgrade
+				autoUpgrade := ptr.Deref(instance.AutoMinorVersionUpgrade, false)
+				resource["auto_minor_version_upgrade"] = autoUpgrade
+				resource["has_auto_minor_upgrade"] = autoUpgrade
 
 				// Backup
-				resource["backup_retention_period"] = instance.BackupRetentionPeriod
-				resource["backup_retention_days"] = instance.BackupRetentionPeriod
-				resource["has_backups"] = instance.BackupRetentionPeriod != nil && *instance.BackupRetentionPeriod > 0
+				backupRetention := ptr.Deref(instance.BackupRetentionPeriod, int32(0))
+				resource["backup_retention_period"] = backupRetention
+				resource["backup_retention_days"] = backupRetention
+				resource["has_backups"] = backupRetention > 0
 
 				// Performance Insights
-				resource["performance_insights_enabled"] = instance.PerformanceInsightsEnabled != nil && *instance.PerformanceInsightsEnabled
-				resource["has_performance_insights"] = instance.PerformanceInsightsEnabled != nil && *instance.PerformanceInsightsEnabled
+				perfInsights := ptr.Deref(instance.PerformanceInsightsEnabled, false)
+				resource["performance_insights_enabled"] = perfInsights
+				resource["has_performance_insights"] = perfInsights
 
 				// Enhanced monitoring
-				resource["monitoring_interval"] = instance.MonitoringInterval
-				resource["has_enhanced_monitoring"] = instance.MonitoringInterval != nil && *instance.MonitoringInterval > 0
+				monitoringInterval := ptr.Deref(instance.MonitoringInterval, int32(0))
+				resource["monitoring_interval"] = monitoringInterval
+				resource["has_enhanced_monitoring"] = monitoringInterval > 0
 
 				// Endpoint
 				if instance.Endpoint != nil {
@@ -98,7 +108,7 @@ func (r *RDSInstanceResource) Fetch(ctx context.Context, asset core.Asset) ([]co
 				}
 
 				// Security groups
-				var sgIDs []string
+				sgIDs := make([]string, 0, len(instance.VpcSecurityGroups))
 				for _, sg := range instance.VpcSecurityGroups {
 					sgIDs = append(sgIDs, aws.ToString(sg.VpcSecurityGroupId))
 				}
@@ -160,24 +170,28 @@ func (r *RDSClusterResource) Fetch(ctx context.Context, asset core.Asset) ([]cor
 				resource["database_name"] = aws.ToString(cluster.DatabaseName)
 
 				// Multi-AZ
-				resource["multi_az"] = cluster.MultiAZ != nil && *cluster.MultiAZ
+				resource["multi_az"] = ptr.Deref(cluster.MultiAZ, false)
 
 				// Storage encryption
-				resource["storage_encrypted"] = cluster.StorageEncrypted != nil && *cluster.StorageEncrypted
-				resource["is_encrypted"] = cluster.StorageEncrypted != nil && *cluster.StorageEncrypted
+				storageEncrypted := ptr.Deref(cluster.StorageEncrypted, false)
+				resource["storage_encrypted"] = storageEncrypted
+				resource["is_encrypted"] = storageEncrypted
 				resource["kms_key_id"] = aws.ToString(cluster.KmsKeyId)
 
 				// IAM auth
-				resource["iam_database_authentication_enabled"] = cluster.IAMDatabaseAuthenticationEnabled != nil && *cluster.IAMDatabaseAuthenticationEnabled
-				resource["has_iam_auth"] = cluster.IAMDatabaseAuthenticationEnabled != nil && *cluster.IAMDatabaseAuthenticationEnabled
+				iamAuth := ptr.Deref(cluster.IAMDatabaseAuthenticationEnabled, false)
+				resource["iam_database_authentication_enabled"] = iamAuth
+				resource["has_iam_auth"] = iamAuth
 
 				// Deletion protection
-				resource["deletion_protection"] = cluster.DeletionProtection != nil && *cluster.DeletionProtection
-				resource["has_deletion_protection"] = cluster.DeletionProtection != nil && *cluster.DeletionProtection
+				deletionProtection := ptr.Deref(cluster.DeletionProtection, false)
+				resource["deletion_protection"] = deletionProtection
+				resource["has_deletion_protection"] = deletionProtection
 
 				// Backup
-				resource["backup_retention_period"] = cluster.BackupRetentionPeriod
-				resource["has_backups"] = cluster.BackupRetentionPeriod != nil && *cluster.BackupRetentionPeriod > 0
+				backupRetention := ptr.Deref(cluster.BackupRetentionPeriod, int32(0))
+				resource["backup_retention_period"] = backupRetention
+				resource["has_backups"] = backupRetention > 0
 
 				// Endpoints
 				resource["endpoint"] = aws.ToString(cluster.Endpoint)
@@ -188,7 +202,7 @@ func (r *RDSClusterResource) Fetch(ctx context.Context, asset core.Asset) ([]cor
 				resource["member_count"] = len(cluster.DBClusterMembers)
 
 				// Security groups
-				var sgIDs []string
+				sgIDs := make([]string, 0, len(cluster.VpcSecurityGroups))
 				for _, sg := range cluster.VpcSecurityGroups {
 					sgIDs = append(sgIDs, aws.ToString(sg.VpcSecurityGroupId))
 				}

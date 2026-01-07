@@ -10,6 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 
 	"github.com/kopexa-grc/kspec/core"
+	"github.com/kopexa-grc/kspec/pkg/ptr"
 )
 
 // S3BucketResource fetches S3 buckets.
@@ -81,7 +82,7 @@ func (r *S3BucketResource) Fetch(ctx context.Context, asset core.Asset) ([]core.
 					resource["kms_key_id"] = aws.ToString(rule.ApplyServerSideEncryptionByDefault.KMSMasterKeyID)
 					resource["has_kms_encryption"] = rule.ApplyServerSideEncryptionByDefault.SSEAlgorithm == types.ServerSideEncryptionAwsKms
 				}
-				resource["bucket_key_enabled"] = rule.BucketKeyEnabled != nil && *rule.BucketKeyEnabled
+				resource["bucket_key_enabled"] = ptr.Deref(rule.BucketKeyEnabled, false)
 			}
 		} else {
 			resource["has_encryption"] = false
@@ -105,17 +106,18 @@ func (r *S3BucketResource) Fetch(ctx context.Context, asset core.Asset) ([]core.
 		})
 		if err == nil && pabResp.PublicAccessBlockConfiguration != nil {
 			pab := pabResp.PublicAccessBlockConfiguration
-			resource["block_public_acls"] = pab.BlockPublicAcls != nil && *pab.BlockPublicAcls
-			resource["ignore_public_acls"] = pab.IgnorePublicAcls != nil && *pab.IgnorePublicAcls
-			resource["block_public_policy"] = pab.BlockPublicPolicy != nil && *pab.BlockPublicPolicy
-			resource["restrict_public_buckets"] = pab.RestrictPublicBuckets != nil && *pab.RestrictPublicBuckets
+			blockPublicAcls := ptr.Deref(pab.BlockPublicAcls, false)
+			ignorePublicAcls := ptr.Deref(pab.IgnorePublicAcls, false)
+			blockPublicPolicy := ptr.Deref(pab.BlockPublicPolicy, false)
+			restrictPublicBuckets := ptr.Deref(pab.RestrictPublicBuckets, false)
+
+			resource["block_public_acls"] = blockPublicAcls
+			resource["ignore_public_acls"] = ignorePublicAcls
+			resource["block_public_policy"] = blockPublicPolicy
+			resource["restrict_public_buckets"] = restrictPublicBuckets
 
 			// All blocks enabled
-			allBlocked := (pab.BlockPublicAcls != nil && *pab.BlockPublicAcls) &&
-				(pab.IgnorePublicAcls != nil && *pab.IgnorePublicAcls) &&
-				(pab.BlockPublicPolicy != nil && *pab.BlockPublicPolicy) &&
-				(pab.RestrictPublicBuckets != nil && *pab.RestrictPublicBuckets)
-			resource["public_access_block_enabled"] = allBlocked
+			resource["public_access_block_enabled"] = blockPublicAcls && ignorePublicAcls && blockPublicPolicy && restrictPublicBuckets
 		} else {
 			resource["public_access_block_enabled"] = false
 			resource["block_public_acls"] = false

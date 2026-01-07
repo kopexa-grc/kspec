@@ -342,3 +342,237 @@ func TestParseCredentialFromConfig(t *testing.T) {
 		})
 	}
 }
+
+// FuzzParseCredentialType tests credential type parsing with random input.
+func FuzzParseCredentialType(f *testing.F) {
+	// Seed corpus with known types and edge cases
+	seeds := []string{
+		"password",
+		"PASSWORD",
+		"Password",
+		"private_key",
+		"PRIVATE_KEY",
+		"ssh_agent",
+		"bearer",
+		"credentials_query",
+		"json",
+		"aws_ec2_instance_connect",
+		"aws_ec2_ssm_session",
+		"pkcs12",
+		"env",
+		"",
+		"   ",
+		"unknown",
+		"password123",
+		"bearer_token",
+		"pass word",
+		"PASSWORD\n",
+		"password\x00",
+		string(make([]byte, 1000)),
+	}
+
+	for _, seed := range seeds {
+		f.Add(seed)
+	}
+
+	f.Fuzz(func(t *testing.T, input string) {
+		// Should never panic
+		result := ParseCredentialType(input)
+
+		// Result should always be a valid CredentialType
+		if result < CredentialTypeUndefined || result > CredentialTypeEnv {
+			t.Errorf("ParseCredentialType(%q) returned invalid type: %d", input, result)
+		}
+	})
+}
+
+// FuzzCredentialValidate tests credential validation with random input.
+func FuzzCredentialValidate(f *testing.F) {
+	// Seed corpus with various field combinations
+	seeds := []struct {
+		credType int
+		user     string
+		secret   string
+		keyPath  string
+		envVar   string
+		jsonData string
+	}{
+		{1, "user", "pass", "", "", ""},
+		{1, "", "pass", "", "", ""},
+		{1, "user", "", "", "", ""},
+		{2, "", "", "/path/to/key", "", ""},
+		{2, "", "", "", "", ""},
+		{4, "", "token", "", "", ""},
+		{4, "", "", "", "", ""},
+		{10, "", "", "", "ENV_VAR", ""},
+		{10, "", "", "", "", ""},
+		{6, "", "", "", "", `{"key":"value"}`},
+		{0, "", "", "", "", ""},
+	}
+
+	for _, seed := range seeds {
+		f.Add(seed.credType, seed.user, seed.secret, seed.keyPath, seed.envVar, seed.jsonData)
+	}
+
+	f.Fuzz(func(t *testing.T, credType int, user, secret, keyPath, envVar, jsonData string) {
+		cred := &Credential{
+			Type:           CredentialType(credType),
+			User:           user,
+			Secret:         secret,
+			PrivateKeyPath: keyPath,
+			EnvVarName:     envVar,
+			JSONData:       jsonData,
+		}
+
+		// Should never panic
+		_ = cred.Validate()
+	})
+}
+
+// FuzzParseCredentialFromConfig tests config parsing with random input.
+func FuzzParseCredentialFromConfig(f *testing.F) {
+	// Seed corpus
+	seeds := []struct {
+		credType string
+		user     string
+		secret   string
+		token    string
+		envVar   string
+	}{
+		{"password", "user", "pass", "", ""},
+		{"bearer", "", "token", "", ""},
+		{"bearer", "", "", "token", ""},
+		{"env", "", "", "", "VAR"},
+		{"", "", "", "legacy", ""},
+		{"unknown", "", "", "", ""},
+		{"", "", "", "", ""},
+		{"private_key", "", "", "", ""},
+	}
+
+	for _, seed := range seeds {
+		f.Add(seed.credType, seed.user, seed.secret, seed.token, seed.envVar)
+	}
+
+	f.Fuzz(func(t *testing.T, credType, user, secret, token, envVar string) {
+		config := make(map[string]string)
+		if credType != "" {
+			config["credential_type"] = credType
+		}
+		if user != "" {
+			config["user"] = user
+		}
+		if secret != "" {
+			config["secret"] = secret
+		}
+		if token != "" {
+			config["token"] = token
+		}
+		if envVar != "" {
+			config["env_var"] = envVar
+		}
+
+		// Should never panic
+		_, _ = ParseCredentialFromConfig(config)
+	})
+}
+
+// TestCredentialType_EdgeCases tests edge cases in credential type handling.
+func TestCredentialType_EdgeCases(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		want  CredentialType
+	}{
+		{"mixed case", "PaSsWoRd", CredentialTypePassword},
+		{"leading whitespace", " password", CredentialTypeUndefined},
+		{"trailing whitespace", "password ", CredentialTypeUndefined},
+		{"empty string", "", CredentialTypeUndefined},
+		{"null byte", "password\x00", CredentialTypeUndefined},
+		{"newline", "password\n", CredentialTypeUndefined},
+		{"unicode", "密码", CredentialTypeUndefined},
+		{"very long", string(make([]byte, 1000)), CredentialTypeUndefined},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := ParseCredentialType(tt.input)
+			if got != tt.want {
+				t.Errorf("ParseCredentialType(%q) = %v, want %v", tt.input, got, tt.want)
+			}
+		})
+	}
+}
+
+// TestCredential_ValidateEdgeCases tests edge cases in credential validation.
+func TestCredential_ValidateEdgeCases(t *testing.T) {
+	tests := []struct {
+		name    string
+		cred    *Credential
+		wantErr bool
+	}{
+		{
+			name: "undefined type",
+			cred: &Credential{
+				Type: CredentialTypeUndefined,
+			},
+			wantErr: true,
+		},
+		{
+			name: "unknown type value",
+			cred: &Credential{
+				Type: CredentialType(999),
+			},
+			wantErr: true,
+		},
+		{
+			name: "password with whitespace only user",
+			cred: &Credential{
+				Type:   CredentialTypePassword,
+				User:   "   ",
+				Secret: "pass",
+			},
+			wantErr: false, // Current implementation allows whitespace-only strings
+		},
+		{
+			name: "bearer with very long token",
+			cred: &Credential{
+				Type:   CredentialTypeBearer,
+				Secret: string(make([]byte, 10000)),
+			},
+			wantErr: false, // Should still be valid
+		},
+		{
+			name: "json with invalid json data",
+			cred: &Credential{
+				Type:     CredentialTypeJSON,
+				JSONData: "not-json",
+			},
+			wantErr: false, // Validation doesn't parse JSON, just checks non-empty
+		},
+		{
+			name: "pkcs12 with empty data",
+			cred: &Credential{
+				Type:       CredentialTypePKCS12,
+				PKCS12Data: []byte{},
+			},
+			wantErr: true,
+		},
+		{
+			name: "pkcs12 with data",
+			cred: &Credential{
+				Type:       CredentialTypePKCS12,
+				PKCS12Data: []byte{0x01, 0x02, 0x03},
+			},
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.cred.Validate()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Credential.Validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}

@@ -621,6 +621,190 @@ func TestEvaluatePolicies_CheckResolution(t *testing.T) {
 	}
 }
 
+// FuzzEvaluateGroupFilter tests the group filter parsing with random input.
+func FuzzEvaluateGroupFilter(f *testing.F) {
+	// Seed corpus with valid and edge-case filters
+	seeds := []string{
+		"",
+		`asset.type == "github-org"`,
+		`asset.type == 'github-repo'`,
+		`asset.type =="test"`,
+		`asset.type=='test'`,
+		"some.unknown.expression",
+		"asset.type",
+		`asset.type == "`,
+		`asset.type == '`,
+		`asset.type == ""`,
+		`asset.type == ''`,
+		"   ",
+		`asset.type == "test" && other`,
+		`multiple == "quotes" == "here"`,
+		"asset.type == \"unclosed",
+		"asset.type == 'unclosed",
+		`== "value"`,
+		`"value" == asset.type`,
+	}
+
+	for _, seed := range seeds {
+		f.Add(seed)
+	}
+
+	f.Fuzz(func(t *testing.T, filter string) {
+		// Should never panic
+		asset := core.Asset{Type: "test-type"}
+		_ = evaluateGroupFilter(filter, asset)
+	})
+}
+
+// FuzzYAMLParsing tests YAML parsing with random input.
+func FuzzYAMLParsing(f *testing.F) {
+	// Seed corpus with valid and malformed YAML
+	seeds := []string{
+		`apiVersion: kopexa.io/v1alpha1
+kind: Policy
+metadata:
+  name: test
+`,
+		`{}`,
+		`[]`,
+		`null`,
+		``,
+		`invalid: yaml: [`,
+		`- item1
+- item2`,
+		`key: value
+another: 123`,
+		`deeply:
+  nested:
+    structure:
+      here: true`,
+		`"string only"`,
+		`123`,
+		`true`,
+		`key: |
+  multiline
+  string`,
+		`key: >
+  folded
+  string`,
+		`---
+document1: true
+---
+document2: true`,
+		`&anchor
+key: *anchor`,
+		string(make([]byte, 1000)), // zeros
+	}
+
+	for _, seed := range seeds {
+		f.Add(seed)
+	}
+
+	f.Fuzz(func(t *testing.T, content string) {
+		// Create a temp file with the fuzzed content
+		tmpDir := t.TempDir()
+		policyFile := tmpDir + "/fuzz-policy.yml"
+		if err := os.WriteFile(policyFile, []byte(content), 0o644); err != nil {
+			t.Skip("Failed to write temp file")
+		}
+
+		// Should never panic, errors are expected for invalid YAML
+		_, _ = LoadPolicies(policyFile, "")
+	})
+}
+
+// TestEvaluateGroupFilter_EdgeCases tests edge cases in filter parsing.
+func TestEvaluateGroupFilter_EdgeCases(t *testing.T) {
+	tests := []struct {
+		name   string
+		filter string
+		asset  core.Asset
+		want   bool
+	}{
+		{
+			name:   "Empty value in quotes",
+			filter: `asset.type == ""`,
+			asset:  core.Asset{Type: ""},
+			want:   true,
+		},
+		{
+			name:   "Empty value single quotes",
+			filter: `asset.type == ''`,
+			asset:  core.Asset{Type: ""},
+			want:   true,
+		},
+		{
+			name:   "Unclosed double quote",
+			filter: `asset.type == "unclosed`,
+			asset:  core.Asset{Type: "any"},
+			want:   true, // Falls back to true
+		},
+		{
+			name:   "Unclosed single quote",
+			filter: `asset.type == 'unclosed`,
+			asset:  core.Asset{Type: "any"},
+			want:   true, // Falls back to true
+		},
+		{
+			name:   "Value before operator",
+			filter: `"value" == asset.type`,
+			asset:  core.Asset{Type: "value"},
+			want:   true, // Falls back to true (not parsed)
+		},
+		{
+			name:   "Multiple separators",
+			filter: `asset.type == "first" == "second"`,
+			asset:  core.Asset{Type: "first"},
+			want:   true, // Should match first value
+		},
+		{
+			name:   "Unicode in filter",
+			filter: `asset.type == "日本語"`,
+			asset:  core.Asset{Type: "日本語"},
+			want:   true,
+		},
+		{
+			name:   "Special characters in value",
+			filter: `asset.type == "test-with-dashes_and_underscores"`,
+			asset:  core.Asset{Type: "test-with-dashes_and_underscores"},
+			want:   true,
+		},
+		{
+			name:   "Newline in filter",
+			filter: "asset.type ==\n\"test\"",
+			asset:  core.Asset{Type: "any"},
+			want:   true, // Falls back to true
+		},
+		{
+			name:   "Tab in filter",
+			filter: "asset.type ==\t\"test\"",
+			asset:  core.Asset{Type: "any"},
+			want:   true, // Falls back to true
+		},
+		{
+			name:   "Only whitespace after separator",
+			filter: `asset.type == "   "`,
+			asset:  core.Asset{Type: "   "},
+			want:   true,
+		},
+		{
+			name:   "Very long value",
+			filter: `asset.type == "` + string(make([]byte, 1000)) + `"`,
+			asset:  core.Asset{Type: string(make([]byte, 1000))},
+			want:   true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := evaluateGroupFilter(tt.filter, tt.asset)
+			if result != tt.want {
+				t.Errorf("evaluateGroupFilter(%q) = %v, want %v", tt.filter, result, tt.want)
+			}
+		})
+	}
+}
+
 func TestEvaluatePolicies_UnresolvedCheck(t *testing.T) {
 	// Test that unresolved check references are skipped
 	policies := []core.Policy{

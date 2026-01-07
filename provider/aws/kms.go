@@ -10,6 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/kms/types"
 
 	"github.com/kopexa-grc/kspec/core"
+	"github.com/kopexa-grc/kspec/pkg/ptr"
 )
 
 // KMSKeyResource fetches KMS keys.
@@ -69,15 +70,16 @@ func (r *KMSKeyResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Re
 				resource["key_manager"] = string(metadata.KeyManager)
 
 				// Is enabled
-				resource["enabled"] = metadata.Enabled
-				resource["is_enabled"] = metadata.Enabled
+				enabled := metadata.Enabled
+				resource["enabled"] = enabled
+				resource["is_enabled"] = enabled
 
 				// AWS managed vs customer managed
 				resource["is_aws_managed"] = metadata.KeyManager == types.KeyManagerTypeAws
 				resource["is_customer_managed"] = metadata.KeyManager == types.KeyManagerTypeCustomer
 
 				// Multi-region
-				resource["multi_region"] = metadata.MultiRegion != nil && *metadata.MultiRegion
+				resource["multi_region"] = ptr.Deref(metadata.MultiRegion, false)
 
 				// Creation date
 				if metadata.CreationDate != nil {
@@ -134,7 +136,7 @@ func (r *KMSKeyResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Re
 					KeyId: key.KeyId,
 				})
 				if err == nil {
-					var aliases []string
+					aliases := make([]string, 0, len(aliasResp.Aliases))
 					for _, alias := range aliasResp.Aliases {
 						aliases = append(aliases, aws.ToString(alias.AliasName))
 					}
