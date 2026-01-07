@@ -29,7 +29,7 @@ func (r *S3BucketResource) Fetch(ctx context.Context, asset core.Asset) ([]core.
 	// List all buckets (global operation)
 	bucketsResp, err := client.ListBuckets(ctx, &s3.ListBucketsInput{})
 	if err != nil {
-		return nil, err
+		return nil, core.WrapError("aws", "s3_bucket", "list", err)
 	}
 
 	resources := make([]core.Resource, 0, len(bucketsResp.Buckets))

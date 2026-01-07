@@ -27,7 +27,7 @@ func (r *AccountResource) Fetch(ctx context.Context, asset core.Asset) ([]core.R
 	stsClient := sts.NewFromConfig(r.conn.cfg)
 	identity, err := stsClient.GetCallerIdentity(ctx, &sts.GetCallerIdentityInput{})
 	if err != nil {
-		return nil, err
+		return nil, core.WrapError("aws", "account", "get_caller_identity", err)
 	}
 
 	resource := make(core.Resource)

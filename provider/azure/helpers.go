@@ -2,7 +2,6 @@ package azure
 
 import (
 	"context"
-	"encoding/json"
 
 	"github.com/kopexa-grc/kspec/core"
 )
@@ -48,15 +47,5 @@ func fetchWithPager[TPage any, TItem any](
 
 // toResourceMap converts any struct to a map[string]interface{} via JSON marshaling.
 func toResourceMap(item any) (map[string]interface{}, error) {
-	data, err := json.Marshal(item)
-	if err != nil {
-		return nil, err
-	}
-
-	var resourceMap map[string]interface{}
-	if err := json.Unmarshal(data, &resourceMap); err != nil {
-		return nil, err
-	}
-
-	return resourceMap, nil
+	return core.ToResource(item)
 }

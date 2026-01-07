@@ -34,7 +34,7 @@ func (r *IAMUserResource) Fetch(ctx context.Context, asset core.Asset) ([]core.R
 	for paginator.HasMorePages() {
 		page, err := paginator.NextPage(ctx)
 		if err != nil {
-			return nil, err
+			return nil, core.WrapError("aws", "iam_user", "list", err)
 		}
 
 		for _, user := range page.Users {
@@ -185,7 +185,7 @@ func (r *IAMRoleResource) Fetch(ctx context.Context, asset core.Asset) ([]core.R
 	for paginator.HasMorePages() {
 		page, err := paginator.NextPage(ctx)
 		if err != nil {
-			return nil, err
+			return nil, core.WrapError("aws", "iam_role", "list", err)
 		}
 
 		for _, role := range page.Roles {
@@ -284,7 +284,7 @@ func (r *IAMGroupResource) Fetch(ctx context.Context, asset core.Asset) ([]core.
 	for paginator.HasMorePages() {
 		page, err := paginator.NextPage(ctx)
 		if err != nil {
-			return nil, err
+			return nil, core.WrapError("aws", "iam_group", "list", err)
 		}
 
 		for _, group := range page.Groups {
@@ -370,7 +370,7 @@ func (r *IAMPolicyResource) Fetch(ctx context.Context, asset core.Asset) ([]core
 	for paginator.HasMorePages() {
 		page, err := paginator.NextPage(ctx)
 		if err != nil {
-			return nil, err
+			return nil, core.WrapError("aws", "iam_policy", "list", err)
 		}
 
 		for _, policy := range page.Policies {

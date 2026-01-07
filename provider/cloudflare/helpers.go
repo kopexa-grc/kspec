@@ -1,7 +1,6 @@
 package cloudflare
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/kopexa-grc/kspec/core"
@@ -30,13 +29,8 @@ func itemsToResources[T any](
 	resources := make([]core.Resource, 0, len(items))
 
 	for _, item := range items {
-		data, err := json.Marshal(item)
+		resourceMap, err := core.ToResource(item)
 		if err != nil {
-			continue
-		}
-
-		var resourceMap map[string]interface{}
-		if err := json.Unmarshal(data, &resourceMap); err != nil {
 			continue
 		}
 

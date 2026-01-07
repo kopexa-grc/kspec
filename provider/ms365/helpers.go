@@ -2,7 +2,6 @@ package ms365
 
 import (
 	"context"
-	"encoding/json"
 	"time"
 
 	"github.com/kopexa-grc/kspec/core"
@@ -23,20 +22,15 @@ type DeviceManagementItem interface {
 // fetchDeviceManagementResources is a generic helper for fetching MS365 device management resources.
 // It handles the common pattern of iterating through results and converting them to core.Resource.
 func fetchDeviceManagementResources[T DeviceManagementItem](
-	ctx context.Context,
+	_ context.Context,
 	items []T,
 	typeFieldName string,
 ) []core.Resource {
 	resources := make([]core.Resource, 0, len(items))
 
 	for _, item := range items {
-		data, err := json.Marshal(item)
+		resourceMap, err := core.ToResource(item)
 		if err != nil {
-			continue
-		}
-
-		var resourceMap map[string]interface{}
-		if err := json.Unmarshal(data, &resourceMap); err != nil {
 			continue
 		}
 
