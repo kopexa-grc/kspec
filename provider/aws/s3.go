@@ -15,7 +15,8 @@ import (
 
 // S3BucketResource fetches S3 buckets.
 type S3BucketResource struct {
-	conn *Connection
+	conn   *Connection
+	client S3API // optional, for testing
 }
 
 // Name returns the resource type name.
@@ -23,9 +24,17 @@ func (r *S3BucketResource) Name() string {
 	return "aws_s3_bucket"
 }
 
+// getClient returns the S3 client, using the injected mock if available.
+func (r *S3BucketResource) getClient() S3API {
+	if r.client != nil {
+		return r.client
+	}
+	return s3.NewFromConfig(r.conn.cfg)
+}
+
 // Fetch retrieves all S3 buckets with their security configurations.
 func (r *S3BucketResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
-	client := s3.NewFromConfig(r.conn.cfg)
+	client := r.getClient()
 
 	// List all buckets (global operation)
 	bucketsResp, err := client.ListBuckets(ctx, &s3.ListBucketsInput{})
