@@ -29,7 +29,7 @@ Whether you are auditing cloud configurations, verifying GitHub repository secur
 
 ## Key Features
 
-- **Multi-Cloud Support**: Scan Azure subscriptions, Microsoft 365 tenants, and GitHub organizations from a single tool
+- **Multi-Cloud Support**: Scan AWS accounts, Azure subscriptions, Microsoft 365 tenants, and GitHub organizations from a single tool
 - **Policy-as-Code**: Define your security expectations in clear, version-controlled YAML with CEL expressions
 - **Extensible Provider Architecture**: Modular design with providers for Azure, MS365, GitHub, Network, and more
 - **Interactive TUI**: Beautiful terminal UI showing real-time scan progress and results
@@ -40,13 +40,17 @@ Whether you are auditing cloud configurations, verifying GitHub repository secur
 
 | Provider | Description | Documentation |
 |----------|-------------|---------------|
+| **AWS** | Scan AWS accounts for security compliance (IAM, S3, EC2, RDS, Lambda, EKS, and 50+ services) | [Provider Guide](docs/providers/aws.md) |
 | **Azure** | Scan Azure subscriptions for security compliance | [Provider Guide](docs/providers/azure.md) |
 | **Microsoft 365** | Scan M365 tenants for identity and security settings | [Provider Guide](docs/providers/ms365.md) |
 | **GitHub** | Scan organizations and repositories for security best practices | [Provider Guide](docs/providers/github.md) |
 | **Hetzner Cloud** | Scan Hetzner Cloud projects for infrastructure security | [Provider Guide](docs/providers/hetzner.md) |
 | **Cloudflare** | Scan DNS, WAF, Zero Trust, and security settings | [Provider Guide](docs/providers/cloudflare.md) |
 | **Atlassian** | Scan Jira, Confluence, and admin settings | [Provider Guide](docs/providers/atlassian.md) |
+| **Factorial HR** | Scan HR data for compliance (employees, contracts, documents) | [Provider Guide](docs/providers/factorial.md) |
 | **Network** | Validate TLS, DNS, and HTTP security configurations | [Provider Guide](docs/providers/network.md) |
+| **OS** | Scan local system services, packages, and files | [Provider Guide](docs/providers/os.md) |
+| **SBOM** | Scan Software Bill of Materials for vulnerabilities and licenses | [Provider Guide](docs/providers/sbom.md) |
 
 ## Installation
 
@@ -65,6 +69,18 @@ go build -o kspec ./cmd/kspec
 ```
 
 ## Quick Start
+
+### Scan AWS Account
+
+```bash
+# Set your AWS credentials
+export AWS_ACCESS_KEY_ID="your-access-key"
+export AWS_SECRET_ACCESS_KEY="your-secret-key"
+export AWS_REGION="us-east-1"
+
+# Scan an AWS account
+kspec scan aws account -f policies/aws-security.yml
+```
 
 ### Scan GitHub Organization
 
@@ -166,7 +182,7 @@ queries:
 
 kspec operates on a **Provider-Resource-Policy** model:
 
-1. **Providers** (Azure, MS365, GitHub, Network) connect to target assets
+1. **Providers** (AWS, Azure, MS365, GitHub, Network, etc.) connect to target assets
 2. **Resources** expose structured data from the target (storage accounts, users, repos)
 3. **Policies** define expected security state using CEL expressions
 4. **Scanner** orchestrates discovery, fetching, and policy evaluation

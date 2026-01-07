@@ -6,6 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/iam"
 	"github.com/aws/aws-sdk-go-v2/service/organizations"
+	"github.com/aws/aws-sdk-go-v2/service/organizations/types"
 	"github.com/aws/aws-sdk-go-v2/service/sts"
 
 	"github.com/kopexa-grc/kspec/core"
@@ -167,12 +168,12 @@ func (r *OrganizationResource) Fetch(ctx context.Context, asset core.Asset) ([]c
 			accounts = append(accounts, acc)
 
 			switch account.Status {
-			case "ACTIVE":
+			case types.AccountStatusActive:
 				activeCount++
-			case "SUSPENDED":
+			case types.AccountStatusSuspended:
 				suspendedCount++
-			default:
-				// Other statuses (PENDING_CLOSURE, etc.)
+			case types.AccountStatusPendingClosure:
+				// Pending closure accounts are not counted
 			}
 		}
 	}

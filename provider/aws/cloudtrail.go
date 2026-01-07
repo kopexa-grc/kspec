@@ -63,7 +63,6 @@ func (r *CloudTrailResource) Fetch(ctx context.Context, asset core.Asset) ([]cor
 
 			// SNS topic
 			resource["sns_topic_arn"] = aws.ToString(trail.SnsTopicARN)
-			resource["sns_topic_name"] = aws.ToString(trail.SnsTopicName)
 			resource["has_sns_topic"] = trail.SnsTopicARN != nil && aws.ToString(trail.SnsTopicARN) != ""
 
 			// KMS encryption
