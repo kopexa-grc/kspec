@@ -17,7 +17,7 @@ permissions:
 jobs:
   lint:
     name: Lint
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-4c
     steps:
       - name: Checkout
         uses: actions/checkout@v6
