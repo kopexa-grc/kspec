@@ -1,0 +1,229 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kopexa.io/schemas/policy.schema.json",
+  "$ref": "#/$defs/Policy",
+  "$defs": {
+    "Author": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Author name"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Author email address"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name"
+      ]
+    },
+    "Check": {
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Unique identifier for this check"
+        },
+        "id": {
+          "type": "string",
+          "description": "Alternative identifier"
+        },
+        "title": {
+          "type": "string",
+          "description": "Human-readable check title"
+        },
+        "resource": {
+          "type": "string",
+          "description": "Resource type to query (e.g. tls | dns | github_repo)"
+        },
+        "config": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object",
+          "description": "Resource-specific configuration"
+        },
+        "query": {
+          "type": "string",
+          "description": "CEL expression that must evaluate to true for the check to pass"
+        },
+        "remediation": {
+          "type": "string",
+          "description": "Remediation guidance when check fails"
+        },
+        "severity": {
+          "type": "string",
+          "enum": [
+            "critical",
+            "high",
+            "medium",
+            "low",
+            "info"
+          ],
+          "description": "Check severity level"
+        },
+        "docs": {
+          "type": "string",
+          "description": "Documentation or explanation"
+        },
+        "audit": {
+          "type": "string",
+          "description": "Manual audit instructions"
+        },
+        "props": {
+          "items": {
+            "$ref": "#/$defs/Prop"
+          },
+          "type": "array",
+          "description": "Properties to extract from resources"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "Group": {
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Group title"
+        },
+        "filter": {
+          "type": "string",
+          "description": "CEL expression to filter assets for this group"
+        },
+        "checks": {
+          "items": {
+            "$ref": "#/$defs/Check"
+          },
+          "type": "array",
+          "description": "Checks in this group (can reference queries by uid)"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "title"
+      ]
+    },
+    "Metadata": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Unique identifier for the policy"
+        },
+        "version": {
+          "type": "string",
+          "description": "Semantic version of the policy"
+        },
+        "title": {
+          "type": "string",
+          "description": "Human-readable title"
+        },
+        "license": {
+          "type": "string",
+          "description": "License identifier (e.g. MIT or Apache-2.0)"
+        },
+        "tags": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object",
+          "description": "Key-value tags for categorization"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name"
+      ]
+    },
+    "Policy": {
+      "properties": {
+        "apiVersion": {
+          "type": "string",
+          "description": "API version for the policy format"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "Policy"
+          ],
+          "description": "Must be 'Policy'"
+        },
+        "metadata": {
+          "$ref": "#/$defs/Metadata",
+          "description": "Policy metadata"
+        },
+        "groups": {
+          "items": {
+            "$ref": "#/$defs/Group"
+          },
+          "type": "array",
+          "description": "Groups of related checks"
+        },
+        "queries": {
+          "items": {
+            "$ref": "#/$defs/Check"
+          },
+          "type": "array",
+          "description": "Check definitions that can be referenced by groups"
+        },
+        "require": {
+          "items": {
+            "$ref": "#/$defs/Requirement"
+          },
+          "type": "array",
+          "description": "Provider dependencies required by this policy"
+        },
+        "authors": {
+          "items": {
+            "$ref": "#/$defs/Author"
+          },
+          "type": "array",
+          "description": "Policy authors"
+        },
+        "scoring_system": {
+          "type": "string",
+          "description": "Scoring system to use for this policy"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "Prop": {
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Property identifier"
+        },
+        "title": {
+          "type": "string",
+          "description": "Property title"
+        },
+        "mql": {
+          "description": "MQL expression for property extraction"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "Requirement": {
+      "properties": {
+        "provider": {
+          "type": "string",
+          "description": "Provider name (e.g. aws | azure | github)"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "provider"
+      ]
+    }
+  },
+  "title": "Kopexa Policy",
+  "description": "Schema for Kopexa security policy files"
+}

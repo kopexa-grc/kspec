@@ -39,7 +39,12 @@
       "Bash(git checkout:*)",
       "Bash(xxd:*)",
       "Bash(make lint:*)",
-      "WebFetch(domain:raw.githubusercontent.com)"
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(go install:*)",
+      "Bash(mockgen --version:*)",
+      "Bash(go generate:*)",
+      "Bash(git restore:*)",
+      "Bash(make:*)"
     ]
   }
 }

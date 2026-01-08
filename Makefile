@@ -2,7 +2,7 @@
 # Run `make help` for available commands
 
 .PHONY: help build install clean test lint lint-fix fmt vet check \
-        run dev release snapshot hooks deps tidy
+        run dev release snapshot hooks deps tidy schema
 
 # Build variables
 BINARY_NAME := kspec
@@ -58,6 +58,11 @@ clean: ## Remove build artifacts
 	@rm -rf $(BUILD_DIR)
 	@rm -f coverage.out coverage.html
 	@echo "$(GREEN)Cleaned$(RESET)"
+
+schema: ## Generate JSON schema from Policy struct
+	@echo "$(BLUE)Generating JSON schema...$(RESET)"
+	@go run ./cmd/schema-gen
+	@echo "$(GREEN)Schema generated at schema/policy.schema.json$(RESET)"
 
 ##@ Testing
 
