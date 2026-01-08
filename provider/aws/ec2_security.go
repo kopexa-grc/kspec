@@ -64,8 +64,8 @@ func (r *EC2SecurityGroupResource) Fetch(ctx context.Context, asset core.Asset) 
 					allowsSSHFromInternet   bool
 					allowsRDPFromInternet   bool
 					allowsAllTrafficIngress bool
-					inboundRules            []map[string]any
 				)
+				inboundRules := make([]map[string]any, 0, len(sg.IpPermissions))
 
 				for _, perm := range sg.IpPermissions {
 					rule := map[string]any{
@@ -74,7 +74,7 @@ func (r *EC2SecurityGroupResource) Fetch(ctx context.Context, asset core.Asset) 
 						"to_port":   perm.ToPort,
 					}
 
-					var cidrs []string
+					cidrs := make([]string, 0, len(perm.IpRanges)+len(perm.Ipv6Ranges))
 					for _, ipRange := range perm.IpRanges {
 						cidr := aws.ToString(ipRange.CidrIp)
 						cidrs = append(cidrs, cidr)
@@ -122,7 +122,7 @@ func (r *EC2SecurityGroupResource) Fetch(ctx context.Context, asset core.Asset) 
 					rule["cidrs"] = cidrs
 
 					// Referenced security groups
-					var referencedSGs []string
+					referencedSGs := make([]string, 0, len(perm.UserIdGroupPairs))
 					for _, refSG := range perm.UserIdGroupPairs {
 						referencedSGs = append(referencedSGs, aws.ToString(refSG.GroupId))
 					}
@@ -142,8 +142,8 @@ func (r *EC2SecurityGroupResource) Fetch(ctx context.Context, asset core.Asset) 
 				var (
 					hasUnrestrictedEgress  bool
 					allowsAllTrafficEgress bool
-					outboundRules          []map[string]any
 				)
+				outboundRules := make([]map[string]any, 0, len(sg.IpPermissionsEgress))
 
 				for _, perm := range sg.IpPermissionsEgress {
 					rule := map[string]any{
@@ -152,7 +152,7 @@ func (r *EC2SecurityGroupResource) Fetch(ctx context.Context, asset core.Asset) 
 						"to_port":   perm.ToPort,
 					}
 
-					var cidrs []string
+					cidrs := make([]string, 0, len(perm.IpRanges)+len(perm.Ipv6Ranges))
 					for _, ipRange := range perm.IpRanges {
 						cidr := aws.ToString(ipRange.CidrIp)
 						cidrs = append(cidrs, cidr)
@@ -177,7 +177,7 @@ func (r *EC2SecurityGroupResource) Fetch(ctx context.Context, asset core.Asset) 
 
 					rule["cidrs"] = cidrs
 
-					var referencedSGs []string
+					referencedSGs := make([]string, 0, len(perm.UserIdGroupPairs))
 					for _, refSG := range perm.UserIdGroupPairs {
 						referencedSGs = append(referencedSGs, aws.ToString(refSG.GroupId))
 					}

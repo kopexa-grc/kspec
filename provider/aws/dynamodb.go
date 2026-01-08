@@ -92,7 +92,7 @@ func (r *DynamoDBTableResource) Fetch(ctx context.Context, asset core.Asset) ([]
 
 				// Global secondary indexes
 				resource["gsi_count"] = len(table.GlobalSecondaryIndexes)
-				var gsiNames []string
+				gsiNames := make([]string, 0, len(table.GlobalSecondaryIndexes))
 				for _, gsi := range table.GlobalSecondaryIndexes {
 					gsiNames = append(gsiNames, aws.ToString(gsi.IndexName))
 				}
@@ -100,7 +100,7 @@ func (r *DynamoDBTableResource) Fetch(ctx context.Context, asset core.Asset) ([]
 
 				// Local secondary indexes
 				resource["lsi_count"] = len(table.LocalSecondaryIndexes)
-				var lsiNames []string
+				lsiNames := make([]string, 0, len(table.LocalSecondaryIndexes))
 				for _, lsi := range table.LocalSecondaryIndexes {
 					lsiNames = append(lsiNames, aws.ToString(lsi.IndexName))
 				}
@@ -108,7 +108,7 @@ func (r *DynamoDBTableResource) Fetch(ctx context.Context, asset core.Asset) ([]
 
 				// Replicas (global tables)
 				resource["replica_count"] = len(table.Replicas)
-				var replicaRegions []string
+				replicaRegions := make([]string, 0, len(table.Replicas))
 				for _, replica := range table.Replicas {
 					replicaRegions = append(replicaRegions, aws.ToString(replica.RegionName))
 				}

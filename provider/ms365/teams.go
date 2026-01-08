@@ -149,7 +149,7 @@ func (r *TeamSettingsResource) Name() string {
 
 // Fetch retrieves tenant-wide Microsoft Teams configuration settings.
 func (r *TeamSettingsResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
-	var resources []core.Resource
+	resources := make([]core.Resource, 0, 1)
 
 	// Get tenant-wide Teams settings (requires Teams admin role)
 	// This is obtained through teamwork settings

@@ -299,7 +299,7 @@ func (r *VPCEndpointResource) Fetch(ctx context.Context, asset core.Asset) ([]co
 				resource["subnet_ids"] = append([]string{}, endpoint.SubnetIds...)
 
 				// Security groups (for Interface endpoints)
-				var sgIDs []string
+				sgIDs := make([]string, 0, len(endpoint.Groups))
 				for _, sg := range endpoint.Groups {
 					sgIDs = append(sgIDs, aws.ToString(sg.GroupId))
 				}

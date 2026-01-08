@@ -72,7 +72,7 @@ func (r *SecureScoreResource) Name() string {
 
 // Fetch retrieves the most recent Microsoft Secure Score with control details.
 func (r *SecureScoreResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
-	var resources []core.Resource
+	resources := make([]core.Resource, 0, 1)
 
 	result, err := r.client.Security().SecureScores().Get(ctx, nil)
 	if err != nil {

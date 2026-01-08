@@ -89,7 +89,7 @@ func (r *WAFWebACLResource) Fetch(ctx context.Context, asset core.Asset) ([]core
 
 					// Rules
 					resource["rule_count"] = len(acl.Rules)
-					var ruleNames []string
+					ruleNames := make([]string, 0, len(acl.Rules))
 					var managedRuleGroups []string
 					hasRateLimiting := false
 					hasSQLi := false
@@ -338,7 +338,7 @@ func (r *WAFRuleGroupResource) Fetch(ctx context.Context, asset core.Asset) ([]c
 					}
 
 					// Rules
-					var ruleNames []string
+					ruleNames := make([]string, 0, len(rg.Rules))
 					for _, rule := range rg.Rules {
 						ruleNames = append(ruleNames, aws.ToString(rule.Name))
 					}

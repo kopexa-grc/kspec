@@ -56,7 +56,7 @@ func (r *ElastiCacheClusterResource) Fetch(ctx context.Context, asset core.Asset
 				}
 
 				// Security groups
-				var sgIDs []string
+				sgIDs := make([]string, 0, len(cluster.SecurityGroups))
 				for _, sg := range cluster.SecurityGroups {
 					sgIDs = append(sgIDs, aws.ToString(sg.SecurityGroupId))
 				}
@@ -106,7 +106,7 @@ func (r *ElastiCacheClusterResource) Fetch(ctx context.Context, asset core.Asset
 				}
 
 				// Nodes
-				var nodeEndpoints []map[string]interface{}
+				nodeEndpoints := make([]map[string]interface{}, 0, len(cluster.CacheNodes))
 				for _, node := range cluster.CacheNodes {
 					nodeInfo := map[string]interface{}{
 						"id":                aws.ToString(node.CacheNodeId),

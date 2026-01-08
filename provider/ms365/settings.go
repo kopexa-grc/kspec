@@ -121,7 +121,7 @@ func (r *ExternalIdentityPolicyResource) Name() string {
 
 // Fetch retrieves cross-tenant access policies for B2B collaboration settings.
 func (r *ExternalIdentityPolicyResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
-	var resources []core.Resource
+	resources := make([]core.Resource, 0, 1)
 
 	// Get B2B collaboration settings via cross-tenant access settings
 	result, err := r.client.Policies().CrossTenantAccessPolicy().Get(ctx, nil)

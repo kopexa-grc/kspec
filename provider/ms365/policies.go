@@ -22,7 +22,7 @@ func (r *AuthorizationPolicyResource) Name() string {
 
 // Fetch retrieves the tenant authorization policy with user permissions.
 func (r *AuthorizationPolicyResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
-	var resources []core.Resource
+	resources := make([]core.Resource, 0, 1)
 
 	result, err := r.client.Policies().AuthorizationPolicy().Get(ctx, nil)
 	if err != nil {
@@ -79,7 +79,7 @@ func (r *AuthenticationMethodPolicyResource) Name() string {
 
 // Fetch retrieves the authentication methods policy with method configurations.
 func (r *AuthenticationMethodPolicyResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
-	var resources []core.Resource
+	resources := make([]core.Resource, 0, 1)
 
 	result, err := r.client.Policies().AuthenticationMethodsPolicy().Get(ctx, nil)
 	if err != nil {
@@ -149,7 +149,7 @@ func (r *IdentitySecurityDefaultsEnforcementPolicyResource) Name() string {
 
 // Fetch retrieves the security defaults enforcement policy.
 func (r *IdentitySecurityDefaultsEnforcementPolicyResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
-	var resources []core.Resource
+	resources := make([]core.Resource, 0, 1)
 
 	result, err := r.client.Policies().IdentitySecurityDefaultsEnforcementPolicy().Get(ctx, nil)
 	if err != nil {

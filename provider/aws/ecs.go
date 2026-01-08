@@ -188,7 +188,7 @@ func (r *ECSServiceResource) Fetch(ctx context.Context, asset core.Asset) ([]cor
 						}
 
 						// Load balancers
-						var lbTargets []string
+						lbTargets := make([]string, 0, len(svc.LoadBalancers))
 						for _, lb := range svc.LoadBalancers {
 							lbTargets = append(lbTargets, aws.ToString(lb.TargetGroupArn))
 						}

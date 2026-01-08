@@ -70,7 +70,7 @@ func (r *ConfigRecorderResource) Fetch(ctx context.Context, asset core.Asset) ([
 
 				// Exclusion by resource types
 				if rg.ExclusionByResourceTypes != nil {
-					var excludedTypes []string
+					excludedTypes := make([]string, 0, len(rg.ExclusionByResourceTypes.ResourceTypes))
 					for _, rt := range rg.ExclusionByResourceTypes.ResourceTypes {
 						excludedTypes = append(excludedTypes, string(rt))
 					}
@@ -169,7 +169,7 @@ func (r *ConfigRuleResource) Fetch(ctx context.Context, asset core.Asset) ([]cor
 					resource["is_custom_rule"] = rule.Source.Owner == types.OwnerCustomLambda || rule.Source.Owner == types.OwnerCustomPolicy
 
 					// Source details
-					var triggerTypes []string
+					triggerTypes := make([]string, 0, len(rule.Source.SourceDetails))
 					for _, detail := range rule.Source.SourceDetails {
 						triggerTypes = append(triggerTypes, string(detail.MessageType))
 					}
@@ -198,7 +198,7 @@ func (r *ConfigRuleResource) Fetch(ctx context.Context, asset core.Asset) ([]cor
 				resource["maximum_execution_frequency"] = string(rule.MaximumExecutionFrequency)
 
 				// Evaluation mode
-				var evaluationModes []string
+				evaluationModes := make([]string, 0, len(rule.EvaluationModes))
 				for _, mode := range rule.EvaluationModes {
 					evaluationModes = append(evaluationModes, string(mode.Mode))
 				}
@@ -377,7 +377,7 @@ func (r *ConfigConformancePackResource) Fetch(ctx context.Context, asset core.As
 				resource["template_s3_uri"] = aws.ToString(pack.TemplateSSMDocumentDetails.DocumentName)
 
 				// Input parameters
-				var paramNames []string
+				paramNames := make([]string, 0, len(pack.ConformancePackInputParameters))
 				for _, param := range pack.ConformancePackInputParameters {
 					paramNames = append(paramNames, aws.ToString(param.ParameterName))
 				}
