@@ -85,10 +85,12 @@ func (p *Provider) Connect(ctx context.Context, config map[string]string) (core.
 // Resources returns the list of available Azure resource types that can be scanned.
 func (c *Connection) Resources() []core.ResourceSpec {
 	return []core.ResourceSpec{
+		// Storage
 		&StorageAccountResource{
 			credential:     c.credential,
 			subscriptionID: c.subscriptionID,
 		},
+		// Databases
 		&SqlServerResource{
 			credential:     c.credential,
 			subscriptionID: c.subscriptionID,
@@ -101,22 +103,91 @@ func (c *Connection) Resources() []core.ResourceSpec {
 			credential:     c.credential,
 			subscriptionID: c.subscriptionID,
 		},
+		&MariaDBServerResource{
+			credential:     c.credential,
+			subscriptionID: c.subscriptionID,
+		},
+		&CosmosDBAccountResource{
+			credential:     c.credential,
+			subscriptionID: c.subscriptionID,
+		},
+		&RedisCacheResource{
+			credential:     c.credential,
+			subscriptionID: c.subscriptionID,
+		},
+		// Security
 		&KeyVaultResource{
 			credential:     c.credential,
 			subscriptionID: c.subscriptionID,
 		},
+		&SecurityAssessmentResource{
+			credential:     c.credential,
+			subscriptionID: c.subscriptionID,
+		},
+		&SecurityAlertResource{
+			credential:     c.credential,
+			subscriptionID: c.subscriptionID,
+		},
+		&DefenderSettingResource{
+			credential:     c.credential,
+			subscriptionID: c.subscriptionID,
+		},
+		&SecureScoreResource{
+			credential:     c.credential,
+			subscriptionID: c.subscriptionID,
+		},
+		// Networking
 		&NetworkSecurityGroupResource{
 			credential:     c.credential,
 			subscriptionID: c.subscriptionID,
 		},
+		// Compute
 		&VirtualMachineResource{
 			credential:     c.credential,
 			subscriptionID: c.subscriptionID,
 		},
+		&AKSClusterResource{
+			credential:     c.credential,
+			subscriptionID: c.subscriptionID,
+		},
+		// Web
 		&AppServiceResource{
 			credential:     c.credential,
 			subscriptionID: c.subscriptionID,
 		},
+		// IoT
+		&IoTHubResource{
+			credential:     c.credential,
+			subscriptionID: c.subscriptionID,
+		},
+		// IAM
+		&RoleAssignmentResource{
+			credential:     c.credential,
+			subscriptionID: c.subscriptionID,
+		},
+		&RoleDefinitionResource{
+			credential:     c.credential,
+			subscriptionID: c.subscriptionID,
+		},
+		// Policy
+		&PolicyAssignmentResource{
+			credential:     c.credential,
+			subscriptionID: c.subscriptionID,
+		},
+		&PolicyDefinitionResource{
+			credential:     c.credential,
+			subscriptionID: c.subscriptionID,
+		},
+		&PolicyComplianceResource{
+			credential:     c.credential,
+			subscriptionID: c.subscriptionID,
+		},
+		// Advisor
+		&AdvisorRecommendationResource{
+			credential:     c.credential,
+			subscriptionID: c.subscriptionID,
+		},
+		// Subscription
 		&SubscriptionResource{
 			credential:     c.credential,
 			subscriptionID: c.subscriptionID,
