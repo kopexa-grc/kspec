@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.6](https://github.com/kopexa-grc/kspec/compare/v0.1.5...v0.1.6) (2026-01-08)
+
+
+### Features
+
+* add ptr package and optimize AWS provider with fuzz tests ([7ebe687](https://github.com/kopexa-grc/kspec/commit/7ebe6879196be67c0d5492815d714fc1834a8b42))
+* **azure:** add comprehensive Azure provider resources ([c8a3216](https://github.com/kopexa-grc/kspec/commit/c8a32162cd8927a7eb8c61b237533678af1d77e9))
+* **schema:** add JSON Schema generation for policy validation ([d0f59b9](https://github.com/kopexa-grc/kspec/commit/d0f59b9278ca74de0cda020c542f34cf67619bc8))
+
+
+### Bug Fixes
+
+* preallocate slices to satisfy prealloc linter ([a90f8af](https://github.com/kopexa-grc/kspec/commit/a90f8afbb4ffa60e8b9b269f76dc573c7e1072c0))
+* resolve remaining prealloc linter issues for golangci-lint v2.8.0 ([3b2efd9](https://github.com/kopexa-grc/kspec/commit/3b2efd9d82dcb23354d18ecd2f283decf933532d))
+* update license to ELv2 in policy files ([41b7593](https://github.com/kopexa-grc/kspec/commit/41b75934bf83d85be088d7a6a47a04f77eb4119e))
+
+
+### Code Refactoring
+
+* add core helpers and improve error handling ([ea357ff](https://github.com/kopexa-grc/kspec/commit/ea357ffc014911e68628272f98c22945653ea12f))
+
 ## [0.1.5](https://github.com/kopexa-grc/kspec/compare/v0.1.4...v0.1.5) (2026-01-07)
 
 
