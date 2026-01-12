@@ -53,7 +53,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/securityhub v1.67.2
 	github.com/aws/aws-sdk-go-v2/service/sns v1.39.10
 	github.com/aws/aws-sdk-go-v2/service/sqs v1.42.20
-	github.com/aws/aws-sdk-go-v2/service/ssm v1.67.7
+	github.com/aws/aws-sdk-go-v2/service/ssm v1.67.8
 	github.com/aws/aws-sdk-go-v2/service/sts v1.41.5
 	github.com/aws/aws-sdk-go-v2/service/wafv2 v1.70.6
 	github.com/charmbracelet/bubbles v0.21.0
