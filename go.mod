@@ -65,7 +65,7 @@ require (
 	github.com/google/go-github/v62 v62.0.0
 	github.com/hetznercloud/hcloud-go/v2 v2.33.0
 	github.com/invopop/jsonschema v0.13.0
-	github.com/microsoftgraph/msgraph-sdk-go v1.92.0
+	github.com/microsoftgraph/msgraph-sdk-go v1.93.0
 	github.com/miekg/dns v1.1.69
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
 	github.com/spf13/cobra v1.10.2
