@@ -48,7 +48,7 @@ jobs:
           cache: true
 
       - name: Go Test Cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.cache/go-build
           key: ${{ runner.os }}-go-test-${{ hashFiles('**/*.go') }}
@@ -83,7 +83,7 @@ jobs:
           cache: true
 
       - name: Go Test Cache (Race)
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.cache/go-build
           key: ${{ runner.os }}-go-test-race-${{ hashFiles('**/*.go') }}
@@ -114,7 +114,7 @@ jobs:
           cache: true
 
       - name: Go Build Cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.cache/go-build
           key: ${{ runner.os }}-go-build-${{ matrix.goos }}-${{ matrix.goarch }}-${{ hashFiles('**/*.go') }}
