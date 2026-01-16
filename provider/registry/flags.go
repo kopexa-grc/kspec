@@ -10,6 +10,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const (
+	// boolTrue is the string representation of a true boolean value.
+	boolTrue = "true"
+	// defaultAssetName is the fallback asset name when none is specified.
+	defaultAssetName = "default"
+)
+
 // RegisterFlags registers all flags from a provider definition to a cobra command.
 func RegisterFlags(cmd *cobra.Command, def *ProviderDefinition) {
 	for _, flag := range def.Flags {
@@ -31,7 +38,7 @@ func RegisterFlag(cmd *cobra.Command, flag FlagDefinition) {
 
 	switch flagType {
 	case FlagTypeBool:
-		defaultVal := flag.Default == "true"
+		defaultVal := flag.Default == boolTrue
 		if flag.Short != "" {
 			cmd.Flags().BoolP(flag.Name, flag.Short, defaultVal, flag.Description)
 		} else {
@@ -92,7 +99,7 @@ func getFlagValue(cmd *cobra.Command, flag FlagDefinition) string {
 	switch flagType {
 	case FlagTypeBool:
 		if val, err := cmd.Flags().GetBool(flag.Name); err == nil && val {
-			value = "true"
+			value = boolTrue
 		}
 	case FlagTypeStringSlice:
 		if val, err := cmd.Flags().GetStringSlice(flag.Name); err == nil && len(val) > 0 {
@@ -122,7 +129,7 @@ func ParseAssetArgs(def *ProviderDefinition, args []string) (assetType, assetNam
 			assetType = def.AssetTypes[0].Name
 			assetName = def.AssetTypes[0].DefaultName
 			if assetName == "" {
-				assetName = "default"
+				assetName = defaultAssetName
 			}
 			return assetType, assetName, config, nil
 		}
@@ -130,19 +137,24 @@ func ParseAssetArgs(def *ProviderDefinition, args []string) (assetType, assetNam
 	}
 
 	// First argument is the asset type
-	assetType = args[0]
-	assetDef, ok := def.GetAssetType(assetType)
+	assetDef, ok := def.GetAssetType(args[0])
 	if !ok {
 		// If only one asset type, treat first arg as asset name
 		if len(def.AssetTypes) == 1 {
 			assetType = def.AssetTypes[0].Name
 			assetDef = &def.AssetTypes[0]
 			assetName = args[0]
+			// Add the first arg to config if it matches the first ArgDefinition
+			if len(assetDef.Args) > 0 && assetDef.Args[0].ConfigKey != "" {
+				config[assetDef.Args[0].ConfigKey] = args[0]
+			}
 			args = args[1:]
 		} else {
 			return "", "", nil, nil
 		}
 	} else {
+		// Resolve alias to primary name
+		assetType = assetDef.Name
 		args = args[1:]
 	}
 
@@ -162,7 +174,7 @@ func ParseAssetArgs(def *ProviderDefinition, args []string) (assetType, assetNam
 	if assetName == "" {
 		assetName = assetDef.DefaultName
 		if assetName == "" {
-			assetName = "default"
+			assetName = defaultAssetName
 		}
 	}
 
