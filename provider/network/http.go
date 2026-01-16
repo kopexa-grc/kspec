@@ -29,7 +29,7 @@ func (r *HTTPResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Reso
 	}
 
 	if domainName == "" {
-		return nil, fmt.Errorf("missing 'domain', 'target', or FQDN in asset for http resource")
+		return nil, fmt.Errorf("missing domain configuration: provide 'domain' or 'target' in asset config, or set asset FQDN")
 	}
 
 	// Simple heuristic: if no protocol, try https first, then http?

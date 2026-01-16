@@ -4,7 +4,11 @@
 // Package registry provides a dynamic provider registration system.
 package registry
 
-import "github.com/kopexa-grc/kspec/core"
+import (
+	"strings"
+
+	"github.com/kopexa-grc/kspec/core"
+)
 
 // ProviderDefinition describes a provider and its configuration requirements.
 type ProviderDefinition struct {
@@ -136,15 +140,7 @@ func (p *ProviderDefinition) GetAssetType(name string) (*AssetDefinition, bool) 
 
 // dashToUnderscore converts dashes to underscores in a string.
 func dashToUnderscore(s string) string {
-	result := make([]byte, len(s))
-	for i := 0; i < len(s); i++ {
-		if s[i] == '-' {
-			result[i] = '_'
-		} else {
-			result[i] = s[i]
-		}
-	}
-	return string(result)
+	return strings.ReplaceAll(s, "-", "_")
 }
 
 // GetScannerKey returns the scanner key for an asset type.

@@ -21,8 +21,16 @@ func Register(def *ProviderDefinition) {
 	mu.Lock()
 	defer mu.Unlock()
 
+	if def == nil {
+		panic("provider definition must not be nil")
+	}
+
 	if def.Name == "" {
 		panic("provider definition must have a name")
+	}
+
+	if def.Factory == nil {
+		panic(fmt.Sprintf("provider %q must have a non-nil factory", def.Name))
 	}
 
 	if _, exists := providers[def.Name]; exists {

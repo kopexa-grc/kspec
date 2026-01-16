@@ -31,7 +31,7 @@ func (r *DNSResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resou
 		domainName = asset.Config["target"]
 	}
 	if domainName == "" {
-		return nil, fmt.Errorf("missing 'domain', 'target', or FQDN in asset for dns resource")
+		return nil, fmt.Errorf("missing domain configuration: provide 'domain' or 'target' in asset config, or set asset FQDN")
 	}
 	config := asset.Config
 

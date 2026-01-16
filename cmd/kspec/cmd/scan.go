@@ -215,16 +215,18 @@ func runAssetScan(cmd *cobra.Command, def *registry.ProviderDefinition, at *regi
 	// Build provider config from flags
 	providerConfig := registry.BuildConfig(cmd, def)
 
-	// Merge asset config into provider config
+	// Merge asset config into provider config.
+	// Asset-level configuration takes precedence over provider-level
+	// configuration when keys collide (more specific wins).
 	for k, v := range assetConfig {
 		providerConfig[k] = v
 	}
 
-	// Build asset
+	// Build asset with merged config so providers have access to all configuration
 	asset := core.Asset{
 		Type:   fullAssetType,
 		Name:   assetName,
-		Config: assetConfig,
+		Config: providerConfig,
 	}
 
 	// Load and filter policies
@@ -410,7 +412,7 @@ func loadAndFilterPolicies(cmd *cobra.Command, providerName string) ([]core.Poli
 		if info, err := os.Stat("policies"); err == nil && info.IsDir() {
 			policyDir = "policies"
 		} else {
-			return nil, fmt.Errorf("no policy specified and no ./policies directory found\n\nUse --policy (-f) or --policy-dir (-d), or create a ./policies directory")
+			return nil, fmt.Errorf("no policy specified and no ./policies directory found. Use --policy (-f) or --policy-dir (-d), or create a ./policies directory")
 		}
 	}
 
