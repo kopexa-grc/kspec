@@ -34,7 +34,8 @@ Whether you are auditing cloud configurations, verifying GitHub repository secur
 - **Extensible Provider Architecture**: Modular design with providers for Azure, MS365, GitHub, Network, and more
 - **Interactive TUI**: Beautiful terminal UI showing real-time scan progress and results
 - **High Performance**: Built in Go for speed, portability, and minimal overhead
-- **CI/CD Ready**: Easy integration with GitHub Actions, Azure DevOps, and other CI/CD platforms
+- **CI/CD Ready**: Non-interactive mode with structured logging (`--no-ui`) and export to CSV/XLSX/JSON
+- **Export Reports**: Generate compliance reports in CSV, XLSX, or JSON format
 
 ## Supported Providers
 
@@ -129,6 +130,50 @@ export HCLOUD_TOKEN="your-api-token"
 
 # Scan all resources in a project
 kspec scan hetzner project -f policies/hetzner-security.yml
+```
+
+## Output Options
+
+### Export Results
+
+Export scan results to CSV, XLSX, or JSON for compliance reporting:
+
+```bash
+# Export to CSV
+kspec scan aws account -f policies/aws-security.yml -o report.csv
+
+# Export to Excel
+kspec scan azure subscription <sub-id> -f policies/azure-security.yml -o report.xlsx
+
+# Export to JSON
+kspec scan github org <org-name> -f policies/github-security.yml -o report.json
+
+# Specify format explicitly
+kspec scan aws account -f policies/aws-security.yml -o report --export-format xlsx
+```
+
+### Non-Interactive Mode (CI/CD)
+
+Use `--no-ui` for CI/CD pipelines with structured logging via zerolog:
+
+```bash
+# Run without interactive UI
+kspec scan aws account -f policies/aws-security.yml --no-ui
+
+# Combine with export
+kspec scan azure subscription <sub-id> -f policies/azure-security.yml --no-ui -o results.csv
+```
+
+Output example:
+```
+12:34:56 INF Scan initialized target=my-subscription
+12:34:57 INF Discovery started
+12:34:58 INF Discovery complete
+12:34:58 INF Scan started
+12:34:59 INF Storage encryption enabled id=azure-storage-encryption status=PASS
+12:34:59 WRN Public blob access disabled id=azure-storage-public-access status=FAIL severity=high details="Public access is enabled"
+12:35:00 INF Scan complete
+12:35:00 INF Scan summary total=10 passed=8 failed=1 skipped=1
 ```
 
 ## Policy Library
@@ -244,7 +289,16 @@ jobs:
           AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
         run: |
           ./kspec scan azure subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }} \
-            -f policies/azure-security.yml
+            -f policies/azure-security.yml \
+            --no-ui \
+            -o scan-results.csv
+
+      - name: Upload Scan Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-scan-results
+          path: scan-results.csv
 ```
 
 ## Contributing

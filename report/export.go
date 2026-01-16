@@ -1,0 +1,130 @@
+// Copyright (c) Kopexa GmbH
+// SPDX-License-Identifier: BUSL-1.1
+
+package report
+
+import (
+	"time"
+
+	"github.com/kopexa-grc/kspec/cli/components/common"
+)
+
+// FromResourceTree converts a ResourceTree to a Report.
+func FromResourceTree(tree *common.ResourceTree, provider string) *Report {
+	report := &Report{
+		Metadata: Metadata{
+			GeneratedAt: time.Now(),
+			Provider:    provider,
+		},
+		Rows: make([]Row, 0),
+	}
+
+	if tree == nil || tree.Root == nil {
+		return report
+	}
+
+	// Set scan target from root
+	report.Metadata.ScanTarget = tree.Root.Name
+
+	// Collect all rows recursively
+	collectRows(tree.Root, "", report)
+
+	// Calculate totals
+	for _, row := range report.Rows {
+		report.Metadata.TotalChecks++
+		switch row.CheckStatus {
+		case StatusPass, StatusPassed:
+			report.Metadata.PassedChecks++
+		case StatusFail, StatusFailed:
+			report.Metadata.FailedChecks++
+		case StatusSkip, StatusSkipped:
+			report.Metadata.SkippedCheck++
+		}
+	}
+
+	return report
+}
+
+// collectRows recursively collects rows from a ResourceNode and its children.
+func collectRows(node *common.ResourceNode, path string, report *Report) {
+	if node == nil {
+		return
+	}
+
+	// Build current path
+	currentPath := path
+	if currentPath != "" {
+		currentPath += " > " + node.Name
+	} else {
+		currentPath = node.Name
+	}
+
+	// Add rows for each check on this node
+	for _, check := range node.Checks {
+		row := Row{
+			ResourceType:  node.ResourceType,
+			ResourceName:  node.Name,
+			ResourceID:    node.ID,
+			ResourcePath:  currentPath,
+			CheckID:       check.ID,
+			CheckGroup:    check.Group,
+			CheckName:     check.Name,
+			CheckStatus:   check.Status,
+			CheckSeverity: check.Severity,
+			CheckDetails:  check.Details,
+		}
+		report.Rows = append(report.Rows, row)
+	}
+
+	// Process children
+	for _, child := range node.Children {
+		collectRows(child, currentPath, report)
+	}
+}
+
+// Summary generates a summary from a Report.
+func (r *Report) Summary() *Summary {
+	summary := &Summary{
+		BySeverity:       make(map[string]int),
+		ByResourceType:   make(map[string]int),
+		FailedBySeverity: make(map[string]int),
+	}
+
+	resourcesSeen := make(map[string]bool)
+
+	for _, row := range r.Rows {
+		// Count unique resources
+		resourceKey := row.ResourceType + ":" + row.ResourceID
+		if !resourcesSeen[resourceKey] {
+			resourcesSeen[resourceKey] = true
+			summary.TotalResources++
+		}
+
+		summary.TotalChecks++
+
+		// Count by severity
+		if row.CheckSeverity != "" {
+			summary.BySeverity[row.CheckSeverity]++
+		}
+
+		// Count by resource type
+		if row.ResourceType != "" {
+			summary.ByResourceType[row.ResourceType]++
+		}
+
+		// Count by status
+		switch row.CheckStatus {
+		case StatusPass, StatusPassed:
+			summary.PassedChecks++
+		case StatusFail, StatusFailed:
+			summary.FailedChecks++
+			if row.CheckSeverity != "" {
+				summary.FailedBySeverity[row.CheckSeverity]++
+			}
+		case StatusSkip, StatusSkipped:
+			summary.SkippedChecks++
+		}
+	}
+
+	return summary
+}

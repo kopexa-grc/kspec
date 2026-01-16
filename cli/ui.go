@@ -97,3 +97,8 @@ type UpdateNodeStateMsg struct {
 type ScanErrorMsg struct {
 	Error error
 }
+
+// GetTree returns the current resource tree from the model
+func (m Model) GetTree() *common.ResourceTree {
+	return m.tree
+}

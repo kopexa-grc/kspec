@@ -3,14 +3,19 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 
 	"github.com/kopexa-grc/kspec/cli"
+	"github.com/kopexa-grc/kspec/cli/components/common"
 	"github.com/kopexa-grc/kspec/core"
 	"github.com/kopexa-grc/kspec/provider/scanner"
+	"github.com/kopexa-grc/kspec/report"
 )
 
 // Provider name constants
@@ -65,8 +70,9 @@ Examples:
   kspec scan hcloud project my-project --api-token <token> -f policy.yml
   kspec scan factorial -f policy.yml
   kspec scan factorial --api-key <key> -f policy.yml`,
-	Args: cobra.MinimumNArgs(1),
-	RunE: runScan,
+	Args:         cobra.MinimumNArgs(1),
+	SilenceUsage: true,
+	RunE:         runScan,
 }
 
 func init() {
@@ -117,6 +123,13 @@ func init() {
 	scanCmd.Flags().String("session-token", "", "AWS session token")
 	scanCmd.Flags().String("role-arn", "", "IAM role ARN to assume for cross-account access")
 	scanCmd.Flags().String("external-id", "", "External ID for assume role")
+
+	// Export flags
+	scanCmd.Flags().StringP("export", "o", "", "Export results to file (supported formats: csv, xlsx, json)")
+	scanCmd.Flags().String("export-format", "", "Export format (csv, xlsx, json). Auto-detected from filename if not specified")
+
+	// Output mode flags
+	scanCmd.Flags().Bool("no-ui", false, "Disable interactive UI and log output to stdout (useful for CI/CD)")
 }
 
 func runScan(cmd *cobra.Command, args []string) error {
@@ -143,6 +156,17 @@ func runScan(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	// Check for no-ui mode
+	noUI, _ := cmd.Flags().GetBool("no-ui") //nolint:errcheck // Flag is defined
+	if noUI {
+		return runScanNoUI(ctx, cmd, s, scanConfig.ProviderName)
+	}
+
+	return runScanWithUI(ctx, cmd, s, scanConfig.ProviderName)
+}
+
+// runScanWithUI runs the scan with the interactive TUI
+func runScanWithUI(ctx context.Context, cmd *cobra.Command, s *scanner.Scanner, providerName string) error {
 	// Initialize bubbletea UI
 	uiModel := cli.InitialModel()
 	p := tea.NewProgram(uiModel)
@@ -177,11 +201,141 @@ func runScan(cmd *cobra.Command, args []string) error {
 	}()
 
 	// Run the UI
-	if _, err := p.Run(); err != nil {
+	finalModel, err := p.Run()
+	if err != nil {
 		return fmt.Errorf("UI error: %w", err)
 	}
 
+	// Check if export is requested
+	exportPath, _ := cmd.Flags().GetString("export") //nolint:errcheck // Flag is defined
+	if exportPath != "" {
+		// Get the final tree from the model
+		if model, ok := finalModel.(cli.Model); ok {
+			tree := model.GetTree()
+			if tree != nil {
+				if err := exportResults(cmd, tree, providerName, exportPath); err != nil {
+					return fmt.Errorf("export failed: %w", err)
+				}
+				fmt.Printf("Results exported to: %s\n", exportPath)
+			}
+		}
+	}
+
 	return nil
+}
+
+// runScanNoUI runs the scan with logging output instead of the TUI
+func runScanNoUI(ctx context.Context, cmd *cobra.Command, s *scanner.Scanner, providerName string) error {
+	// Configure zerolog for console output
+	logger := zerolog.New(zerolog.ConsoleWriter{Out: os.Stdout}).
+		With().
+		Timestamp().
+		Logger()
+
+	var finalTree *common.ResourceTree
+
+	// Set up event handler to log events
+	s.OnEvent(func(event scanner.ScanEvent) {
+		finalTree = event.Tree
+
+		switch event.Type {
+		case scanner.EventTreeCreated:
+			logger.Info().Str("target", event.Tree.Root.Name).Msg("Scan initialized")
+		case scanner.EventDiscoveryStarted:
+			logger.Info().Msg("Discovery started")
+		case scanner.EventDiscoveryComplete:
+			logger.Info().Msg("Discovery complete")
+		case scanner.EventScanStarted:
+			logger.Info().Msg("Scan started")
+		case scanner.EventTreeUpdated:
+			// Tree updated, no specific log needed
+		case scanner.EventResourceScanning:
+			if event.Tree.Root != nil {
+				logger.Info().Msg("Scanning resources")
+			}
+		case scanner.EventResourceComplete:
+			if event.Tree.Root != nil {
+				logResourceResults(&logger, event.Tree.Root)
+			}
+		case scanner.EventScanComplete:
+			logger.Info().Msg("Scan complete")
+			if event.Tree.Root != nil {
+				logSummary(&logger, event.Tree)
+			}
+		case scanner.EventError:
+			logger.Error().Msg("Scan error occurred")
+		}
+	})
+
+	// Run scan synchronously
+	result := s.Run(ctx)
+
+	// Log any errors that occurred during scanning
+	if len(result.Errors) > 0 {
+		for _, err := range result.Errors {
+			logger.Error().Err(err).Msg("Scan error")
+		}
+	}
+
+	// Check if export is requested
+	exportPath, _ := cmd.Flags().GetString("export") //nolint:errcheck // Flag is defined
+	if exportPath != "" && finalTree != nil {
+		if err := exportResults(cmd, finalTree, providerName, exportPath); err != nil {
+			return fmt.Errorf("export failed: %w", err)
+		}
+		logger.Info().Str("path", exportPath).Msg("Results exported")
+	}
+
+	return nil
+}
+
+// logResourceResults logs results for a resource node using zerolog
+func logResourceResults(logger *zerolog.Logger, node *common.ResourceNode) {
+	for _, check := range node.Checks {
+		switch check.Status {
+		case "pass", "passed":
+			logger.Info().
+				Str("id", check.ID).
+				Str("status", "PASS").
+				Msg(check.Name)
+		case "fail", "failed":
+			logger.Warn().
+				Str("id", check.ID).
+				Str("status", "FAIL").
+				Str("severity", check.Severity).
+				Str("details", check.Details).
+				Msg(check.Name)
+		case "skip", "skipped":
+			logger.Info().
+				Str("id", check.ID).
+				Str("status", "SKIP").
+				Msg(check.Name)
+		default:
+			logger.Info().
+				Str("id", check.ID).
+				Str("status", strings.ToUpper(check.Status)).
+				Msg(check.Name)
+		}
+	}
+
+	for _, child := range node.Children {
+		logResourceResults(logger, child)
+	}
+}
+
+// logSummary logs a summary of the scan results using zerolog
+func logSummary(logger *zerolog.Logger, tree *common.ResourceTree) {
+	if tree.Root == nil {
+		return
+	}
+
+	total := tree.Root.ChecksPassed + tree.Root.ChecksFailed + tree.Root.ChecksSkipped
+	logger.Info().
+		Int("total", total).
+		Int("passed", tree.Root.ChecksPassed).
+		Int("failed", tree.Root.ChecksFailed).
+		Int("skipped", tree.Root.ChecksSkipped).
+		Msg("Scan summary")
 }
 
 // parseScanArgs parses command line arguments and returns a ScanConfig
@@ -836,4 +990,41 @@ func loadAndFilterPolicies(cmd *cobra.Command, providerName, providerAlias strin
 	}
 
 	return policies, nil
+}
+
+// exportResults exports scan results to the specified file
+func exportResults(cmd *cobra.Command, tree *common.ResourceTree, provider, exportPath string) error {
+	// Convert tree to report
+	rep := report.FromResourceTree(tree, provider)
+
+	// Determine format from flag or filename extension
+	format, _ := cmd.Flags().GetString("export-format") //nolint:errcheck // Flag is defined
+	if format == "" {
+		ext := strings.ToLower(filepath.Ext(exportPath))
+		switch ext {
+		case ".csv":
+			format = "csv"
+		case ".xlsx":
+			format = "xlsx"
+		case ".json":
+			format = "json"
+		default:
+			return fmt.Errorf("unknown export format, use --export-format or specify .csv, .xlsx, or .json extension")
+		}
+	}
+
+	// Export based on format
+	switch report.Format(format) {
+	case report.FormatCSV:
+		exporter := report.NewCSVExporter()
+		return exporter.Export(rep, exportPath)
+	case report.FormatXLSX:
+		exporter := report.NewXLSXExporter()
+		return exporter.Export(rep, exportPath)
+	case report.FormatJSON:
+		exporter := report.NewJSONExporter(true)
+		return exporter.Export(rep, exportPath)
+	default:
+		return fmt.Errorf("unsupported export format: %s (use csv, xlsx, or json)", format)
+	}
 }
