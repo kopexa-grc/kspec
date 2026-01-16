@@ -18,10 +18,10 @@ Use the Hetzner Cloud provider to validate:
 export HCLOUD_TOKEN="your-api-token"
 
 # Scan with all Hetzner policies
-kspec scan hetzner project -d policies
+kspec scan hetzner -d policies
 
 # Scan with specific policy
-kspec scan hetzner project -f policies/hetzner-security.yml
+kspec scan hetzner -f policies/hetzner-security.yml
 ```
 
 ## Prerequisites
@@ -47,18 +47,18 @@ kspec scan hetzner project -f policies/hetzner-security.yml
 **Environment Variable (Recommended):**
 ```bash
 export HCLOUD_TOKEN="your-api-token"
-kspec scan hetzner project -f policy.yml
+kspec scan hetzner -f policy.yml
 ```
 
 **Alternative Environment Variable:**
 ```bash
 export HETZNER_API_TOKEN="your-api-token"
-kspec scan hetzner project -f policy.yml
+kspec scan hetzner -f policy.yml
 ```
 
 **Command Line Flag:**
 ```bash
-kspec scan hetzner project --api-token "your-api-token" -f policy.yml
+kspec scan hetzner --api-token "your-api-token" -f policy.yml
 ```
 
 ---
@@ -356,16 +356,16 @@ queries:
 
 ```bash
 # Scan all resources in current project
-kspec scan hetzner project -f <policy-file>
+kspec scan hetzner -f <policy-file>
 
 # Scan with named project (for identification)
-kspec scan hetzner project my-project -f <policy-file>
+kspec scan hetzner my-project -f <policy-file>
 
 # Using hcloud alias
-kspec scan hcloud project -f <policy-file>
+kspec scan hcloud -f <policy-file>
 
 # With explicit token
-kspec scan hetzner project --api-token <token> -f <policy-file>
+kspec scan hetzner --api-token <token> -f <policy-file>
 ```
 
 ### Options
@@ -409,7 +409,7 @@ jobs:
       - name: Scan Hetzner Cloud
         env:
           HCLOUD_TOKEN: ${{ secrets.HCLOUD_TOKEN }}
-        run: ./kspec scan hetzner project -f policies/hetzner-security.yml
+        run: ./kspec scan hetzner -f policies/hetzner-security.yml
 ```
 
 ### GitLab CI
@@ -419,7 +419,7 @@ hetzner-scan:
   image: golang:1.21
   script:
     - go build -o kspec ./cmd/kspec
-    - ./kspec scan hetzner project -f policies/hetzner-security.yml
+    - ./kspec scan hetzner -f policies/hetzner-security.yml
   variables:
     HCLOUD_TOKEN: $HCLOUD_TOKEN
 ```

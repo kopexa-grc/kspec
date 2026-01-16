@@ -14,10 +14,10 @@ Use the Network provider to validate:
 
 ```bash
 # Scan a host with all network policies
-kspec scan host example.com -d policies
+kspec scan network host example.com -d policies
 
 # Scan with specific policy
-kspec scan host example.com -f policies/tls_security.yaml
+kspec scan network host example.com -f policies/tls_security.yaml
 ```
 
 ## Prerequisites
@@ -273,15 +273,15 @@ kspec includes several network security policies:
 
 ```bash
 # Basic host scan
-kspec scan host <hostname> -f <policy-file>
+kspec scan network host <hostname> -f <policy-file>
 
 # Scan with policy directory
-kspec scan host <hostname> -d <policy-directory>
+kspec scan network host <hostname> -d <policy-directory>
 
 # Examples
-kspec scan host example.com -f policies/tls_security.yaml
-kspec scan host api.example.com -d policies
-kspec scan host 192.168.1.1 -f my-policy.yaml
+kspec scan network host example.com -f policies/tls_security.yaml
+kspec scan network host api.example.com -d policies
+kspec scan network host 192.168.1.1 -f my-policy.yaml
 ```
 
 ### Options
@@ -319,10 +319,10 @@ jobs:
         run: go build -o kspec ./cmd/kspec
 
       - name: Scan TLS Configuration
-        run: ./kspec scan host ${{ vars.TARGET_HOST }} -f policies/tls_security.yaml
+        run: ./kspec scan network host ${{ vars.TARGET_HOST }} -f policies/tls_security.yaml
 
       - name: Scan Certificates
-        run: ./kspec scan host ${{ vars.TARGET_HOST }} -f policies/certificate_security.yaml
+        run: ./kspec scan network host ${{ vars.TARGET_HOST }} -f policies/certificate_security.yaml
 ```
 
 ### GitLab CI
@@ -332,7 +332,7 @@ security-scan:
   image: golang:1.21
   script:
     - go build -o kspec ./cmd/kspec
-    - ./kspec scan host ${TARGET_HOST} -d policies
+    - ./kspec scan network host ${TARGET_HOST} -d policies
 ```
 
 ---

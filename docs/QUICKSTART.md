@@ -15,7 +15,7 @@ go build -o kspec ./cmd/kspec
 Scan a host with the built-in TLS and certificate policies:
 
 ```bash
-./kspec scan host example.com -d policies
+./kspec scan network host example.com -d policies
 ```
 
 This scans `example.com` and evaluates all policies in the `policies/` directory.
@@ -46,13 +46,13 @@ To run only specific checks:
 
 ```bash
 # TLS checks only
-./kspec scan host example.com -f policies/tls_security.yaml
+./kspec scan network host example.com -f policies/tls_security.yaml
 
 # Certificate checks only
-./kspec scan host example.com -f policies/certificate_security.yaml
+./kspec scan network host example.com -f policies/certificate_security.yaml
 
 # Multiple policies
-./kspec scan host example.com -f policies/tls_security.yaml -f policies/certificate_security.yaml
+./kspec scan network host example.com -f policies/tls_security.yaml -f policies/certificate_security.yaml
 ```
 
 ## 4. Navigate the Results
@@ -151,7 +151,7 @@ queries:
 Run your custom policy:
 
 ```bash
-./kspec scan host example.com -f my-policy.yaml
+./kspec scan network host example.com -f my-policy.yaml
 ```
 
 ## 7. Available Resources & Fields
