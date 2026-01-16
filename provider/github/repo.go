@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/google/go-github/v62/github"
 
@@ -31,21 +32,42 @@ func (r *RepoResource) Name() string {
 // Fetch retrieves repository data for a single repo or all repos in an organization.
 func (r *RepoResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
 	config := asset.Config
-	owner, ok := config["owner"]
-	if !ok {
-		return nil, fmt.Errorf("missing 'owner' in config")
+
+	// Parse owner and repo from config
+	// Supports both explicit owner/repo keys and combined "repository" key (owner/repo format)
+	owner, repo := r.parseOwnerRepo(config)
+	if owner == "" {
+		return nil, fmt.Errorf("missing 'owner' in config (use 'owner' key or 'repository' in owner/repo format)")
 	}
 
-	// Check if this is a single repo scan or an org scan
-	repoName, hasRepo := config["repo"]
-
-	if hasRepo {
+	if repo != "" {
 		// Single repo scan
-		return r.fetchSingleRepo(ctx, owner, repoName)
+		return r.fetchSingleRepo(ctx, owner, repo)
 	}
 
 	// Org scan - fetch all repos in the organization
 	return r.fetchOrgRepos(ctx, owner)
+}
+
+// parseOwnerRepo extracts owner and repo from config.
+// It supports both explicit keys (owner, repo) and combined repository key (owner/repo format).
+func (r *RepoResource) parseOwnerRepo(config map[string]string) (owner, repo string) {
+	// First try explicit keys
+	owner = config["owner"]
+	repo = config["repo"]
+
+	// If owner is not set, try to parse from combined "repository" key
+	if owner == "" {
+		if repository, ok := config["repository"]; ok && repository != "" {
+			parts := strings.SplitN(repository, "/", 2)
+			if len(parts) == 2 {
+				owner = parts[0]
+				repo = parts[1]
+			}
+		}
+	}
+
+	return owner, repo
 }
 
 func (r *RepoResource) fetchSingleRepo(ctx context.Context, owner, repoName string) ([]core.Resource, error) {
@@ -157,12 +179,11 @@ func (r *RepoResource) Discover(ctx context.Context, asset core.Asset) (map[stri
 	}
 
 	config := asset.Config
-	owner, ok := config["owner"]
-	if !ok {
+	owner, repoName := r.parseOwnerRepo(config)
+	if owner == "" {
 		return nil, fmt.Errorf("missing 'owner' in config for repo discovery")
 	}
-	repoName, ok := config["repo"]
-	if !ok {
+	if repoName == "" {
 		return nil, fmt.Errorf("missing 'repo' in config for repo discovery")
 	}
 

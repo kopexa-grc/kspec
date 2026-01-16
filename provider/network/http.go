@@ -24,11 +24,12 @@ func (r *HTTPResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Reso
 	if domainName == "" {
 		domainName = asset.Config["domain"]
 	}
+	if domainName == "" {
+		domainName = asset.Config["target"]
+	}
 
 	if domainName == "" {
-		// Fallback: try to see if "host" is passed or similar?
-		// Usually 'scan host google.com' puts 'google.com' in domain via our main.go injection logic.
-		return nil, fmt.Errorf("missing 'domain' in asset for http resource")
+		return nil, fmt.Errorf("missing 'domain', 'target', or FQDN in asset for http resource")
 	}
 
 	// Simple heuristic: if no protocol, try https first, then http?
