@@ -157,19 +157,15 @@ kspec scan aws -f policies/aws-security.yml -o report --export-format xlsx
 
 ### HTML Reports
 
-Generate beautiful, standalone HTML reports with interactive features:
+Share scan results with stakeholders who don't have CLI access. HTML reports are self-contained files you can email, upload to Confluence, or attach to audit documentation.
+
+```bash
+kspec scan aws -f policies/aws-security.yml -o compliance-report.html
+```
 
 <a href="https://kopexa.com">
   <img src="docs/kspec_html_report.png" alt="kspec HTML Report" width="100%" />
 </a>
-
-- Summary statistics with progress visualization
-- Severity breakdown for failed checks
-- Filter by severity and search by resource
-- Collapsible sections for passed/skipped checks
-- Expandable details with remediation guidance (Markdown supported)
-- Dark theme optimized for readability
-- No external dependencies (standalone HTML file)
 
 ### Non-Interactive Mode (CI/CD)
 
