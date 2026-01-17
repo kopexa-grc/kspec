@@ -17,6 +17,7 @@ import (
 	"github.com/kopexa-grc/kspec/cli"
 	"github.com/kopexa-grc/kspec/cli/components/common"
 	"github.com/kopexa-grc/kspec/core"
+	"github.com/kopexa-grc/kspec/pkg/concurrency"
 	_ "github.com/kopexa-grc/kspec/provider/all" // Import all providers to register them
 	"github.com/kopexa-grc/kspec/provider/registry"
 	"github.com/kopexa-grc/kspec/provider/scanner"
@@ -207,6 +208,10 @@ func registerCommonFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("export", "o", "", "Export results to file (csv, xlsx, json, html)")
 	cmd.Flags().String("export-format", "", "Export format (auto-detected from filename)")
 	cmd.Flags().Bool("no-ui", false, "Disable interactive UI (for CI/CD)")
+
+	// Concurrency flags
+	cmd.Flags().Int("max-workers", concurrency.DefaultMaxWorkers, "Maximum number of concurrent workers")
+	cmd.Flags().Bool("sequential", false, "Disable concurrency (run sequentially for debugging)")
 }
 
 // runAssetScan executes the scan for a specific provider and asset type.
@@ -258,12 +263,24 @@ func runAssetScan(cmd *cobra.Command, def *registry.ProviderDefinition, at *regi
 		return err
 	}
 
+	// Build concurrency config
+	maxWorkers, _ := cmd.Flags().GetInt("max-workers") //nolint:errcheck // Flag is defined
+	sequential, _ := cmd.Flags().GetBool("sequential") //nolint:errcheck // Flag is defined
+	concurrencyConfig := concurrency.Config{
+		Auto:       !sequential,
+		MaxWorkers: maxWorkers,
+	}
+	if sequential {
+		concurrencyConfig.MaxWorkers = 1
+	}
+
 	// Create scan config
 	scanConfig := scanner.ScanConfig{
 		ProviderName:   def.Name,
 		ProviderConfig: providerConfig,
 		Asset:          asset,
 		Policies:       policies,
+		Concurrency:    concurrencyConfig,
 	}
 
 	// Create scanner

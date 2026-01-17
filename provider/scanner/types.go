@@ -5,6 +5,7 @@ import (
 
 	"github.com/kopexa-grc/kspec/cli/components/common"
 	"github.com/kopexa-grc/kspec/core"
+	"github.com/kopexa-grc/kspec/pkg/concurrency"
 )
 
 // ScanConfig holds the configuration for a scan
@@ -18,6 +19,9 @@ type ScanConfig struct {
 
 	// Policies to evaluate
 	Policies []core.Policy
+
+	// Concurrency configuration for parallel scanning
+	Concurrency concurrency.Config
 }
 
 // ScanEventType represents the type of scan event

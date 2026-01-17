@@ -76,8 +76,8 @@ func (s *Scanner) Run(ctx context.Context) *ScanResult {
 
 	s.emit(ScanEvent{Type: EventTreeCreated, Tree: tree})
 
-	// Phase 1: Discovery
-	discoveredResources, hasDiscovery := s.discover(ctx, tree)
+	// Phase 1: Discovery (concurrent)
+	discoveredResources, hasDiscovery := s.discoverConcurrent(ctx, tree)
 
 	// Create resource type nodes
 	s.createResourceNodes(ctx, tree, discoveredResources, hasDiscovery)
@@ -86,8 +86,8 @@ func (s *Scanner) Run(ctx context.Context) *ScanResult {
 	tree.Root.State = common.AssetStateScanning
 	s.emit(ScanEvent{Type: EventScanStarted, Tree: tree})
 
-	// Phase 2: Fetch and scan resources
-	s.scanResources(ctx, tree, discoveredResources, policies)
+	// Phase 2: Fetch and scan resources (concurrent)
+	s.scanResourcesConcurrent(ctx, tree, discoveredResources, policies)
 
 	// Mark root as complete
 	tree.Root.State = common.AssetStateComplete
@@ -97,34 +97,6 @@ func (s *Scanner) Run(ctx context.Context) *ScanResult {
 		Tree:   tree,
 		Errors: s.errors,
 	}
-}
-
-// discover runs the discovery phase
-func (s *Scanner) discover(ctx context.Context, tree *common.ResourceTree) (map[string]int, bool) {
-	asset := s.config.Asset
-	discoveredResources := make(map[string]int)
-	hasDiscovery := false
-
-	s.emit(ScanEvent{Type: EventDiscoveryStarted, Tree: tree})
-
-	for _, resSpec := range s.registry {
-		if discoverer, ok := resSpec.(core.DiscoveryResource); ok {
-			hasDiscovery = true
-			discovered, err := discoverer.Discover(ctx, asset)
-			if err != nil {
-				s.recordError("discovery", resSpec.Name(), err.Error(), err)
-				continue
-			}
-
-			for resourceType, count := range discovered {
-				discoveredResources[resourceType] = count
-			}
-		}
-	}
-
-	s.emit(ScanEvent{Type: EventDiscoveryComplete, Tree: tree})
-
-	return discoveredResources, hasDiscovery
 }
 
 // createResourceNodes creates nodes in the tree for discovered resources
@@ -217,232 +189,6 @@ func (s *Scanner) createResourceNodes(ctx context.Context, tree *common.Resource
 			}
 		}
 		s.emit(ScanEvent{Type: EventTreeUpdated, Tree: tree})
-	}
-}
-
-// scanResources fetches and scans all resources
-func (s *Scanner) scanResources(ctx context.Context, tree *common.ResourceTree, discoveredResources map[string]int, policies []core.Policy) {
-	asset := s.config.Asset
-
-	// Build resource order from tree children
-	resourceOrder := make([]string, 0, len(tree.Root.Children))
-	for _, child := range tree.Root.Children {
-		resourceOrder = append(resourceOrder, child.ResourceType)
-	}
-
-	for _, resourceType := range resourceOrder {
-		resSpec, ok := s.registry[resourceType]
-		if !ok {
-			continue
-		}
-
-		nodeID := fmt.Sprintf("%s-%s", tree.Root.ID, resourceType)
-		resourceNode, exists := tree.GetNode(nodeID)
-		if !exists {
-			continue
-		}
-
-		// Skip if discovered with 0 count
-		if count, discovered := discoveredResources[resourceType]; discovered && count == 0 {
-			resourceNode.State = common.AssetStateComplete
-			s.emit(ScanEvent{Type: EventTreeUpdated, Tree: tree})
-			continue
-		}
-
-		// Mark as scanning
-		resourceNode.State = common.AssetStateScanning
-		s.emit(ScanEvent{Type: EventResourceScanning, Tree: tree, ResourceType: resourceType})
-
-		// Fetch resources
-		resources, err := resSpec.Fetch(ctx, asset)
-		if err != nil {
-			resourceNode.State = common.AssetStateError
-			resourceNode.Error = err
-			s.emit(ScanEvent{Type: EventError, Tree: tree, Error: err, ResourceType: resourceType})
-			continue
-		}
-
-		resourceNode.ResourceCount = len(resources)
-
-		// Process each resource instance
-		for i, resource := range resources {
-			s.processResourceInstance(ctx, tree, resourceNode, nodeID, resource, resourceType, i, resSpec, policies)
-		}
-
-		// Mark resource type as complete
-		resourceNode.State = common.AssetStateComplete
-		s.emit(ScanEvent{Type: EventResourceComplete, Tree: tree, ResourceType: resourceType})
-	}
-}
-
-// processResourceInstance processes a single resource instance
-func (s *Scanner) processResourceInstance(
-	ctx context.Context,
-	tree *common.ResourceTree,
-	resourceNode *common.ResourceNode,
-	nodeID string,
-	resource core.Resource,
-	resourceType string,
-	index int,
-	resSpec core.ResourceSpec,
-	policies []core.Policy,
-) {
-	asset := s.config.Asset
-
-	// Get resource name for display
-	resourceName := getResourceName(resource, resourceType, index)
-
-	instanceID := fmt.Sprintf("%s-%d", nodeID, index)
-	instanceNode := &common.ResourceNode{
-		ID:           instanceID,
-		Name:         resourceName,
-		Type:         "resource_instance",
-		ResourceType: resourceType,
-		State:        common.AssetStateScanning,
-		Checks:       []CheckResult{},
-		Metadata:     resource,
-	}
-
-	if err := tree.AddNode(nodeID, instanceNode); err != nil {
-		log.Printf("Error adding instance node: %v", err)
-		return
-	}
-
-	// Run policy checks
-	checkResults := EvaluatePolicies(resource, resourceType, policies, s.registry, asset)
-
-	// Add check results to instance node
-	for _, checkResult := range checkResults {
-		instanceNode.Checks = append(instanceNode.Checks, checkResult)
-
-		switch checkResult.Status {
-		case "passed":
-			instanceNode.ChecksPassed++
-		case "failed":
-			instanceNode.ChecksFailed++
-		case "skipped":
-			instanceNode.ChecksSkipped++
-		}
-	}
-
-	instanceNode.State = common.AssetStateComplete
-
-	// Update parent counts
-	resourceNode.ChecksPassed += instanceNode.ChecksPassed
-	resourceNode.ChecksFailed += instanceNode.ChecksFailed
-	resourceNode.ChecksSkipped += instanceNode.ChecksSkipped
-
-	// Update root counts
-	tree.Root.ChecksPassed += instanceNode.ChecksPassed
-	tree.Root.ChecksFailed += instanceNode.ChecksFailed
-	tree.Root.ChecksSkipped += instanceNode.ChecksSkipped
-
-	// Process sub-resources
-	s.processSubResources(ctx, tree, instanceNode, instanceID, resource, resourceType, resSpec, policies)
-}
-
-// processSubResources processes sub-resources for a resource instance
-func (s *Scanner) processSubResources(
-	ctx context.Context,
-	tree *common.ResourceTree,
-	instanceNode *common.ResourceNode,
-	instanceID string,
-	resource core.Resource,
-	resourceType string,
-	resSpec core.ResourceSpec,
-	policies []core.Policy,
-) {
-	asset := s.config.Asset
-
-	subProvider, ok := resSpec.(core.SubResourceProvider)
-	if !ok {
-		return
-	}
-
-	subSpecs := subProvider.SubResources()
-	for _, subSpec := range subSpecs {
-		subResType := subSpec.Name()
-
-		// Create instance-specific asset config
-		instanceAsset := core.Asset{
-			Type:   asset.Type,
-			Name:   asset.Name,
-			Config: make(map[string]string),
-		}
-		for k, v := range asset.Config {
-			instanceAsset.Config[k] = v
-		}
-
-		// Add instance-specific config for sub-resource fetching
-		if resourceType == "github_repo" {
-			if repoName, ok := resource["name"]; ok {
-				instanceAsset.Config["repo"] = fmt.Sprintf("%v", repoName)
-			}
-		}
-
-		// Fetch sub-resources
-		subResources, err := subSpec.Fetch(ctx, instanceAsset)
-		if err != nil {
-			s.recordError("fetch", subResType, err.Error(), err)
-			continue
-		}
-
-		// Process each sub-resource
-		for j, subResource := range subResources {
-			subResName := fmt.Sprintf("%s-%d", subResType, j)
-			if name, ok := subResource["name"]; ok {
-				subResName = fmt.Sprintf("%v", name)
-			}
-
-			subInstanceID := fmt.Sprintf("%s-sub-%s-%d", instanceID, subResType, j)
-
-			// Run checks for sub-resource
-			subCheckResults := EvaluatePolicies(subResource, subResType, policies, s.registry, asset)
-
-			subInstanceNode := &common.ResourceNode{
-				ID:           subInstanceID,
-				Name:         subResName,
-				Type:         "sub_resource_instance",
-				ResourceType: subResType,
-				State:        common.AssetStateComplete,
-				Checks:       subCheckResults,
-				Metadata:     subResource,
-			}
-
-			// Count check results
-			for _, cr := range subCheckResults {
-				switch cr.Status {
-				case "passed":
-					subInstanceNode.ChecksPassed++
-				case "failed":
-					subInstanceNode.ChecksFailed++
-				case "skipped":
-					subInstanceNode.ChecksSkipped++
-				}
-			}
-
-			// Add to parent instance's sub-resources
-			if err := tree.AddSubResource(instanceID, subResType, subInstanceNode); err != nil {
-				log.Printf("Error adding sub-resource: %v", err)
-				continue
-			}
-
-			// Update counts up the tree
-			instanceNode.ChecksPassed += subInstanceNode.ChecksPassed
-			instanceNode.ChecksFailed += subInstanceNode.ChecksFailed
-			instanceNode.ChecksSkipped += subInstanceNode.ChecksSkipped
-
-			// Find parent resource node to update its counts
-			if parent := instanceNode.Parent; parent != nil {
-				parent.ChecksPassed += subInstanceNode.ChecksPassed
-				parent.ChecksFailed += subInstanceNode.ChecksFailed
-				parent.ChecksSkipped += subInstanceNode.ChecksSkipped
-			}
-
-			tree.Root.ChecksPassed += subInstanceNode.ChecksPassed
-			tree.Root.ChecksFailed += subInstanceNode.ChecksFailed
-			tree.Root.ChecksSkipped += subInstanceNode.ChecksSkipped
-		}
 	}
 }
 
