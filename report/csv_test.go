@@ -57,9 +57,16 @@ func TestCSVExporter(t *testing.T) {
 
 	output := buf.String()
 
-	// Check header
-	if !strings.Contains(output, "Resource Type,Resource Name,Resource ID,Resource Path,Check ID,Check Group,Check Name,Status,Severity,Details") {
-		t.Error("expected CSV header not found")
+	// Check header contains all fields including new ones
+	expectedHeaders := []string{
+		"Resource Type", "Resource Name", "Resource ID", "Resource Path",
+		"Check ID", "Check Group", "Check Name", "Status", "Severity", "Details",
+		"Remediation", "Documentation", "Audit",
+	}
+	for _, h := range expectedHeaders {
+		if !strings.Contains(output, h) {
+			t.Errorf("expected CSV header to contain %q", h)
+		}
 	}
 
 	// Check data rows

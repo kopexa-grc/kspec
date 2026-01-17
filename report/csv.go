@@ -48,6 +48,9 @@ func (e *CSVExporter) ExportToWriter(report *Report, w io.Writer) error {
 		"Status",
 		"Severity",
 		"Details",
+		"Remediation",
+		"Documentation",
+		"Audit",
 	}
 	if err := writer.Write(header); err != nil {
 		return fmt.Errorf("failed to write CSV header: %w", err)
@@ -66,6 +69,9 @@ func (e *CSVExporter) ExportToWriter(report *Report, w io.Writer) error {
 			row.CheckStatus,
 			row.CheckSeverity,
 			row.CheckDetails,
+			row.CheckRemediation,
+			row.CheckDocs,
+			row.CheckAudit,
 		}
 		if err := writer.Write(record); err != nil {
 			return fmt.Errorf("failed to write CSV row: %w", err)

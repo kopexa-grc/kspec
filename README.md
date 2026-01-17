@@ -34,8 +34,8 @@ Whether you are auditing cloud configurations, verifying GitHub repository secur
 - **Extensible Provider Architecture**: Modular design with providers for Azure, MS365, GitHub, Network, and more
 - **Interactive TUI**: Beautiful terminal UI showing real-time scan progress and results
 - **High Performance**: Built in Go for speed, portability, and minimal overhead
-- **CI/CD Ready**: Non-interactive mode with structured logging (`--no-ui`) and export to CSV/XLSX/JSON
-- **Export Reports**: Generate compliance reports in CSV, XLSX, or JSON format
+- **CI/CD Ready**: Non-interactive mode with structured logging (`--no-ui`) and multiple export formats
+- **Export Reports**: Generate compliance reports in CSV, XLSX, JSON, or interactive HTML format
 
 ## Supported Providers
 
@@ -136,7 +136,7 @@ kspec scan hetzner -f policies/hetzner-security.yml
 
 ### Export Results
 
-Export scan results to CSV, XLSX, or JSON for compliance reporting:
+Export scan results to CSV, XLSX, JSON, or HTML for compliance reporting:
 
 ```bash
 # Export to CSV
@@ -148,9 +148,24 @@ kspec scan azure <sub-id> -f policies/azure-security.yml -o report.xlsx
 # Export to JSON
 kspec scan github org <org-name> -f policies/github-security.yml -o report.json
 
+# Export to HTML (visual report)
+kspec scan aws -f policies/aws-security.yml -o report.html
+
 # Specify format explicitly
 kspec scan aws -f policies/aws-security.yml -o report --export-format xlsx
 ```
+
+### HTML Reports
+
+Share scan results with stakeholders who don't have CLI access. HTML reports are self-contained files you can email, upload to Confluence, or attach to audit documentation.
+
+```bash
+kspec scan aws -f policies/aws-security.yml -o compliance-report.html
+```
+
+<a href="https://kopexa.com" rel="noopener noreferrer nofollow">
+  <img src="docs/kspec_html_report.png" alt="kspec HTML Report" width="100%" />
+</a>
 
 ### Non-Interactive Mode (CI/CD)
 

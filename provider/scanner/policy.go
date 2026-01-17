@@ -238,7 +238,7 @@ func EvaluatePolicies(
 					status = StatusPassed
 				default:
 					status = StatusFailed
-					details = check.Remediation
+					// Details left empty - remediation is in separate field
 				}
 
 				// Use severity from check (default to medium if not specified)
@@ -254,14 +254,15 @@ func EvaluatePolicies(
 				}
 
 				results = append(results, CheckResult{
-					ID:       checkID,
-					Group:    group.Title,
-					Name:     check.Title,
-					Status:   status,
-					Severity: severity,
-					Details:  details,
-					Docs:     check.Docs,
-					Audit:    check.Audit,
+					ID:          checkID,
+					Group:       group.Title,
+					Name:        check.Title,
+					Status:      status,
+					Severity:    severity,
+					Details:     details,
+					Remediation: check.Remediation,
+					Docs:        check.Docs,
+					Audit:       check.Audit,
 				})
 			}
 		}

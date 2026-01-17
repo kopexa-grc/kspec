@@ -31,7 +31,7 @@ These flags are available for all scan commands:
 |------|-------------|
 | `-f, --policy` | Path to policy YAML file |
 | `-d, --policy-dir` | Path to directory containing policy files |
-| `-o, --export` | Export results to file (csv, xlsx, json) |
+| `-o, --export` | Export results to file (csv, xlsx, json, html) |
 | `--export-format` | Export format (auto-detected from filename) |
 | `--no-ui` | Disable interactive UI (useful for CI/CD) |
 
@@ -395,9 +395,22 @@ kspec scan github org my-org -d policies -o results.xlsx
 # Export to JSON
 kspec scan github org my-org -d policies -o results.json
 
+# Export to HTML (visual report)
+kspec scan github org my-org -d policies -o results.html
+
 # Explicit format
-kspec scan github org my-org -d policies -o results --export-format json
+kspec scan github org my-org -d policies -o results --export-format html
 ```
+
+### HTML Reports
+
+HTML reports provide a visual, shareable format with:
+- Summary statistics and progress bar
+- Severity breakdown for failed checks
+- **Filter by severity and resource** (search/dropdown)
+- Collapsible sections (passed/skipped collapsed by default)
+- Dark theme optimized for readability
+- No external dependencies (standalone HTML file)
 
 ---
 
