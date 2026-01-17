@@ -119,9 +119,12 @@ func TestHTMLExporter(t *testing.T) {
 		t.Error("expected HTML to contain embedded styles")
 	}
 
-	// Verify footer is present
-	if !strings.Contains(output, "kspec") {
-		t.Error("expected HTML to contain kspec branding in footer")
+	// Verify footer branding is present
+	if !strings.Contains(output, "Kopexa") {
+		t.Error("expected HTML to contain Kopexa branding in footer")
+	}
+	if !strings.Contains(output, "kopexa.com") {
+		t.Error("expected HTML to contain link to kopexa.com")
 	}
 }
 
