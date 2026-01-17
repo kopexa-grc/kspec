@@ -67,6 +67,9 @@ func (e *XLSXExporter) Export(report *Report, path string) error {
 		"Status",
 		"Severity",
 		"Details",
+		"Remediation",
+		"Documentation",
+		"Audit",
 	}
 
 	for col, header := range headers {
@@ -129,6 +132,9 @@ func (e *XLSXExporter) Export(report *Report, path string) error {
 			row.CheckStatus,
 			row.CheckSeverity,
 			row.CheckDetails,
+			row.CheckRemediation,
+			row.CheckDocs,
+			row.CheckAudit,
 		}
 
 		for col, value := range values {
@@ -172,6 +178,9 @@ func (e *XLSXExporter) Export(report *Report, path string) error {
 		"H": 10, // Status
 		"I": 10, // Severity
 		"J": 50, // Details
+		"K": 50, // Remediation
+		"L": 40, // Documentation
+		"M": 40, // Audit
 	}
 	for col, width := range colWidths {
 		if err := f.SetColWidth(resultsSheet, col, col, width); err != nil {
