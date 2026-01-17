@@ -1,5 +1,5 @@
 // Copyright (c) Kopexa GmbH
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Elastic-2.0
 
 package ratelimit
 
@@ -23,37 +23,6 @@ func TestNew(t *testing.T) {
 	}
 	if gotCfg.Burst != cfg.Burst {
 		t.Errorf("expected Burst %v, got %v", cfg.Burst, gotCfg.Burst)
-	}
-}
-
-func TestNewFromDefaults(t *testing.T) {
-	tests := []struct {
-		provider    string
-		expectedRPS float64
-		expectedB   int
-	}{
-		{"aws", 10, 20},
-		{"github", 5, 10},
-		{"azure", 10, 20},
-		{"cloudflare", 4, 8},
-		{"ms365", 10, 20},
-		{"hetzner", 10, 20},
-		{"factorial", 5, 10},
-		{"unknown", 5, 10}, // Default fallback
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.provider, func(t *testing.T) {
-			limiter := NewFromDefaults(tt.provider)
-
-			cfg := limiter.Config()
-			if cfg.RequestsPerSecond != tt.expectedRPS {
-				t.Errorf("expected RPS %v, got %v", tt.expectedRPS, cfg.RequestsPerSecond)
-			}
-			if cfg.Burst != tt.expectedB {
-				t.Errorf("expected Burst %v, got %v", tt.expectedB, cfg.Burst)
-			}
-		})
 	}
 }
 

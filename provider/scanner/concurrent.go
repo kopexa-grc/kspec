@@ -1,5 +1,5 @@
 // Copyright (c) Kopexa GmbH
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Elastic-2.0
 
 package scanner
 
@@ -15,6 +15,7 @@ import (
 	"github.com/kopexa-grc/kspec/core"
 	"github.com/kopexa-grc/kspec/pkg/concurrency"
 	"github.com/kopexa-grc/kspec/pkg/ratelimit"
+	"github.com/kopexa-grc/kspec/provider"
 )
 
 // discoveryResult holds the result of a single resource discovery.
@@ -56,7 +57,7 @@ func (s *Scanner) discoverConcurrent(ctx context.Context, tree *common.ResourceT
 	workers := concurrency.DiscoveryWorkers(s.config.Concurrency, len(discoverers))
 
 	// Create rate limiter for the provider
-	limiter := ratelimit.NewFromDefaults(s.config.ProviderName)
+	limiter := provider.NewRateLimiter(s.config.ProviderName)
 
 	// Use conc pool for parallel discovery
 	p := pool.NewWithResults[discoveryResult]().
@@ -113,7 +114,7 @@ func (s *Scanner) scanResourcesConcurrent(ctx context.Context, tree *common.Reso
 	workers := concurrency.FetchWorkers(s.config.Concurrency, len(resourceOrder))
 
 	// Create rate limiter for the provider
-	limiter := ratelimit.NewFromDefaults(s.config.ProviderName)
+	limiter := provider.NewRateLimiter(s.config.ProviderName)
 
 	// Mutex for tree updates (tree is not thread-safe)
 	var treeMu sync.Mutex

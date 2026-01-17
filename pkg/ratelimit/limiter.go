@@ -1,5 +1,5 @@
 // Copyright (c) Kopexa GmbH
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Elastic-2.0
 
 package ratelimit
 
@@ -25,18 +25,6 @@ type Limiter struct {
 	config  Config
 }
 
-// Defaults contains default rate limit configurations for each provider.
-// These values are conservative to prevent API throttling.
-var Defaults = map[string]Config{
-	"aws":        {RequestsPerSecond: 10, Burst: 20}, // Conservative for IAM operations
-	"github":     {RequestsPerSecond: 5, Burst: 10},  // 5000/hr = ~1.4/s, using 5/s for safety
-	"azure":      {RequestsPerSecond: 10, Burst: 20}, // ARM has varying limits per resource
-	"cloudflare": {RequestsPerSecond: 4, Burst: 8},   // 1200/5min = 4/s
-	"ms365":      {RequestsPerSecond: 10, Burst: 20}, // Graph API limits vary
-	"hetzner":    {RequestsPerSecond: 10, Burst: 20}, // Conservative default
-	"factorial":  {RequestsPerSecond: 5, Burst: 10},  // Conservative default
-}
-
 // New creates a new rate limiter with the specified configuration.
 func New(name string, cfg Config) *Limiter {
 	return &Limiter{
@@ -44,17 +32,6 @@ func New(name string, cfg Config) *Limiter {
 		name:    name,
 		config:  cfg,
 	}
-}
-
-// NewFromDefaults creates a rate limiter using default configuration for the provider.
-// If no default exists for the provider, a conservative default is used.
-func NewFromDefaults(provider string) *Limiter {
-	cfg, ok := Defaults[provider]
-	if !ok {
-		// Conservative default for unknown providers
-		cfg = Config{RequestsPerSecond: 5, Burst: 10}
-	}
-	return New(provider, cfg)
 }
 
 // Wait blocks until the limiter permits one event.
