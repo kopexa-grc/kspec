@@ -486,19 +486,6 @@ const htmlTemplate = `<!DOCTYPE html>
 
         .footer-links a:hover {
             color: var(--color-text);
-            font-size: 0.75rem;
-        }
-
-        .collapsible {
-            cursor: pointer;
-        }
-
-        .collapsible-content {
-            display: none;
-        }
-
-        .collapsible-content.show {
-            display: block;
         }
 
         @media (max-width: 768px) {
