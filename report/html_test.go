@@ -346,52 +346,77 @@ func TestHTMLExporterWithRemediation(t *testing.T) {
 
 func TestRenderMarkdown(t *testing.T) {
 	tests := []struct {
-		name     string
-		input    string
-		expected string
+		name           string
+		input          string
+		mustContain    []string
+		mustNotContain []string
 	}{
 		{
-			name:     "empty string",
-			input:    "",
-			expected: "",
+			name:        "empty string",
+			input:       "",
+			mustContain: []string{},
 		},
 		{
-			name:     "plain text",
-			input:    "Hello world",
-			expected: "<p>Hello world</p>",
+			name:        "plain text",
+			input:       "Hello world",
+			mustContain: []string{"Hello world"},
 		},
 		{
-			name:     "bold text",
-			input:    "This is **bold** text",
-			expected: "<p>This is <strong>bold</strong> text</p>",
+			name:        "bold text",
+			input:       "This is **bold** text",
+			mustContain: []string{"<strong>bold</strong>"},
 		},
 		{
-			name:     "italic text",
-			input:    "This is *italic* text",
-			expected: "<p>This is <em>italic</em> text</p>",
+			name:        "italic text",
+			input:       "This is *italic* text",
+			mustContain: []string{"<em>italic</em>"},
 		},
 		{
-			name:     "inline code",
-			input:    "Run `command` here",
-			expected: "<p>Run <code>command</code> here</p>",
+			name:        "inline code",
+			input:       "Run `command` here",
+			mustContain: []string{"<code>command</code>"},
 		},
 		{
-			name:     "link",
-			input:    "Visit [Google](https://google.com)",
-			expected: `<p>Visit <a href="https://google.com" target="_blank" rel="noopener">Google</a></p>`,
+			name:        "link",
+			input:       "Visit [Google](https://google.com)",
+			mustContain: []string{`href="https://google.com"`, ">Google</a>"},
 		},
 		{
-			name:     "XSS prevention",
-			input:    "<script>alert('xss')</script>",
-			expected: "<p>&lt;script&gt;alert(&#39;xss&#39;)&lt;/script&gt;</p>",
+			name:           "XSS prevention - script tag",
+			input:          "<script>alert('xss')</script>",
+			mustNotContain: []string{"<script>", "</script>"},
+		},
+		{
+			name:        "GFM strikethrough",
+			input:       "This is ~~deleted~~ text",
+			mustContain: []string{"<del>deleted</del>"},
+		},
+		{
+			name:        "GFM table",
+			input:       "| A | B |\n|---|---|\n| 1 | 2 |",
+			mustContain: []string{"<table>", "<th>", "<td>"},
+		},
+		{
+			name:        "GFM autolink",
+			input:       "Check https://example.com for info",
+			mustContain: []string{`href="https://example.com"`},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := string(renderMarkdown(tt.input))
-			if result != tt.expected {
-				t.Errorf("renderMarkdown(%q) = %q, want %q", tt.input, result, tt.expected)
+
+			for _, s := range tt.mustContain {
+				if !strings.Contains(result, s) {
+					t.Errorf("renderMarkdown(%q) = %q, expected to contain %q", tt.input, result, s)
+				}
+			}
+
+			for _, s := range tt.mustNotContain {
+				if strings.Contains(result, s) {
+					t.Errorf("renderMarkdown(%q) = %q, expected NOT to contain %q", tt.input, result, s)
+				}
 			}
 		})
 	}

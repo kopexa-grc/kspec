@@ -238,7 +238,7 @@ func EvaluatePolicies(
 					status = StatusPassed
 				default:
 					status = StatusFailed
-					details = check.Remediation
+					// Details left empty - remediation is in separate field
 				}
 
 				// Use severity from check (default to medium if not specified)

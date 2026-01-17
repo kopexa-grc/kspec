@@ -4,13 +4,17 @@
 package report
 
 import (
+	"bytes"
 	"fmt"
-	"html"
 	"html/template"
 	"io"
 	"os"
-	"regexp"
 	"strings"
+
+	"github.com/microcosm-cc/bluemonday"
+	"github.com/yuin/goldmark"
+	"github.com/yuin/goldmark/extension"
+	"github.com/yuin/goldmark/renderer/html"
 )
 
 // HTMLExporter exports reports to HTML format.
@@ -132,46 +136,38 @@ func statusClass(status string) string {
 	}
 }
 
-// renderMarkdown converts simple markdown to HTML.
-// Supports: **bold**, *italic*, `code`, [link](url), and basic lists.
+// mdRenderer is the configured goldmark markdown parser with GFM extensions.
+var mdRenderer = goldmark.New(
+	goldmark.WithExtensions(
+		extension.GFM, // GitHub Flavored Markdown (tables, strikethrough, autolinks, task lists)
+	),
+	goldmark.WithRendererOptions(
+		html.WithHardWraps(), // Convert newlines to <br>
+	),
+)
+
+// htmlSanitizer is the configured bluemonday policy for sanitizing HTML output.
+// Uses UGCPolicy which allows safe HTML for user-generated content.
+var htmlSanitizer = bluemonday.UGCPolicy()
+
+// renderMarkdown converts GitHub Flavored Markdown to sanitized HTML.
+// Uses goldmark for parsing and bluemonday for XSS protection.
 func renderMarkdown(md string) template.HTML {
 	if md == "" {
 		return ""
 	}
 
-	// Escape HTML first to prevent XSS
-	result := html.EscapeString(md)
-
-	// Code blocks (```...```)
-	codeBlockRe := regexp.MustCompile("(?s)```([^`]*?)```")
-	result = codeBlockRe.ReplaceAllString(result, "<pre><code>$1</code></pre>")
-
-	// Inline code (`...`)
-	inlineCodeRe := regexp.MustCompile("`([^`]+)`")
-	result = inlineCodeRe.ReplaceAllString(result, "<code>$1</code>")
-
-	// Bold (**...**)
-	boldRe := regexp.MustCompile(`\*\*([^*]+)\*\*`)
-	result = boldRe.ReplaceAllString(result, "<strong>$1</strong>")
-
-	// Italic (*...*)
-	italicRe := regexp.MustCompile(`\*([^*]+)\*`)
-	result = italicRe.ReplaceAllString(result, "<em>$1</em>")
-
-	// Hyperlinks in markdown format
-	linkRe := regexp.MustCompile(`\[([^\]]+)\]\(([^)]+)\)`)
-	result = linkRe.ReplaceAllString(result, `<a href="$2" target="_blank" rel="noopener">$1</a>`)
-
-	// Line breaks
-	result = strings.ReplaceAll(result, "\n\n", "</p><p>")
-	result = strings.ReplaceAll(result, "\n", "<br>")
-
-	// Wrap in paragraph if not empty
-	if result != "" && !strings.HasPrefix(result, "<pre>") {
-		result = "<p>" + result + "</p>"
+	// Convert markdown to HTML using goldmark
+	var buf bytes.Buffer
+	if err := mdRenderer.Convert([]byte(md), &buf); err != nil {
+		// On error, return escaped plain text
+		return template.HTML("<p>" + template.HTMLEscapeString(md) + "</p>") //nolint:gosec // Escaped
 	}
 
-	return template.HTML(result) //nolint:gosec // Content is escaped above
+	// Sanitize HTML output to prevent XSS
+	sanitized := htmlSanitizer.SanitizeBytes(buf.Bytes())
+
+	return template.HTML(sanitized) //nolint:gosec // Sanitized by bluemonday
 }
 
 const htmlTemplate = `<!DOCTYPE html>
