@@ -12,47 +12,145 @@ kspec [command] [flags]
 |------|-------------|
 | `-h, --help` | Help for kspec |
 | `-v, --version` | Print version |
-| `-f, --policy` | Path to policy YAML file |
-| `-d, --policy-dir` | Path to policy directory |
-| `--credential-type` | Credential type (`bearer`, `env`, `password`) |
-| `--env-var` | Environment variable for token (default: `GITHUB_TOKEN`) |
-| `--token` | Authentication token |
 
 ## Commands
 
 ### scan
 
-Scan resources using policy checks.
+Scan resources using policy checks. Each provider is a subcommand with its own flags and asset types.
 
 ```bash
-kspec scan <provider> [resource-type] [target] [flags]
+kspec scan <provider> [asset-type] [target] [flags]
 ```
 
-#### Providers
+#### Common Scan Flags
 
-| Provider | Resource Types | Example |
-|----------|---------------|---------|
-| `local` | - | `kspec scan local -f policy.yml` |
-| `host` | - | `kspec scan host example.com -f policy.yml` |
-| `github` | `org`, `repo` | `kspec scan github org my-org -f policy.yml` |
-| `azure` | `subscription` | `kspec scan azure subscription <id> -f policy.yml` |
-| `ms365` | `tenant` | `kspec scan ms365 tenant <id> -f policy.yml` |
-| `cloudflare` | `account`, `zone` | `kspec scan cloudflare account -f policy.yml` |
-| `atlassian` | `site`, `org` | `kspec scan atlassian site site.atlassian.net -f policy.yml` |
-| `hetzner` | `project` | `kspec scan hetzner project -f policy.yml` |
-| `sbom` | `file`, `dir` | `kspec scan sbom file ./sbom.json -f policy.yml` |
+These flags are available for all scan commands:
 
-#### Provider Aliases
+| Flag | Description |
+|------|-------------|
+| `-f, --policy` | Path to policy YAML file |
+| `-d, --policy-dir` | Path to directory containing policy files |
+| `-o, --export` | Export results to file (csv, xlsx, json) |
+| `--export-format` | Export format (auto-detected from filename) |
+| `--no-ui` | Disable interactive UI (useful for CI/CD) |
+
+#### Default Policy Directory
+
+If no `--policy` or `--policy-dir` flag is specified, kspec automatically uses `./policies` as the default directory if it exists. If the directory doesn't exist, an error is shown with instructions.
+
+```bash
+# These are equivalent if ./policies/ exists:
+kspec scan github org my-org
+kspec scan github org my-org -d policies
+```
+
+---
+
+## Providers
+
+### Provider Overview
+
+| Provider | Asset Types | Example |
+|----------|-------------|---------|
+| `aws` | `account` | `kspec scan aws` |
+| `azure` | `subscription` | `kspec scan azure <subscription-id>` |
+| `github` | `org`, `repo` | `kspec scan github org my-org` |
+| `ms365` | `tenant` | `kspec scan ms365 <tenant-id>` |
+| `cloudflare` | `account`, `zone` | `kspec scan cloudflare account` |
+| `atlassian` | `site`, `org` | `kspec scan atlassian site mysite.atlassian.net` |
+| `hetzner` | `project` | `kspec scan hetzner` |
+| `factorial` | `company` | `kspec scan factorial` |
+| `network` | `host` | `kspec scan network host example.com` |
+| `os` | `local` | `kspec scan os` |
+| `sbom` | `file`, `dir` | `kspec scan sbom file ./sbom.json` |
+
+### Provider Aliases
 
 | Alias | Provider |
 |-------|----------|
+| `amazon`, `ec2`, `s3` | `aws` |
+| `gh` | `github` |
+| `m365`, `microsoft365` | `ms365` |
+| `cf` | `cloudflare` |
+| `jira`, `confluence` | `atlassian` |
 | `hcloud` | `hetzner` |
-| `jira` | `atlassian` |
-| `confluence` | `atlassian` |
+| `factorial-hr`, `hris` | `factorial` |
+| `bom`, `cyclonedx`, `spdx` | `sbom` |
 
 ---
 
 ## Provider-Specific Options
+
+### AWS
+
+```bash
+kspec scan aws [flags]
+```
+
+| Flag | Env Var | Description |
+|------|---------|-------------|
+| `--profile` | `AWS_PROFILE` | AWS profile from ~/.aws/credentials |
+| `--region` | `AWS_REGION` | AWS region |
+| `--regions` | - | Multiple regions (comma-separated) |
+| `--access-key-id` | `AWS_ACCESS_KEY_ID` | AWS access key ID |
+| `--secret-access-key` | `AWS_SECRET_ACCESS_KEY` | AWS secret access key |
+| `--session-token` | `AWS_SESSION_TOKEN` | AWS session token |
+| `--role-arn` | - | IAM role ARN to assume |
+| `--external-id` | - | External ID for assume role |
+
+**Examples:**
+
+```bash
+# Using default credentials
+kspec scan aws -d policies
+
+# Using specific profile
+kspec scan aws --profile production -d policies
+
+# Multi-region scan
+kspec scan aws --regions us-east-1,eu-west-1 -d policies
+
+# Cross-account with assume role
+kspec scan aws --role-arn arn:aws:iam::123456789:role/SecurityAudit -d policies
+```
+
+---
+
+### Azure
+
+```bash
+kspec scan azure <subscription-id> [flags]
+```
+
+| Flag | Env Var | Description |
+|------|---------|-------------|
+| `--tenant-id` | `AZURE_TENANT_ID` | Azure tenant ID |
+| `--client-id` | `AZURE_CLIENT_ID` | Service principal client ID |
+| `--client-secret` | `AZURE_CLIENT_SECRET` | Client secret |
+| `--resource-group` | - | Filter to resource group |
+
+**Examples:**
+
+```bash
+# Using environment variables (DefaultAzureCredential)
+export AZURE_TENANT_ID="tenant-id"
+export AZURE_CLIENT_ID="client-id"
+export AZURE_CLIENT_SECRET="secret"
+kspec scan azure 00000000-0000-0000-0000-000000000000 -d policies
+
+# Using flags
+kspec scan azure <sub-id> \
+  --tenant-id <tenant-id> \
+  --client-id <client-id> \
+  --client-secret <secret> \
+  -d policies
+
+# Filter by resource group
+kspec scan azure <sub-id> --resource-group my-rg -d policies
+```
+
+---
 
 ### GitHub
 
@@ -68,50 +166,15 @@ kspec scan github repo <owner/repo> [flags]
 **Examples:**
 
 ```bash
-# Scan organization
+# Scan organization (uses GITHUB_TOKEN env var)
 export GITHUB_TOKEN="ghp_xxx"
-kspec scan github org kopexa-grc -f policies/github-security.yml
+kspec scan github org kopexa-grc -d policies
 
 # Scan repository
-kspec scan github repo kopexa-grc/kspec --token ghp_xxx -f policy.yml
-```
+kspec scan github repo kopexa-grc/kspec -d policies
 
----
-
-### Azure
-
-```bash
-kspec scan azure subscription <subscription-id> [flags]
-```
-
-| Flag | Env Var | Description |
-|------|---------|-------------|
-| `--tenant-id` | `AZURE_TENANT_ID` | Azure tenant ID |
-| `--client-id` | `AZURE_CLIENT_ID` | Service principal client ID |
-| `--token` | `AZURE_CLIENT_SECRET` | Client secret |
-| `--resource-group` | - | Filter to resource group |
-| `--credential-type` | - | Credential type (`env`) |
-
-**Examples:**
-
-```bash
-# Using environment variables
-export AZURE_TENANT_ID="tenant-id"
-export AZURE_CLIENT_ID="client-id"
-export AZURE_CLIENT_SECRET="secret"
-kspec scan azure subscription 00000000-0000-0000-0000-000000000000 -f policy.yml
-
-# Using flags
-kspec scan azure subscription <sub-id> \
-  --tenant-id <tenant-id> \
-  --client-id <client-id> \
-  --token <secret> \
-  -f policy.yml
-
-# Filter by resource group
-kspec scan azure subscription <sub-id> \
-  --resource-group my-rg \
-  -f policy.yml
+# With explicit token
+kspec scan github org my-org --token ghp_xxx -d policies
 ```
 
 ---
@@ -119,11 +182,12 @@ kspec scan azure subscription <sub-id> \
 ### Microsoft 365
 
 ```bash
-kspec scan ms365 tenant <tenant-id> [flags]
+kspec scan ms365 <tenant-id> [flags]
 ```
 
 | Flag | Env Var | Description |
 |------|---------|-------------|
+| `--tenant-id` | `AZURE_TENANT_ID` | Azure AD tenant ID |
 | `--client-id` | `AZURE_CLIENT_ID` | Application client ID |
 | `--client-secret` | `AZURE_CLIENT_SECRET` | Client secret |
 
@@ -134,13 +198,13 @@ kspec scan ms365 tenant <tenant-id> [flags]
 export AZURE_TENANT_ID="tenant-id"
 export AZURE_CLIENT_ID="client-id"
 export AZURE_CLIENT_SECRET="secret"
-kspec scan ms365 tenant $AZURE_TENANT_ID -f policy.yml
+kspec scan ms365 $AZURE_TENANT_ID -d policies
 
 # Using flags
-kspec scan ms365 tenant <tenant-id> \
+kspec scan ms365 <tenant-id> \
   --client-id <client-id> \
   --client-secret <secret> \
-  -f policy.yml
+  -d policies
 ```
 
 ---
@@ -157,23 +221,23 @@ kspec scan cloudflare zone <zone-id> [flags]
 | `--api-token` | `CLOUDFLARE_API_TOKEN` | API token (recommended) |
 | `--api-key` | `CLOUDFLARE_API_KEY` | API key (legacy) |
 | `--email` | `CLOUDFLARE_EMAIL` | Account email (with API key) |
-| `--account-id` | `CLOUDFLARE_ACCOUNT_ID` | Account ID |
+| `--account-id` | - | Account ID |
 
 **Examples:**
 
 ```bash
 # Using API token
 export CLOUDFLARE_API_TOKEN="token"
-kspec scan cloudflare account -f policy.yml
+kspec scan cloudflare account -d policies
 
 # Scan specific zone
-kspec scan cloudflare zone abc123 --api-token token -f policy.yml
+kspec scan cloudflare zone abc123 --api-token token -d policies
 
 # Using legacy API key
 kspec scan cloudflare account \
   --api-key key \
   --email user@example.com \
-  -f policy.yml
+  -d policies
 ```
 
 ---
@@ -189,8 +253,8 @@ kspec scan atlassian org <org-id> [flags]
 |------|---------|-------------|
 | `--email` | `ATLASSIAN_EMAIL` | Account email |
 | `--api-token` | `ATLASSIAN_API_TOKEN` | API token |
-| `--site` | `ATLASSIAN_SITE` | Site URL |
-| `--org-id` | `ATLASSIAN_ORG_ID` | Organization ID |
+| `--site` | - | Site URL |
+| `--org-id` | - | Organization ID |
 
 **Examples:**
 
@@ -198,18 +262,10 @@ kspec scan atlassian org <org-id> [flags]
 # Using environment variables
 export ATLASSIAN_EMAIL="user@example.com"
 export ATLASSIAN_API_TOKEN="token"
-kspec scan atlassian site mysite.atlassian.net -f policy.yml
-
-# Using flags
-kspec scan atlassian site mysite.atlassian.net \
-  --email user@example.com \
-  --api-token token \
-  -f policy.yml
+kspec scan atlassian site mysite.atlassian.net -d policies
 
 # Scan organization (Admin APIs)
-kspec scan atlassian org abc123 \
-  --site mysite.atlassian.net \
-  -f policy.yml
+kspec scan atlassian org abc123 --site mysite.atlassian.net -d policies
 ```
 
 ---
@@ -217,36 +273,58 @@ kspec scan atlassian org abc123 \
 ### Hetzner Cloud
 
 ```bash
-kspec scan hetzner project [project-name] [flags]
-kspec scan hcloud project [project-name] [flags]
+kspec scan hetzner [flags]
 ```
 
 | Flag | Env Var | Description |
 |------|---------|-------------|
 | `--api-token` | `HCLOUD_TOKEN` | API token |
-| `--hcloud-token` | `HETZNER_API_TOKEN` | Alternative token var |
-| `--project` | - | Project name (identification) |
+| `--project` | - | Project name (for identification) |
 
 **Examples:**
 
 ```bash
 # Using environment variable
 export HCLOUD_TOKEN="token"
-kspec scan hetzner project -f policy.yml
+kspec scan hetzner -d policies
 
 # With project name
-kspec scan hetzner project my-project --api-token token -f policy.yml
+kspec scan hetzner --project my-project --api-token token -d policies
 
 # Using alias
-kspec scan hcloud project -f policy.yml
+kspec scan hcloud -d policies
 ```
 
 ---
 
-### Network/Host
+### Factorial HR
 
 ```bash
-kspec scan host <hostname> [flags]
+kspec scan factorial [flags]
+```
+
+| Flag | Env Var | Description |
+|------|---------|-------------|
+| `--api-key` | `FACTORIAL_API_KEY` | Factorial API key |
+| `--access-token` | - | OAuth access token |
+
+**Examples:**
+
+```bash
+# Using API key
+export FACTORIAL_API_KEY="key"
+kspec scan factorial -d policies
+
+# Using access token
+kspec scan factorial --access-token token -d policies
+```
+
+---
+
+### Network
+
+```bash
+kspec scan network host <hostname> [flags]
 ```
 
 No authentication required for public endpoints.
@@ -255,10 +333,27 @@ No authentication required for public endpoints.
 
 ```bash
 # Scan TLS and HTTP security
-kspec scan host example.com -f policies/tls_security.yaml
+kspec scan network host example.com -d policies
 
-# Scan with multiple policies
-kspec scan host example.com -d policies/
+# Scan with single policy file
+kspec scan network host example.com -f policies/tls_security.yaml
+```
+
+---
+
+### Operating System
+
+```bash
+kspec scan os [flags]
+```
+
+Scans the local operating system.
+
+**Examples:**
+
+```bash
+# Scan local system
+kspec scan os -d policies
 ```
 
 ---
@@ -278,34 +373,43 @@ kspec scan sbom dir <path> [flags]
 
 ```bash
 # Scan single SBOM
-kspec scan sbom file ./sbom.json -f policy.yml
+kspec scan sbom file ./sbom.json -d policies
 
 # Scan directory of SBOMs
-kspec scan sbom dir ./sboms/ -f policy.yml
+kspec scan sbom dir ./sboms/ -d policies
 ```
 
 ---
 
-## Policy Options
+## Export Options
 
-| Flag | Description |
-|------|-------------|
-| `-f, --policy` | Single policy file |
-| `-d, --policy-dir` | Directory of policy files |
-
-**Examples:**
+Export scan results to various formats:
 
 ```bash
-# Single policy file
-kspec scan host example.com -f policies/tls_security.yaml
+# Export to CSV
+kspec scan github org my-org -d policies -o results.csv
 
-# All policies in directory
-kspec scan host example.com -d policies/
+# Export to Excel
+kspec scan github org my-org -d policies -o results.xlsx
 
-# Multiple policy files (run separately)
-kspec scan host example.com -f policies/tls.yaml
-kspec scan host example.com -f policies/http.yaml
+# Export to JSON
+kspec scan github org my-org -d policies -o results.json
+
+# Explicit format
+kspec scan github org my-org -d policies -o results --export-format json
 ```
+
+---
+
+## CI/CD Mode
+
+Disable the interactive TUI for CI/CD pipelines:
+
+```bash
+kspec scan github org my-org -d policies --no-ui
+```
+
+This outputs structured logs instead of the interactive interface.
 
 ---
 
@@ -342,6 +446,11 @@ kspec displays results in an interactive TUI (Terminal User Interface):
 
 | Variable | Provider | Description |
 |----------|----------|-------------|
+| `AWS_PROFILE` | AWS | AWS profile name |
+| `AWS_REGION` | AWS | AWS region |
+| `AWS_ACCESS_KEY_ID` | AWS | Access key ID |
+| `AWS_SECRET_ACCESS_KEY` | AWS | Secret access key |
+| `AWS_SESSION_TOKEN` | AWS | Session token |
 | `GITHUB_TOKEN` | GitHub | Personal Access Token |
 | `AZURE_TENANT_ID` | Azure, MS365 | Tenant ID |
 | `AZURE_CLIENT_ID` | Azure, MS365 | Client ID |
@@ -351,7 +460,5 @@ kspec displays results in an interactive TUI (Terminal User Interface):
 | `CLOUDFLARE_EMAIL` | Cloudflare | Account email |
 | `ATLASSIAN_EMAIL` | Atlassian | Account email |
 | `ATLASSIAN_API_TOKEN` | Atlassian | API token |
-| `ATLASSIAN_SITE` | Atlassian | Site URL |
-| `ATLASSIAN_ORG_ID` | Atlassian | Organization ID |
 | `HCLOUD_TOKEN` | Hetzner | API token |
-| `HETZNER_API_TOKEN` | Hetzner | API token (alternative) |
+| `FACTORIAL_API_KEY` | Factorial | API key |
