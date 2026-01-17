@@ -163,7 +163,7 @@ Share scan results with stakeholders who don't have CLI access. HTML reports are
 kspec scan aws -f policies/aws-security.yml -o compliance-report.html
 ```
 
-<a href="https://kopexa.com">
+<a href="https://kopexa.com" rel="noopener noreferrer nofollow">
   <img src="docs/kspec_html_report.png" alt="kspec HTML Report" width="100%" />
 </a>
 
