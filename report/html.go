@@ -584,6 +584,63 @@ const htmlTemplate = `<!DOCTYPE html>
             display: none !important;
         }
 
+        .expandable-row {
+            cursor: pointer;
+        }
+
+        .expandable-row:hover {
+            background-color: var(--color-bg-tertiary);
+        }
+
+        .expand-icon {
+            display: inline-block;
+            width: 16px;
+            font-size: 0.75rem;
+            color: var(--color-text-muted);
+            transition: transform 0.2s;
+        }
+
+        .expandable-row.expanded .expand-icon {
+            transform: rotate(90deg);
+        }
+
+        .details-row {
+            display: none;
+            background-color: var(--color-bg-tertiary);
+        }
+
+        .details-row.visible {
+            display: table-row;
+        }
+
+        .details-row td {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .details-content {
+            font-size: 0.875rem;
+            color: var(--color-text);
+        }
+
+        .details-label {
+            font-size: 0.75rem;
+            color: var(--color-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.25rem;
+        }
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .details-item {
+            padding: 0.5rem 0;
+        }
+
         @media (max-width: 768px) {
             body {
                 padding: 1rem;
@@ -695,15 +752,16 @@ const htmlTemplate = `<!DOCTYPE html>
             <table id="failed-table">
                 <thead>
                     <tr>
+                        <th style="width: 24px"></th>
                         <th>Severity</th>
                         <th>Check</th>
                         <th>Resource</th>
-                        <th>Details</th>
                     </tr>
                 </thead>
                 <tbody>
                     {{range .FailedRows}}
-                    <tr data-severity="{{lower .CheckSeverity}}" data-resource="{{.ResourceName}}" data-resource-type="{{.ResourceType}}">
+                    <tr class="expandable-row" data-severity="{{lower .CheckSeverity}}" data-resource="{{.ResourceName}}" data-resource-type="{{.ResourceType}}" onclick="toggleDetails(this)">
+                        <td><span class="expand-icon">&#9654;</span></td>
                         <td><span class="severity-badge {{severityClass .CheckSeverity}}">{{.CheckSeverity}}</span></td>
                         <td>
                             <div>{{.CheckName}}</div>
@@ -713,7 +771,24 @@ const htmlTemplate = `<!DOCTYPE html>
                             <div>{{.ResourceName}}</div>
                             <div class="resource-path">{{.ResourceType}}</div>
                         </td>
-                        <td class="check-details">{{.CheckDetails}}</td>
+                    </tr>
+                    <tr class="details-row">
+                        <td colspan="4">
+                            <div class="details-grid">
+                                <div class="details-item">
+                                    <div class="details-label">Details</div>
+                                    <div class="details-content">{{if .CheckDetails}}{{.CheckDetails}}{{else}}No additional details{{end}}</div>
+                                </div>
+                                <div class="details-item">
+                                    <div class="details-label">Check ID</div>
+                                    <div class="details-content">{{.CheckID}}</div>
+                                </div>
+                                <div class="details-item">
+                                    <div class="details-label">Resource Path</div>
+                                    <div class="details-content">{{.ResourcePath}}</div>
+                                </div>
+                            </div>
+                        </td>
                     </tr>
                     {{end}}
                 </tbody>
@@ -821,6 +896,14 @@ const htmlTemplate = `<!DOCTYPE html>
             }
         }
 
+        function toggleDetails(row) {
+            row.classList.toggle('expanded');
+            const detailsRow = row.nextElementSibling;
+            if (detailsRow && detailsRow.classList.contains('details-row')) {
+                detailsRow.classList.toggle('visible');
+            }
+        }
+
         function applyFilters() {
             const severityFilter = document.getElementById('severity-filter');
             const resourceFilter = document.getElementById('resource-filter');
@@ -831,7 +914,7 @@ const htmlTemplate = `<!DOCTYPE html>
             const severity = severityFilter ? severityFilter.value.toLowerCase() : '';
             const resource = resourceFilter ? resourceFilter.value.toLowerCase() : '';
 
-            const rows = table.querySelectorAll('tbody tr');
+            const rows = table.querySelectorAll('tbody tr.expandable-row');
             let visibleCount = 0;
             const totalCount = rows.length;
 
@@ -845,11 +928,15 @@ const htmlTemplate = `<!DOCTYPE html>
                     rowResource.toLowerCase().includes(resource) ||
                     rowResourceType.toLowerCase().includes(resource);
 
+                const detailsRow = row.nextElementSibling;
+
                 if (matchesSeverity && matchesResource) {
                     row.classList.remove('hidden-row');
+                    if (detailsRow) detailsRow.classList.remove('hidden-row');
                     visibleCount++;
                 } else {
                     row.classList.add('hidden-row');
+                    if (detailsRow) detailsRow.classList.add('hidden-row');
                 }
             });
 
