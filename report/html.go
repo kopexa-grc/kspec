@@ -704,7 +704,7 @@ const htmlTemplate = `<!DOCTYPE html>
             </a>
             <div class="footer-links">
                 <a href="https://github.com/kopexa-grc/kspec" target="_blank" rel="noopener">GitHub</a>
-                <a href="https://kopexa.com/docs" target="_blank" rel="noopener">Documentation</a>
+                <a href="https://docs.kopexa.com" target="_blank" rel="noopener">Documentation</a>
                 <a href="https://kopexa.com" target="_blank" rel="noopener">kopexa.com</a>
             </div>
         </footer>
