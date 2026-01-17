@@ -19,6 +19,9 @@ func init() {
 				Description: "Path to SBOM file or directory",
 			},
 		},
+		// Both "file" and "dir" asset types use the same ConfigKey "sbom_path" intentionally.
+		// The provider accepts a single path parameter and determines at runtime whether
+		// it points to a file or directory. The ScannerKey differentiates the scan behavior.
 		AssetTypes: []registry.AssetDefinition{
 			{
 				Name:        "file",
