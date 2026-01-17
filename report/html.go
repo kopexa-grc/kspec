@@ -733,6 +733,92 @@ const htmlTemplate = `<!DOCTYPE html>
             color: var(--color-text-heading);
         }
 
+        .markdown-content em {
+            font-style: italic;
+        }
+
+        .markdown-content del {
+            color: var(--color-text-muted);
+            text-decoration: line-through;
+        }
+
+        /* GFM Tables */
+        .markdown-content table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 0.5rem 0;
+            font-size: 0.8125rem;
+        }
+
+        .markdown-content th,
+        .markdown-content td {
+            border: 1px solid var(--color-border);
+            padding: 0.5rem 0.75rem;
+            text-align: left;
+        }
+
+        .markdown-content th {
+            background-color: var(--color-bg);
+            font-weight: 600;
+            color: var(--color-text-heading);
+        }
+
+        .markdown-content tr:nth-child(even) {
+            background-color: rgba(255, 255, 255, 0.02);
+        }
+
+        /* GFM Task Lists */
+        .markdown-content ul {
+            list-style: disc;
+            padding-left: 1.5rem;
+            margin: 0.5rem 0;
+        }
+
+        .markdown-content ol {
+            list-style: decimal;
+            padding-left: 1.5rem;
+            margin: 0.5rem 0;
+        }
+
+        .markdown-content li {
+            margin: 0.25rem 0;
+        }
+
+        .markdown-content input[type="checkbox"] {
+            margin-right: 0.5rem;
+            vertical-align: middle;
+        }
+
+        /* Blockquotes */
+        .markdown-content blockquote {
+            border-left: 3px solid var(--color-border);
+            padding-left: 1rem;
+            margin: 0.5rem 0;
+            color: var(--color-text-muted);
+        }
+
+        /* Horizontal rule */
+        .markdown-content hr {
+            border: none;
+            border-top: 1px solid var(--color-border);
+            margin: 1rem 0;
+        }
+
+        /* Headings in markdown */
+        .markdown-content h1,
+        .markdown-content h2,
+        .markdown-content h3,
+        .markdown-content h4 {
+            color: var(--color-text-heading);
+            margin: 0.75rem 0 0.5rem 0;
+            font-weight: 600;
+        }
+
+        .markdown-content h1 { font-size: 1.25rem; }
+        .markdown-content h2 { font-size: 1.125rem; }
+        .markdown-content h3 { font-size: 1rem; }
+        .markdown-content h4 { font-size: 0.875rem; }
+
         @media (max-width: 768px) {
             body {
                 padding: 1rem;
