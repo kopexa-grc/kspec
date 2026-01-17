@@ -518,6 +518,72 @@ const htmlTemplate = `<!DOCTYPE html>
             max-height: 0 !important;
         }
 
+        .filters {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .filter-label {
+            font-size: 0.75rem;
+            color: var(--color-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .filter-select {
+            background-color: var(--color-bg-tertiary);
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+            color: var(--color-text);
+            padding: 0.5rem 0.75rem;
+            font-size: 0.875rem;
+            cursor: pointer;
+            min-width: 150px;
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: #6366f1;
+        }
+
+        .filter-input {
+            background-color: var(--color-bg-tertiary);
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+            color: var(--color-text);
+            padding: 0.5rem 0.75rem;
+            font-size: 0.875rem;
+            min-width: 200px;
+        }
+
+        .filter-input:focus {
+            outline: none;
+            border-color: #6366f1;
+        }
+
+        .filter-input::placeholder {
+            color: var(--color-text-muted);
+        }
+
+        .filter-count {
+            font-size: 0.75rem;
+            color: var(--color-text-muted);
+            margin-left: auto;
+        }
+
+        .hidden-row {
+            display: none !important;
+        }
+
         @media (max-width: 768px) {
             body {
                 padding: 1rem;
@@ -604,19 +670,29 @@ const htmlTemplate = `<!DOCTYPE html>
         </div>
 
         {{if .FailedRows}}
-        <div class="section">
+        <div class="section" id="failed-section">
             <div class="section-header">
                 <h2>Failed Checks</h2>
-                <span class="badge badge-fail">{{len .FailedRows}} issues</span>
+                <span class="badge badge-fail" id="failed-count">{{len .FailedRows}} issues</span>
             </div>
-            {{if .SeverityCounts}}
-            <div class="severity-badges">
-                {{range $severity, $count := .SeverityCounts}}
-                <span class="severity-badge {{severityClass $severity}}">{{$severity}}: {{$count}}</span>
-                {{end}}
+            <div class="filters">
+                <div class="filter-group">
+                    <span class="filter-label">Severity:</span>
+                    <select class="filter-select" id="severity-filter" onchange="applyFilters()">
+                        <option value="">All Severities</option>
+                        <option value="critical">Critical</option>
+                        <option value="high">High</option>
+                        <option value="medium">Medium</option>
+                        <option value="low">Low</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <span class="filter-label">Resource:</span>
+                    <input type="text" class="filter-input" id="resource-filter" placeholder="Search resources..." oninput="applyFilters()">
+                </div>
+                <span class="filter-count" id="visible-count"></span>
             </div>
-            {{end}}
-            <table>
+            <table id="failed-table">
                 <thead>
                     <tr>
                         <th>Severity</th>
@@ -627,7 +703,7 @@ const htmlTemplate = `<!DOCTYPE html>
                 </thead>
                 <tbody>
                     {{range .FailedRows}}
-                    <tr>
+                    <tr data-severity="{{lower .CheckSeverity}}" data-resource="{{.ResourceName}}" data-resource-type="{{.ResourceType}}">
                         <td><span class="severity-badge {{severityClass .CheckSeverity}}">{{.CheckSeverity}}</span></td>
                         <td>
                             <div>{{.CheckName}}</div>
@@ -741,6 +817,49 @@ const htmlTemplate = `<!DOCTYPE html>
                     content.style.maxHeight = content.scrollHeight + 'px';
                 } else {
                     content.style.maxHeight = null;
+                }
+            }
+        }
+
+        function applyFilters() {
+            const severityFilter = document.getElementById('severity-filter');
+            const resourceFilter = document.getElementById('resource-filter');
+            const table = document.getElementById('failed-table');
+
+            if (!table) return;
+
+            const severity = severityFilter ? severityFilter.value.toLowerCase() : '';
+            const resource = resourceFilter ? resourceFilter.value.toLowerCase() : '';
+
+            const rows = table.querySelectorAll('tbody tr');
+            let visibleCount = 0;
+            const totalCount = rows.length;
+
+            rows.forEach(function(row) {
+                const rowSeverity = row.getAttribute('data-severity') || '';
+                const rowResource = row.getAttribute('data-resource') || '';
+                const rowResourceType = row.getAttribute('data-resource-type') || '';
+
+                const matchesSeverity = !severity || rowSeverity === severity;
+                const matchesResource = !resource ||
+                    rowResource.toLowerCase().includes(resource) ||
+                    rowResourceType.toLowerCase().includes(resource);
+
+                if (matchesSeverity && matchesResource) {
+                    row.classList.remove('hidden-row');
+                    visibleCount++;
+                } else {
+                    row.classList.add('hidden-row');
+                }
+            });
+
+            // Update visible count
+            const countEl = document.getElementById('visible-count');
+            if (countEl) {
+                if (visibleCount === totalCount) {
+                    countEl.textContent = '';
+                } else {
+                    countEl.textContent = 'Showing ' + visibleCount + ' of ' + totalCount;
                 }
             }
         }
