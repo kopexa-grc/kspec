@@ -254,14 +254,15 @@ func EvaluatePolicies(
 				}
 
 				results = append(results, CheckResult{
-					ID:       checkID,
-					Group:    group.Title,
-					Name:     check.Title,
-					Status:   status,
-					Severity: severity,
-					Details:  details,
-					Docs:     check.Docs,
-					Audit:    check.Audit,
+					ID:          checkID,
+					Group:       group.Title,
+					Name:        check.Title,
+					Status:      status,
+					Severity:    severity,
+					Details:     details,
+					Remediation: check.Remediation,
+					Docs:        check.Docs,
+					Audit:       check.Audit,
 				})
 			}
 		}

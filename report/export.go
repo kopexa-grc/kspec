@@ -62,16 +62,19 @@ func collectRows(node *common.ResourceNode, path string, report *Report) {
 	// Add rows for each check on this node
 	for _, check := range node.Checks {
 		row := Row{
-			ResourceType:  node.ResourceType,
-			ResourceName:  node.Name,
-			ResourceID:    node.ID,
-			ResourcePath:  currentPath,
-			CheckID:       check.ID,
-			CheckGroup:    check.Group,
-			CheckName:     check.Name,
-			CheckStatus:   check.Status,
-			CheckSeverity: check.Severity,
-			CheckDetails:  check.Details,
+			ResourceType:     node.ResourceType,
+			ResourceName:     node.Name,
+			ResourceID:       node.ID,
+			ResourcePath:     currentPath,
+			CheckID:          check.ID,
+			CheckGroup:       check.Group,
+			CheckName:        check.Name,
+			CheckStatus:      check.Status,
+			CheckSeverity:    check.Severity,
+			CheckDetails:     check.Details,
+			CheckRemediation: check.Remediation,
+			CheckDocs:        check.Docs,
+			CheckAudit:       check.Audit,
 		}
 		report.Rows = append(report.Rows, row)
 	}

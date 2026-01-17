@@ -25,12 +25,15 @@ type Row struct {
 	ResourcePath string `json:"resource_path" csv:"Resource Path"`
 
 	// Check information
-	CheckID       string `json:"check_id" csv:"Check ID"`
-	CheckGroup    string `json:"check_group" csv:"Check Group"`
-	CheckName     string `json:"check_name" csv:"Check Name"`
-	CheckStatus   string `json:"check_status" csv:"Status"`
-	CheckSeverity string `json:"check_severity" csv:"Severity"`
-	CheckDetails  string `json:"check_details" csv:"Details"`
+	CheckID          string `json:"check_id" csv:"Check ID"`
+	CheckGroup       string `json:"check_group" csv:"Check Group"`
+	CheckName        string `json:"check_name" csv:"Check Name"`
+	CheckStatus      string `json:"check_status" csv:"Status"`
+	CheckSeverity    string `json:"check_severity" csv:"Severity"`
+	CheckDetails     string `json:"check_details" csv:"Details"`
+	CheckRemediation string `json:"check_remediation,omitempty" csv:"Remediation"`
+	CheckDocs        string `json:"check_docs,omitempty" csv:"Documentation"`
+	CheckAudit       string `json:"check_audit,omitempty" csv:"Audit"`
 }
 
 // Metadata contains metadata about the report.

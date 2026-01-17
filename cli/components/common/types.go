@@ -37,12 +37,13 @@ const (
 
 // CheckResult represents a single check result
 type CheckResult struct {
-	ID       string
-	Group    string
-	Name     string
-	Status   string
-	Details  string
-	Severity string
-	Docs     string // Markdown documentation
-	Audit    string // Markdown audit information
+	ID          string
+	Group       string
+	Name        string
+	Status      string
+	Details     string
+	Severity    string
+	Remediation string // Markdown remediation guidance
+	Docs        string // Markdown documentation
+	Audit       string // Markdown audit information
 }

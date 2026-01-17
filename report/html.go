@@ -5,9 +5,11 @@ package report
 
 import (
 	"fmt"
+	"html"
 	"html/template"
 	"io"
 	"os"
+	"regexp"
 	"strings"
 )
 
@@ -84,9 +86,10 @@ func (e *HTMLExporter) ExportToWriter(report *Report, w io.Writer) error {
 	}
 
 	tmpl, err := template.New("report").Funcs(template.FuncMap{
-		"lower":         strings.ToLower,
-		"severityClass": severityClass,
-		"statusClass":   statusClass,
+		"lower":          strings.ToLower,
+		"severityClass":  severityClass,
+		"statusClass":    statusClass,
+		"renderMarkdown": renderMarkdown,
 	}).Parse(htmlTemplate)
 	if err != nil {
 		return fmt.Errorf("failed to parse HTML template: %w", err)
@@ -127,6 +130,48 @@ func statusClass(status string) string {
 	default:
 		return "status-unknown"
 	}
+}
+
+// renderMarkdown converts simple markdown to HTML.
+// Supports: **bold**, *italic*, `code`, [link](url), and basic lists.
+func renderMarkdown(md string) template.HTML {
+	if md == "" {
+		return ""
+	}
+
+	// Escape HTML first to prevent XSS
+	result := html.EscapeString(md)
+
+	// Code blocks (```...```)
+	codeBlockRe := regexp.MustCompile("(?s)```([^`]*?)```")
+	result = codeBlockRe.ReplaceAllString(result, "<pre><code>$1</code></pre>")
+
+	// Inline code (`...`)
+	inlineCodeRe := regexp.MustCompile("`([^`]+)`")
+	result = inlineCodeRe.ReplaceAllString(result, "<code>$1</code>")
+
+	// Bold (**...**)
+	boldRe := regexp.MustCompile(`\*\*([^*]+)\*\*`)
+	result = boldRe.ReplaceAllString(result, "<strong>$1</strong>")
+
+	// Italic (*...*)
+	italicRe := regexp.MustCompile(`\*([^*]+)\*`)
+	result = italicRe.ReplaceAllString(result, "<em>$1</em>")
+
+	// Hyperlinks in markdown format
+	linkRe := regexp.MustCompile(`\[([^\]]+)\]\(([^)]+)\)`)
+	result = linkRe.ReplaceAllString(result, `<a href="$2" target="_blank" rel="noopener">$1</a>`)
+
+	// Line breaks
+	result = strings.ReplaceAll(result, "\n\n", "</p><p>")
+	result = strings.ReplaceAll(result, "\n", "<br>")
+
+	// Wrap in paragraph if not empty
+	if result != "" && !strings.HasPrefix(result, "<pre>") {
+		result = "<p>" + result + "</p>"
+	}
+
+	return template.HTML(result) //nolint:gosec // Content is escaped above
 }
 
 const htmlTemplate = `<!DOCTYPE html>
@@ -641,6 +686,57 @@ const htmlTemplate = `<!DOCTYPE html>
             padding: 0.5rem 0;
         }
 
+        .details-item.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .markdown-content {
+            font-size: 0.875rem;
+            line-height: 1.6;
+        }
+
+        .markdown-content p {
+            margin: 0 0 0.5rem 0;
+        }
+
+        .markdown-content p:last-child {
+            margin-bottom: 0;
+        }
+
+        .markdown-content code {
+            background-color: var(--color-bg);
+            padding: 0.125rem 0.375rem;
+            border-radius: 3px;
+            font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+            font-size: 0.8125rem;
+        }
+
+        .markdown-content pre {
+            background-color: var(--color-bg);
+            padding: 0.75rem 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 0.5rem 0;
+        }
+
+        .markdown-content pre code {
+            padding: 0;
+            background: none;
+        }
+
+        .markdown-content a {
+            color: #58a6ff;
+            text-decoration: none;
+        }
+
+        .markdown-content a:hover {
+            text-decoration: underline;
+        }
+
+        .markdown-content strong {
+            color: var(--color-text-heading);
+        }
+
         @media (max-width: 768px) {
             body {
                 padding: 1rem;
@@ -776,10 +872,6 @@ const htmlTemplate = `<!DOCTYPE html>
                         <td colspan="4">
                             <div class="details-grid">
                                 <div class="details-item">
-                                    <div class="details-label">Details</div>
-                                    <div class="details-content">{{if .CheckDetails}}{{.CheckDetails}}{{else}}No additional details{{end}}</div>
-                                </div>
-                                <div class="details-item">
                                     <div class="details-label">Check ID</div>
                                     <div class="details-content">{{.CheckID}}</div>
                                 </div>
@@ -787,6 +879,30 @@ const htmlTemplate = `<!DOCTYPE html>
                                     <div class="details-label">Resource Path</div>
                                     <div class="details-content">{{.ResourcePath}}</div>
                                 </div>
+                                {{if .CheckDetails}}
+                                <div class="details-item full-width">
+                                    <div class="details-label">Details</div>
+                                    <div class="details-content">{{.CheckDetails}}</div>
+                                </div>
+                                {{end}}
+                                {{if .CheckRemediation}}
+                                <div class="details-item full-width">
+                                    <div class="details-label">Remediation</div>
+                                    <div class="details-content markdown-content">{{renderMarkdown .CheckRemediation}}</div>
+                                </div>
+                                {{end}}
+                                {{if .CheckDocs}}
+                                <div class="details-item full-width">
+                                    <div class="details-label">Documentation</div>
+                                    <div class="details-content markdown-content">{{renderMarkdown .CheckDocs}}</div>
+                                </div>
+                                {{end}}
+                                {{if .CheckAudit}}
+                                <div class="details-item full-width">
+                                    <div class="details-label">Audit</div>
+                                    <div class="details-content markdown-content">{{renderMarkdown .CheckAudit}}</div>
+                                </div>
+                                {{end}}
                             </div>
                         </td>
                     </tr>

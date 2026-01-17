@@ -273,3 +273,126 @@ func TestHTMLExporterSeverityBadges(t *testing.T) {
 		t.Error("expected HTML to contain 'high' severity badge")
 	}
 }
+
+func TestHTMLExporterWithRemediation(t *testing.T) {
+	report := &Report{
+		Metadata: Metadata{
+			GeneratedAt: time.Now(),
+			Provider:    "test",
+		},
+		Rows: []Row{
+			{
+				ResourceType:     "test_resource",
+				ResourceName:     "my-resource",
+				ResourceID:       "res-123",
+				ResourcePath:     "test > my-resource",
+				CheckID:          "check-001",
+				CheckGroup:       "Security",
+				CheckName:        "Test security check",
+				CheckStatus:      StatusFailed,
+				CheckSeverity:    "high",
+				CheckDetails:     "Resource is not compliant",
+				CheckRemediation: "Run `fix-command` to resolve the issue.\n\nSee [documentation](https://example.com) for more info.",
+				CheckDocs:        "This check ensures **security compliance**.",
+				CheckAudit:       "Review the *configuration* settings.",
+			},
+		},
+	}
+
+	exporter := NewHTMLExporter()
+	var buf bytes.Buffer
+	err := exporter.ExportToWriter(report, &buf)
+	if err != nil {
+		t.Fatalf("failed to export: %v", err)
+	}
+
+	output := buf.String()
+
+	// Verify remediation section is present
+	if !strings.Contains(output, "Remediation") {
+		t.Error("expected HTML to contain 'Remediation' label")
+	}
+
+	// Verify documentation section is present
+	if !strings.Contains(output, "Documentation") {
+		t.Error("expected HTML to contain 'Documentation' label")
+	}
+
+	// Verify audit section is present
+	if !strings.Contains(output, "Audit") {
+		t.Error("expected HTML to contain 'Audit' label")
+	}
+
+	// Verify markdown is rendered (code becomes <code>)
+	if !strings.Contains(output, "<code>fix-command</code>") {
+		t.Error("expected inline code to be rendered")
+	}
+
+	// Verify links are rendered
+	if !strings.Contains(output, `<a href="https://example.com"`) {
+		t.Error("expected link to be rendered")
+	}
+
+	// Verify bold text is rendered
+	if !strings.Contains(output, "<strong>security compliance</strong>") {
+		t.Error("expected bold text to be rendered")
+	}
+
+	// Verify italic text is rendered
+	if !strings.Contains(output, "<em>configuration</em>") {
+		t.Error("expected italic text to be rendered")
+	}
+}
+
+func TestRenderMarkdown(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "empty string",
+			input:    "",
+			expected: "",
+		},
+		{
+			name:     "plain text",
+			input:    "Hello world",
+			expected: "<p>Hello world</p>",
+		},
+		{
+			name:     "bold text",
+			input:    "This is **bold** text",
+			expected: "<p>This is <strong>bold</strong> text</p>",
+		},
+		{
+			name:     "italic text",
+			input:    "This is *italic* text",
+			expected: "<p>This is <em>italic</em> text</p>",
+		},
+		{
+			name:     "inline code",
+			input:    "Run `command` here",
+			expected: "<p>Run <code>command</code> here</p>",
+		},
+		{
+			name:     "link",
+			input:    "Visit [Google](https://google.com)",
+			expected: `<p>Visit <a href="https://google.com" target="_blank" rel="noopener">Google</a></p>`,
+		},
+		{
+			name:     "XSS prevention",
+			input:    "<script>alert('xss')</script>",
+			expected: "<p>&lt;script&gt;alert(&#39;xss&#39;)&lt;/script&gt;</p>",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := string(renderMarkdown(tt.input))
+			if result != tt.expected {
+				t.Errorf("renderMarkdown(%q) = %q, want %q", tt.input, result, tt.expected)
+			}
+		})
+	}
+}
