@@ -488,6 +488,36 @@ const htmlTemplate = `<!DOCTYPE html>
             color: var(--color-text);
         }
 
+        .collapsible-header {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .collapsible-header:hover {
+            opacity: 0.8;
+        }
+
+        .collapsible-header::before {
+            content: '▼';
+            display: inline-block;
+            margin-right: 0.5rem;
+            font-size: 0.75rem;
+            transition: transform 0.2s;
+        }
+
+        .collapsible-header.collapsed::before {
+            transform: rotate(-90deg);
+        }
+
+        .collapsible-content {
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+
+        .collapsible-content.collapsed {
+            max-height: 0 !important;
+        }
+
         @media (max-width: 768px) {
             body {
                 padding: 1rem;
@@ -617,10 +647,11 @@ const htmlTemplate = `<!DOCTYPE html>
 
         {{if .PassedRows}}
         <div class="section">
-            <div class="section-header">
+            <div class="section-header collapsible-header collapsed" onclick="toggleSection(this)">
                 <h2>Passed Checks</h2>
                 <span class="badge badge-pass">{{len .PassedRows}} passed</span>
             </div>
+            <div class="collapsible-content collapsed">
             <table>
                 <thead>
                     <tr>
@@ -645,15 +676,17 @@ const htmlTemplate = `<!DOCTYPE html>
                     {{end}}
                 </tbody>
             </table>
+            </div>
         </div>
         {{end}}
 
         {{if .SkippedRows}}
         <div class="section">
-            <div class="section-header">
+            <div class="section-header collapsible-header collapsed" onclick="toggleSection(this)">
                 <h2>Skipped Checks</h2>
                 <span class="badge badge-skip">{{len .SkippedRows}} skipped</span>
             </div>
+            <div class="collapsible-content collapsed">
             <table>
                 <thead>
                     <tr>
@@ -678,6 +711,7 @@ const htmlTemplate = `<!DOCTYPE html>
                     {{end}}
                 </tbody>
             </table>
+            </div>
         </div>
         {{end}}
 
@@ -696,6 +730,28 @@ const htmlTemplate = `<!DOCTYPE html>
             </div>
         </footer>
     </div>
+
+    <script>
+        function toggleSection(header) {
+            header.classList.toggle('collapsed');
+            const content = header.nextElementSibling;
+            if (content && content.classList.contains('collapsible-content')) {
+                content.classList.toggle('collapsed');
+                if (!content.classList.contains('collapsed')) {
+                    content.style.maxHeight = content.scrollHeight + 'px';
+                } else {
+                    content.style.maxHeight = null;
+                }
+            }
+        }
+
+        // Initialize expanded sections with proper max-height
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.collapsible-content:not(.collapsed)').forEach(function(content) {
+                content.style.maxHeight = content.scrollHeight + 'px';
+            });
+        });
+    </script>
 </body>
 </html>
 `

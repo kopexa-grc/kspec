@@ -407,9 +407,9 @@ kspec scan github org my-org -d policies -o results --export-format html
 HTML reports provide a visual, shareable format with:
 - Summary statistics and progress bar
 - Severity breakdown for failed checks
-- Tables for passed, failed, and skipped checks
+- Collapsible sections (passed/skipped collapsed by default)
 - Dark theme optimized for readability
-- No external dependencies (all styles embedded)
+- No external dependencies (standalone HTML file)
 
 ---
 
