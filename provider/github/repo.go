@@ -51,8 +51,10 @@ func (r *RepoResource) Fetch(ctx context.Context, asset core.Asset) ([]core.Reso
 
 // parseOwnerRepo extracts owner and repo from config.
 // It supports both explicit keys (owner, repo) and combined repository key (owner/repo format).
+// Precedence: explicit "owner"/"repo" keys take priority over the combined "repository" key.
+// If both are provided with conflicting values, explicit keys win silently.
 func (r *RepoResource) parseOwnerRepo(config map[string]string) (owner, repo string) {
-	// First try explicit keys
+	// First try explicit keys (these take precedence)
 	owner = config["owner"]
 	repo = config["repo"]
 

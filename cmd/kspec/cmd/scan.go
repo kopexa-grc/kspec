@@ -70,6 +70,7 @@ func createProviderCommand(def *registry.ProviderDefinition) *cobra.Command {
 		registry.RegisterFlags(cmd, def)
 	} else {
 		// Multiple asset types - create subcommands
+		cmd.Long = buildMultiAssetLongDescription(def)
 		for i := range def.AssetTypes {
 			at := &def.AssetTypes[i]
 			assetCmd := createAssetCommand(def, at)
@@ -152,6 +153,25 @@ func buildAssetExampleWithSubcmd(providerName, assetCmd string, at *registry.Ass
 	return strings.Join(examples, "\n")
 }
 
+// buildMultiAssetLongDescription builds a detailed description for providers with multiple asset types.
+func buildMultiAssetLongDescription(def *registry.ProviderDefinition) string {
+	var sb strings.Builder
+	sb.WriteString(def.Description)
+	sb.WriteString("\n\nAvailable asset types:\n")
+	for _, at := range def.AssetTypes {
+		sb.WriteString(fmt.Sprintf("  %s", at.Name))
+		if len(at.Aliases) > 0 {
+			sb.WriteString(fmt.Sprintf(" (aliases: %s)", strings.Join(at.Aliases, ", ")))
+		}
+		if at.Description != "" {
+			sb.WriteString(fmt.Sprintf(" - %s", at.Description))
+		}
+		sb.WriteString("\n")
+	}
+	sb.WriteString(fmt.Sprintf("\nRun 'kspec scan %s <asset-type> --help' for asset-specific options.", def.Name))
+	return sb.String()
+}
+
 // buildArgsValidator builds an argument validator for an asset type.
 func buildArgsValidator(at *registry.AssetDefinition) cobra.PositionalArgs {
 	// Count required args
@@ -202,7 +222,10 @@ func runAssetScan(cmd *cobra.Command, def *registry.ProviderDefinition, at *regi
 
 	for i, arg := range at.Args {
 		if i < len(args) {
-			assetConfig[arg.ConfigKey] = args[i]
+			// Only set config if ConfigKey is defined
+			if arg.ConfigKey != "" {
+				assetConfig[arg.ConfigKey] = args[i]
+			}
 			if i == 0 {
 				assetName = args[i]
 			}
