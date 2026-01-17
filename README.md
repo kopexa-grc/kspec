@@ -80,7 +80,7 @@ export AWS_SECRET_ACCESS_KEY="your-secret-key"
 export AWS_REGION="us-east-1"
 
 # Scan an AWS account
-kspec scan aws account -f policies/aws-security.yml
+kspec scan aws -f policies/aws-security.yml
 ```
 
 ### Scan GitHub Organization
@@ -102,14 +102,14 @@ export AZURE_CLIENT_ID="your-client-id"
 export AZURE_CLIENT_SECRET="your-client-secret"
 
 # Scan a subscription
-kspec scan azure subscription <subscription-id> -f policies/azure-security.yml
+kspec scan azure <subscription-id> -f policies/azure-security.yml
 ```
 
 ### Scan Microsoft 365 Tenant
 
 ```bash
 # Scan M365 tenant
-kspec scan ms365 tenant <tenant-id> \
+kspec scan ms365 <tenant-id> \
   --client-id <client-id> \
   --client-secret <client-secret> \
   -f policies/ms365-security.yml
@@ -119,7 +119,7 @@ kspec scan ms365 tenant <tenant-id> \
 
 ```bash
 # Scan TLS and HTTP security
-kspec scan host example.com -f policies/tls-security.yml
+kspec scan network host example.com -f policies/tls-security.yml
 ```
 
 ### Scan Hetzner Cloud Project
@@ -129,7 +129,7 @@ kspec scan host example.com -f policies/tls-security.yml
 export HCLOUD_TOKEN="your-api-token"
 
 # Scan all resources in a project
-kspec scan hetzner project -f policies/hetzner-security.yml
+kspec scan hetzner -f policies/hetzner-security.yml
 ```
 
 ## Output Options
@@ -140,16 +140,16 @@ Export scan results to CSV, XLSX, or JSON for compliance reporting:
 
 ```bash
 # Export to CSV
-kspec scan aws account -f policies/aws-security.yml -o report.csv
+kspec scan aws -f policies/aws-security.yml -o report.csv
 
 # Export to Excel
-kspec scan azure subscription <sub-id> -f policies/azure-security.yml -o report.xlsx
+kspec scan azure <sub-id> -f policies/azure-security.yml -o report.xlsx
 
 # Export to JSON
 kspec scan github org <org-name> -f policies/github-security.yml -o report.json
 
 # Specify format explicitly
-kspec scan aws account -f policies/aws-security.yml -o report --export-format xlsx
+kspec scan aws -f policies/aws-security.yml -o report --export-format xlsx
 ```
 
 ### Non-Interactive Mode (CI/CD)
@@ -158,10 +158,10 @@ Use `--no-ui` for CI/CD pipelines with structured logging via zerolog:
 
 ```bash
 # Run without interactive UI
-kspec scan aws account -f policies/aws-security.yml --no-ui
+kspec scan aws -f policies/aws-security.yml --no-ui
 
 # Combine with export
-kspec scan azure subscription <sub-id> -f policies/azure-security.yml --no-ui -o results.csv
+kspec scan azure <sub-id> -f policies/azure-security.yml --no-ui -o results.csv
 ```
 
 Output example:
@@ -288,7 +288,7 @@ jobs:
           AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
           AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
         run: |
-          ./kspec scan azure subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }} \
+          ./kspec scan azure ${{ secrets.AZURE_SUBSCRIPTION_ID }} \
             -f policies/azure-security.yml \
             --no-ui \
             -o scan-results.csv

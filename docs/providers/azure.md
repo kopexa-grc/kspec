@@ -21,10 +21,10 @@ export AZURE_CLIENT_ID="your-client-id"
 export AZURE_CLIENT_SECRET="your-client-secret"
 
 # Scan a subscription with all Azure policies
-kspec scan azure subscription <subscription-id> -d policies
+kspec scan azure <subscription-id> -d policies
 
 # Scan with specific policy
-kspec scan azure subscription <subscription-id> -f policies/azure-security.yml
+kspec scan azure <subscription-id> -f policies/azure-security.yml
 ```
 
 ## Prerequisites
@@ -63,12 +63,12 @@ export AZURE_TENANT_ID="your-tenant-id"
 export AZURE_CLIENT_ID="your-client-id"
 export AZURE_CLIENT_SECRET="your-client-secret"
 
-kspec scan azure subscription $AZURE_SUBSCRIPTION_ID -f policy.yml
+kspec scan azure $AZURE_SUBSCRIPTION_ID -f policy.yml
 ```
 
 **Command Line Flags:**
 ```bash
-kspec scan azure subscription <subscription-id> \
+kspec scan azure <subscription-id> \
   --tenant-id <tenant-id> \
   --client-id <client-id> \
   --token <client-secret> \
@@ -81,7 +81,7 @@ kspec scan azure subscription <subscription-id> \
 az login
 
 # kspec will use DefaultAzureCredential
-kspec scan azure subscription <subscription-id> -f policy.yml
+kspec scan azure <subscription-id> -f policy.yml
 ```
 
 ---
@@ -400,18 +400,18 @@ queries:
 
 ```bash
 # Scan all resources in subscription
-kspec scan azure subscription <subscription-id> -f <policy-file>
+kspec scan azure <subscription-id> -f <policy-file>
 
 # Scan with policy directory
-kspec scan azure subscription <subscription-id> -d <policy-directory>
+kspec scan azure <subscription-id> -d <policy-directory>
 
 # Filter by resource group
-kspec scan azure subscription <subscription-id> \
+kspec scan azure <subscription-id> \
   --resource-group <resource-group-name> \
   -f <policy-file>
 
 # Using explicit credentials
-kspec scan azure subscription <subscription-id> \
+kspec scan azure <subscription-id> \
   --tenant-id <tenant-id> \
   --client-id <client-id> \
   --token <client-secret> \
@@ -464,7 +464,7 @@ jobs:
           AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
           AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
         run: |
-          ./kspec scan azure subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }} \
+          ./kspec scan azure ${{ secrets.AZURE_SUBSCRIPTION_ID }} \
             -f policies/azure-security.yml
 ```
 
@@ -486,7 +486,7 @@ steps:
     displayName: 'Build kspec'
 
   - script: |
-      ./kspec scan azure subscription $(AZURE_SUBSCRIPTION_ID) \
+      ./kspec scan azure $(AZURE_SUBSCRIPTION_ID) \
         -f policies/azure-security.yml
     displayName: 'Run Security Scan'
     env:
