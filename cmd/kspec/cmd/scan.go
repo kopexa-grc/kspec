@@ -204,7 +204,7 @@ func buildArgsValidator(at *registry.AssetDefinition) cobra.PositionalArgs {
 func registerCommonFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("policy", "f", "", "Policy file to use")
 	cmd.Flags().StringP("policy-dir", "d", "", "Directory containing policy files")
-	cmd.Flags().StringP("export", "o", "", "Export results to file (csv, xlsx, json)")
+	cmd.Flags().StringP("export", "o", "", "Export results to file (csv, xlsx, json, html)")
 	cmd.Flags().String("export-format", "", "Export format (auto-detected from filename)")
 	cmd.Flags().Bool("no-ui", false, "Disable interactive UI (for CI/CD)")
 }
@@ -466,8 +466,10 @@ func exportResults(cmd *cobra.Command, tree *common.ResourceTree, provider, expo
 			format = "xlsx"
 		case ".json":
 			format = "json"
+		case ".html", ".htm":
+			format = "html"
 		default:
-			return fmt.Errorf("unknown export format, use --export-format or specify .csv, .xlsx, or .json extension")
+			return fmt.Errorf("unknown export format, use --export-format or specify .csv, .xlsx, .json, or .html extension")
 		}
 	}
 
@@ -478,6 +480,8 @@ func exportResults(cmd *cobra.Command, tree *common.ResourceTree, provider, expo
 		return report.NewXLSXExporter().Export(rep, exportPath)
 	case report.FormatJSON:
 		return report.NewJSONExporter(true).Export(rep, exportPath)
+	case report.FormatHTML:
+		return report.NewHTMLExporter().Export(rep, exportPath)
 	default:
 		return fmt.Errorf("unsupported export format: %s", format)
 	}

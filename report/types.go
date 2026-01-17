@@ -70,4 +70,5 @@ const (
 	FormatCSV  Format = "csv"
 	FormatXLSX Format = "xlsx"
 	FormatJSON Format = "json"
+	FormatHTML Format = "html"
 )
