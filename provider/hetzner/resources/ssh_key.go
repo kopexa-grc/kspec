@@ -6,6 +6,7 @@ package resources
 import (
 	"context"
 	"strings"
+	"time"
 
 	"github.com/hetznercloud/hcloud-go/v2/hcloud"
 
@@ -45,13 +46,22 @@ func (r *SSHKey) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, 
 
 	resources := make([]core.Resource, 0, len(sshKeys))
 
+	now := time.Now()
+
 	for _, key := range sshKeys {
 		resource := make(core.Resource)
 		resource["id"] = key.ID
 		resource["name"] = key.Name
 		resource["created"] = key.Created.String()
+		resource["created_at"] = key.Created.Format(time.RFC3339)
 		resource["labels"] = key.Labels
 		resource["fingerprint"] = key.Fingerprint
+
+		// Calculate key age
+		age := now.Sub(key.Created)
+		ageDays := int(age.Hours() / 24)
+		resource["age_days"] = ageDays
+		resource["age_months"] = ageDays / 30
 
 		// Extract key type from public key
 		keyType := detectSSHKeyType(key.PublicKey)
@@ -67,6 +77,10 @@ func (r *SSHKey) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, 
 		resource["is_dsa"] = keyType == keyTypeDSA
 		resource["is_weak_key_type"] = keyType == keyTypeDSA || keyType == keyTypeRSA // DSA is deprecated, RSA is weaker than ed25519
 		resource["has_labels"] = len(key.Labels) > 0
+
+		// Rotation flags (best practice: rotate keys annually)
+		resource["needs_rotation"] = ageDays > 365
+		resource["is_old"] = ageDays > 730 // Older than 2 years
 
 		resources = append(resources, resource)
 	}

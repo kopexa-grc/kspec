@@ -58,34 +58,6 @@ func TestProvider_Connect_WithConfig(t *testing.T) {
 }
 
 // Resource name tests
-func TestLocation_Name(t *testing.T) {
-	r := resources.NewLocation(nil)
-	if got := r.Name(); got != "hcloud_location" {
-		t.Errorf("Name() = %v, want hcloud_location", got)
-	}
-}
-
-func TestDatacenter_Name(t *testing.T) {
-	r := resources.NewDatacenter(nil)
-	if got := r.Name(); got != "hcloud_datacenter" {
-		t.Errorf("Name() = %v, want hcloud_datacenter", got)
-	}
-}
-
-func TestServerType_Name(t *testing.T) {
-	r := resources.NewServerType(nil)
-	if got := r.Name(); got != "hcloud_server_type" {
-		t.Errorf("Name() = %v, want hcloud_server_type", got)
-	}
-}
-
-func TestISO_Name(t *testing.T) {
-	r := resources.NewISO(nil)
-	if got := r.Name(); got != "hcloud_iso" {
-		t.Errorf("Name() = %v, want hcloud_iso", got)
-	}
-}
-
 func TestServer_Name(t *testing.T) {
 	r := resources.NewServer(nil)
 	if got := r.Name(); got != "hcloud_server" {
@@ -128,13 +100,6 @@ func TestFirewall_Name(t *testing.T) {
 	}
 }
 
-func TestImage_Name(t *testing.T) {
-	r := resources.NewImage(nil)
-	if got := r.Name(); got != "hcloud_image" {
-		t.Errorf("Name() = %v, want hcloud_image", got)
-	}
-}
-
 func TestSSHKey_Name(t *testing.T) {
 	r := resources.NewSSHKey(nil)
 	if got := r.Name(); got != "hcloud_ssh_key" {
@@ -158,17 +123,12 @@ func TestConnection_Resources(t *testing.T) {
 	res := conn.Resources()
 
 	expectedNames := []string{
-		"hcloud_location",
-		"hcloud_datacenter",
-		"hcloud_server_type",
-		"hcloud_iso",
 		"hcloud_server",
 		"hcloud_volume",
 		"hcloud_network",
 		"hcloud_floating_ip",
 		"hcloud_primary_ip",
 		"hcloud_firewall",
-		"hcloud_image",
 		"hcloud_ssh_key",
 	}
 
