@@ -179,12 +179,15 @@ func (r *S3Bucket) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource
 			var policy map[string]any
 			if err := json.Unmarshal([]byte(policyDoc), &policy); err == nil {
 				resource["has_public_policy"] = checkPublicBucketPolicy(policy)
-				resource["requires_secure_transport"] = checkSecureTransportPolicy(policy)
+				requiresSecure := checkSecureTransportPolicy(policy)
+				resource["requires_secure_transport"] = requiresSecure
+				resource["has_secure_transport_policy"] = requiresSecure // Alias for policy compatibility
 			}
 		} else {
 			resource["has_bucket_policy"] = false
 			resource["has_public_policy"] = false
 			resource["requires_secure_transport"] = false
+			resource["has_secure_transport_policy"] = false
 		}
 
 		// Get lifecycle rules

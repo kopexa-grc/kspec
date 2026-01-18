@@ -102,6 +102,16 @@ func (c *Connection) Resources() []core.ResourceSpec {
 	}
 }
 
+// EntryResourceType returns the entry point resource type for a given asset type.
+func (c *Connection) EntryResourceType(assetType string) string {
+	switch assetType {
+	case "factorial-company":
+		return "factorial_employee"
+	default:
+		return ""
+	}
+}
+
 // Client returns the underlying Factorial client for direct access if needed.
 func (c *Connection) Client() *Client {
 	return c.client

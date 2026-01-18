@@ -2,7 +2,8 @@
 # Run `make help` for available commands
 
 .PHONY: help build install clean test test-fast test-integration test-all \
-        lint lint-fix fmt vet check run dev release snapshot hooks deps tidy schema
+        lint lint-fix fmt vet check run dev release snapshot hooks deps tidy schema \
+        test-aws-localstack test-aws-localstack-setup test-aws-localstack-cleanup
 
 # Build variables
 BINARY_NAME := kspec
@@ -89,6 +90,23 @@ test-coverage: ## Run tests with coverage
 
 test-short: ## Run short tests only
 	go test -v -short ./...
+
+##@ LocalStack Testing
+
+test-aws-localstack: ## Run AWS policy tests against LocalStack
+	@echo "$(BLUE)Running AWS LocalStack tests...$(RESET)"
+	@./scripts/test-aws-localstack.sh
+	@echo "$(GREEN)LocalStack tests completed$(RESET)"
+
+test-aws-localstack-setup: ## Setup LocalStack with test resources only
+	@echo "$(BLUE)Setting up LocalStack test resources...$(RESET)"
+	@./scripts/test-aws-localstack.sh --setup-only
+	@echo "$(GREEN)LocalStack setup complete$(RESET)"
+
+test-aws-localstack-cleanup: ## Cleanup LocalStack test resources
+	@echo "$(BLUE)Cleaning up LocalStack...$(RESET)"
+	@./scripts/test-aws-localstack.sh --cleanup
+	@echo "$(GREEN)LocalStack cleanup complete$(RESET)"
 
 ##@ Code Quality
 

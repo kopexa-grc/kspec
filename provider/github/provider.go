@@ -84,7 +84,20 @@ func (c *Connection) Resources() []core.ResourceSpec {
 		resources.NewOrganization(gh),
 		resources.NewRepository(gh),
 		resources.NewTeam(gh),
+		resources.NewUser(gh),
 		resources.NewBranch(gh),
+	}
+}
+
+// EntryResourceType returns the entry point resource type for a given asset type.
+func (c *Connection) EntryResourceType(assetType string) string {
+	switch assetType {
+	case "github-org":
+		return "github_organization"
+	case "github-repo":
+		return "github_repo"
+	default:
+		return ""
 	}
 }
 

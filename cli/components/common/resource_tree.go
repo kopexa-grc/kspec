@@ -125,6 +125,10 @@ func (t *ResourceTree) AddSubResource(parentID, subResourceType string, node *Re
 
 // NavigateDown navigates to a child node by ID
 func (t *ResourceTree) NavigateDown(nodeID string) error {
+	if t.Current == nil {
+		return fmt.Errorf("current node is nil")
+	}
+
 	node, exists := t.AllNodes[nodeID]
 	if !exists {
 		return fmt.Errorf("node with ID %s not found", nodeID)
@@ -164,6 +168,9 @@ func (t *ResourceTree) NavigateDown(nodeID string) error {
 
 // NavigateUp navigates to the parent node
 func (t *ResourceTree) NavigateUp() error {
+	if t.Current == nil {
+		return fmt.Errorf("current node is nil")
+	}
 	if t.Current.Parent == nil {
 		return fmt.Errorf("already at root node")
 	}
@@ -179,11 +186,17 @@ func (t *ResourceTree) NavigateToRoot() {
 
 // GetBreadcrumb returns the breadcrumb path for the current node
 func (t *ResourceTree) GetBreadcrumb() []string {
+	if t.Current == nil {
+		return nil
+	}
 	return t.Current.Path
 }
 
 // GetBreadcrumbString returns the breadcrumb as a formatted string
 func (t *ResourceTree) GetBreadcrumbString() string {
+	if t.Current == nil {
+		return ""
+	}
 	return strings.Join(t.Current.Path, " > ")
 }
 
@@ -235,6 +248,11 @@ func (t *ResourceTree) GetNode(nodeID string) (*ResourceNode, bool) {
 func (t *ResourceTree) GetCurrentChildren() []*ResourceNode {
 	children := make([]*ResourceNode, 0)
 
+	// Safety check for nil Current
+	if t.Current == nil {
+		return children
+	}
+
 	// Add direct children
 	children = append(children, t.Current.Children...)
 
@@ -261,11 +279,17 @@ func (t *ResourceTree) GetCurrentChildren() []*ResourceNode {
 
 // HasChildren returns true if the current node has navigable children
 func (t *ResourceTree) HasChildren() bool {
+	if t.Current == nil {
+		return false
+	}
 	return len(t.Current.Children) > 0 || len(t.Current.SubResources) > 0
 }
 
 // GetSubResourceInstances returns all instances of a specific sub-resource type
 func (t *ResourceTree) GetSubResourceInstances(subResourceType string) []*ResourceNode {
+	if t.Current == nil {
+		return []*ResourceNode{}
+	}
 	if instances, exists := t.Current.SubResources[subResourceType]; exists {
 		return instances
 	}

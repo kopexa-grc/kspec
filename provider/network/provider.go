@@ -45,3 +45,13 @@ func (c *Connection) Resources() []core.ResourceSpec {
 		resources.NewTLS(),
 	}
 }
+
+// EntryResourceType returns the entry point resource type for a given asset type.
+func (c *Connection) EntryResourceType(assetType string) string {
+	switch assetType {
+	case "host":
+		return "certificate"
+	default:
+		return ""
+	}
+}

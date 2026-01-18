@@ -66,3 +66,13 @@ func (c *Connection) Resources() []core.ResourceSpec {
 		resources.NewDependency(c.path, c.isDir),
 	}
 }
+
+// EntryResourceType returns the entry point resource type for a given asset type.
+func (c *Connection) EntryResourceType(assetType string) string {
+	switch assetType {
+	case "sbom-file", "sbom-directory":
+		return "sbom_document"
+	default:
+		return ""
+	}
+}

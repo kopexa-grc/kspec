@@ -33,15 +33,16 @@ func GetProviderByName(name string) (core.Provider, error) {
 }
 
 // InitProvider initializes a single provider by name with the given config.
-func InitProvider(ctx context.Context, providerName string, config map[string]string) (map[string]core.ResourceSpec, error) {
+// Returns the connection and resource registry.
+func InitProvider(ctx context.Context, providerName string, config map[string]string) (core.Connection, map[string]core.ResourceSpec, error) {
 	provider, err := GetProviderByName(providerName)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	conn, err := provider.Connect(ctx, config)
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to provider %s: %w", provider.Name(), err)
+		return nil, nil, fmt.Errorf("failed to connect to provider %s: %w", provider.Name(), err)
 	}
 
 	resourceRegistry := make(map[string]core.ResourceSpec)
@@ -60,7 +61,7 @@ func InitProvider(ctx context.Context, providerName string, config map[string]st
 		}
 	}
 
-	return resourceRegistry, nil
+	return conn, resourceRegistry, nil
 }
 
 // InitProviders initializes all providers with the given config and returns a unified resource map.

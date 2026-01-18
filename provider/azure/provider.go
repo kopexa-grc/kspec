@@ -141,6 +141,16 @@ func (c *Connection) Resources() []core.ResourceSpec {
 	}
 }
 
+// EntryResourceType maps CLI asset types to internal resource type identifiers.
+func (c *Connection) EntryResourceType(assetType string) string {
+	switch assetType {
+	case "azure-subscription":
+		return "azure_subscription"
+	default:
+		return ""
+	}
+}
+
 // Client returns the underlying Azure client for direct access if needed.
 func (c *Connection) Client() *Client {
 	return c.client

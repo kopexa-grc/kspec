@@ -24,6 +24,17 @@ type SubResourceProvider interface {
 	SubResources() []ResourceSpec
 }
 
+// ChildResourceProvider is an optional interface for resources that have
+// top-level child resources in the hierarchy (e.g., Organization → Teams, Repos).
+// Unlike SubResourceProvider which returns ResourceSpecs, this returns type names
+// that are already registered in the provider's registry.
+type ChildResourceProvider interface {
+	ResourceSpec
+	// ChildResources returns the names of child resource types.
+	// These types must be registered in the provider's registry.
+	ChildResources() []string
+}
+
 // DiscoveryResource is an optional interface for resources that can discover
 // what sub-resources actually exist before scanning them.
 // This enables smart scanning that only checks resources that are present.
@@ -45,6 +56,19 @@ type Provider interface {
 type Connection interface {
 	// Resources returns the list of resources available on this connection
 	Resources() []ResourceSpec
+	// EntryResourceType returns the entry point resource type for a given asset type.
+	// For example, "github-org" -> "github_organization", "aws-account" -> "aws_account"
+	EntryResourceType(assetType string) string
+}
+
+// AssetContextProvider is an optional interface that ResourceSpecs can implement
+// to provide context when building assets for sub-resource fetching.
+// This allows parent resources to pass necessary context (e.g., repo name) to children.
+type AssetContextProvider interface {
+	ResourceSpec
+	// BuildChildAsset creates an asset configuration for fetching child/sub resources.
+	// The parent resource data and base asset are provided to build the child asset.
+	BuildChildAsset(parentData Resource, baseAsset Asset) Asset
 }
 
 // CheckResult represents the outcome of a policy check.

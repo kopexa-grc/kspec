@@ -130,6 +130,16 @@ func (c *Connection) Resources() []core.ResourceSpec {
 	}
 }
 
+// EntryResourceType maps CLI asset types to internal resource type identifiers.
+func (c *Connection) EntryResourceType(assetType string) string {
+	switch assetType {
+	case "ms365-tenant":
+		return "ms365_tenant"
+	default:
+		return ""
+	}
+}
+
 // Client returns the underlying MS365 client for direct access if needed.
 func (c *Connection) Client() *Client {
 	return c.client
