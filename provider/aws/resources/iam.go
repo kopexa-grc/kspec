@@ -190,12 +190,13 @@ func (r *IAMUser) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource,
 			resource["console_without_mfa"] = hasConsole && !hasMFA
 
 			// Computed: Days since last activity (use password_last_used or create date)
-			if user.PasswordLastUsed != nil {
+			switch {
+			case user.PasswordLastUsed != nil:
 				resource["last_activity_days"] = int(time.Since(*user.PasswordLastUsed).Hours() / 24)
-			} else if user.CreateDate != nil {
+			case user.CreateDate != nil:
 				// If never logged in, use account creation date
 				resource["last_activity_days"] = int(time.Since(*user.CreateDate).Hours() / 24)
-			} else {
+			default:
 				resource["last_activity_days"] = -1 // Unknown
 			}
 
