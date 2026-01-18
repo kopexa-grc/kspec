@@ -21,6 +21,8 @@ type APIGatewayClient interface {
 }
 
 // APIGatewayV2Client is the interface for API Gateway V2 (HTTP/WebSocket) operations.
+//
+//nolint:dupl // AWS SDK client interfaces have similar structures by design
 type APIGatewayV2Client interface {
 	GetApis(ctx context.Context, params *apigatewayv2.GetApisInput, optFns ...func(*apigatewayv2.Options)) (*apigatewayv2.GetApisOutput, error)
 	GetStages(ctx context.Context, params *apigatewayv2.GetStagesInput, optFns ...func(*apigatewayv2.Options)) (*apigatewayv2.GetStagesOutput, error)

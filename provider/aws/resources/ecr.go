@@ -15,6 +15,8 @@ import (
 )
 
 // ECRClient is the interface for ECR operations.
+//
+//nolint:dupl // AWS SDK client interfaces have similar structures by design
 type ECRClient interface {
 	DescribeRepositories(ctx context.Context, params *ecr.DescribeRepositoriesInput, optFns ...func(*ecr.Options)) (*ecr.DescribeRepositoriesOutput, error)
 	GetRepositoryPolicy(ctx context.Context, params *ecr.GetRepositoryPolicyInput, optFns ...func(*ecr.Options)) (*ecr.GetRepositoryPolicyOutput, error)

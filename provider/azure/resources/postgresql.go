@@ -1,6 +1,7 @@
 // Copyright (c) Kopexa GmbH
 // SPDX-License-Identifier: Elastic-2.0
 
+//nolint:dupl // Azure database resource scanners have similar structures by design
 package resources
 
 import (

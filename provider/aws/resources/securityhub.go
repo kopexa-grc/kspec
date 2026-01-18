@@ -14,6 +14,8 @@ import (
 )
 
 // SecurityHubClient is the interface for Security Hub operations.
+//
+//nolint:dupl // AWS SDK client interfaces have similar structures by design
 type SecurityHubClient interface {
 	DescribeHub(ctx context.Context, params *securityhub.DescribeHubInput, optFns ...func(*securityhub.Options)) (*securityhub.DescribeHubOutput, error)
 	GetEnabledStandards(ctx context.Context, params *securityhub.GetEnabledStandardsInput, optFns ...func(*securityhub.Options)) (*securityhub.GetEnabledStandardsOutput, error)

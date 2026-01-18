@@ -14,6 +14,8 @@ import (
 )
 
 // ConfigClient is the interface for AWS Config operations.
+//
+//nolint:dupl // AWS SDK client interfaces have similar structures by design
 type ConfigClient interface {
 	DescribeConfigurationRecorders(ctx context.Context, params *configservice.DescribeConfigurationRecordersInput, optFns ...func(*configservice.Options)) (*configservice.DescribeConfigurationRecordersOutput, error)
 	DescribeConfigurationRecorderStatus(ctx context.Context, params *configservice.DescribeConfigurationRecorderStatusInput, optFns ...func(*configservice.Options)) (*configservice.DescribeConfigurationRecorderStatusOutput, error)

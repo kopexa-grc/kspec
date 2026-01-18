@@ -13,6 +13,8 @@ import (
 )
 
 // CloudTrailClient is the interface for CloudTrail operations.
+//
+//nolint:dupl // AWS SDK client interfaces have similar structures by design
 type CloudTrailClient interface {
 	DescribeTrails(ctx context.Context, params *cloudtrail.DescribeTrailsInput, optFns ...func(*cloudtrail.Options)) (*cloudtrail.DescribeTrailsOutput, error)
 	GetTrailStatus(ctx context.Context, params *cloudtrail.GetTrailStatusInput, optFns ...func(*cloudtrail.Options)) (*cloudtrail.GetTrailStatusOutput, error)

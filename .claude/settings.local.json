@@ -59,7 +59,12 @@
       "Bash(done)",
       "Bash(gh pr comment:*)",
       "Bash(for dir in /Users/juliankoehn/workbox/kspec/provider/*/)",
-      "Bash(xargs:*)"
+      "Bash(xargs:*)",
+      "Bash(git rebase:*)",
+      "Bash(git update-index:*)",
+      "Bash(FILTER_BRANCH_SQUELCH_WARNING=1 git filter-branch:*)",
+      "Bash(gh pr close:*)",
+      "Bash(gh run list:*)"
     ]
   }
 }

@@ -17,6 +17,8 @@ import (
 )
 
 // KMSClient is the interface for KMS operations.
+//
+//nolint:dupl // AWS SDK client interfaces have similar structures by design
 type KMSClient interface {
 	ListKeys(ctx context.Context, params *kms.ListKeysInput, optFns ...func(*kms.Options)) (*kms.ListKeysOutput, error)
 	DescribeKey(ctx context.Context, params *kms.DescribeKeyInput, optFns ...func(*kms.Options)) (*kms.DescribeKeyOutput, error)

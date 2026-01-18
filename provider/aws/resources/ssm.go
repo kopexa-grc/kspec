@@ -15,6 +15,8 @@ import (
 )
 
 // SSMClient is the interface for SSM operations.
+//
+//nolint:dupl // AWS SDK client interfaces have similar structures by design
 type SSMClient interface {
 	DescribeInstanceInformation(ctx context.Context, params *ssm.DescribeInstanceInformationInput, optFns ...func(*ssm.Options)) (*ssm.DescribeInstanceInformationOutput, error)
 	DescribeParameters(ctx context.Context, params *ssm.DescribeParametersInput, optFns ...func(*ssm.Options)) (*ssm.DescribeParametersOutput, error)
