@@ -52,12 +52,28 @@ func createProviderCommand(def *registry.ProviderDefinition) *cobra.Command {
 		Aliases: def.Aliases,
 	}
 
-	// Always create subcommands for asset types for consistent CLI structure
-	// e.g., "kspec scan azure subscription <id>" not "kspec scan azure <id>"
+	// Always create subcommands for asset types
 	for i := range def.AssetTypes {
 		at := &def.AssetTypes[i]
 		assetCmd := createAssetCommand(def, at)
 		cmd.AddCommand(assetCmd)
+	}
+
+	// For single-asset providers, also allow direct execution without subcommand
+	// e.g., "kspec scan host julian.pro" instead of "kspec scan network host julian.pro"
+	if len(def.AssetTypes) == 1 {
+		at := def.AssetTypes[0]
+		cmd.Use = buildAssetUsage(def.Name, &at)
+		cmd.Args = buildArgsValidator(&at)
+		cmd.RunE = func(cmd *cobra.Command, args []string) error {
+			return runAssetScan(cmd, def, &at, args)
+		}
+		cmd.SilenceUsage = true
+		cmd.SilenceErrors = true
+
+		// Register flags for direct execution
+		registerCommonFlags(cmd)
+		registry.RegisterFlags(cmd, def)
 	}
 
 	return cmd
