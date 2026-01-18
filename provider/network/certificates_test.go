@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/kopexa-grc/kspec/core"
+	"github.com/kopexa-grc/kspec/provider/network/resources"
 )
 
 func TestCertificatesFetch(t *testing.T) {
@@ -52,7 +53,7 @@ func TestCertificatesFetch(t *testing.T) {
 	addr := listener.Addr().String()
 
 	// 3. Fetch
-	r := &CertificatesResource{}
+	r := resources.NewCertificate()
 	// asset needs domain (hostname) and target (ip:port)
 	// For testing, we can use "localhost" or specific IP?
 	// Our Fetch logic uses "domain" for SNI and "target" for connection if specified.
@@ -65,21 +66,21 @@ func TestCertificatesFetch(t *testing.T) {
 		},
 	}
 
-	resources, err := r.Fetch(context.Background(), asset)
+	res, err := r.Fetch(context.Background(), asset)
 	if err != nil {
 		t.Fatalf("Fetch failed: %v", err)
 	}
 
-	if len(resources) == 0 {
+	if len(res) == 0 {
 		t.Fatal("Expected at least one resource (the certificate)")
 	}
 
-	res := resources[0]
-	if res["isCA"] != true {
+	result := res[0]
+	if result["isCA"] != true {
 		// Our generator makes it a CA
 		t.Error("Expected isCA to be true")
 	}
-	if sub, ok := res["subject"].(map[string]interface{}); ok {
+	if sub, ok := result["subject"].(map[string]interface{}); ok {
 		if sub["commonName"] != "Test Cert" {
 			t.Errorf("Expected CommonName 'Test Cert', got %v", sub["commonName"])
 		}

@@ -1,0 +1,101 @@
+// Copyright (c) Kopexa GmbH
+// SPDX-License-Identifier: Elastic-2.0
+
+package resources
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/sql/armsql"
+
+	"github.com/kopexa-grc/kspec/core"
+)
+
+// SqlDatabase represents individual SQL databases (sub-resource of SQL Server).
+type SqlDatabase struct {
+	credential     azcore.TokenCredential
+	subscriptionID string
+	serverName     string
+	resourceGroup  string
+}
+
+// NewSqlDatabase creates a new SqlDatabase resource scanner.
+func NewSqlDatabase(credential azcore.TokenCredential, subscriptionID string) *SqlDatabase {
+	return &SqlDatabase{
+		credential:     credential,
+		subscriptionID: subscriptionID,
+	}
+}
+
+// Name returns the resource type name.
+func (r *SqlDatabase) Name() string {
+	return "azure_sql_database"
+}
+
+// Fetch retrieves SQL databases from Azure.
+func (r *SqlDatabase) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
+	if r.subscriptionID == "" {
+		return nil, fmt.Errorf("subscription_id is required")
+	}
+	if r.resourceGroup == "" || r.serverName == "" {
+		return []core.Resource{}, nil // No server context
+	}
+
+	// Create SQL databases client
+	client, err := armsql.NewDatabasesClient(r.subscriptionID, r.credential, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create SQL databases client: %w", err)
+	}
+
+	var resources []core.Resource
+
+	// List all databases in this server
+	pager := client.NewListByServerPager(r.resourceGroup, r.serverName, nil)
+	for pager.More() {
+		page, err := pager.NextPage(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to list SQL databases: %w", err)
+		}
+
+		for _, db := range page.Value {
+			// Convert to map[string]interface{}
+			data, err := json.Marshal(db)
+			if err != nil {
+				continue
+			}
+
+			var resourceMap map[string]interface{}
+			if err := json.Unmarshal(data, &resourceMap); err != nil {
+				continue
+			}
+
+			// Add server context
+			resourceMap["serverName"] = r.serverName
+			resourceMap["resourceGroup"] = r.resourceGroup
+
+			// Fetch TDE (Transparent Data Encryption) status
+			if db.Name != nil {
+				tdeClient, err := armsql.NewTransparentDataEncryptionsClient(r.subscriptionID, r.credential, nil)
+				if err == nil {
+					tde, err := tdeClient.Get(ctx, r.resourceGroup, r.serverName, *db.Name, armsql.TransparentDataEncryptionNameCurrent, nil)
+					if err == nil {
+						tdeData, marshalErr := json.Marshal(tde)
+						if marshalErr == nil {
+							var tdeMap map[string]interface{}
+							if unmarshalErr := json.Unmarshal(tdeData, &tdeMap); unmarshalErr == nil {
+								resourceMap["transparentDataEncryption"] = tdeMap
+							}
+						}
+					}
+				}
+			}
+
+			resources = append(resources, resourceMap)
+		}
+	}
+
+	return resources, nil
+}

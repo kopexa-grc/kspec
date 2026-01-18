@@ -1,5 +1,5 @@
 // Copyright (c) Kopexa GmbH
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Elastic-2.0
 
 package cloudflare
 
@@ -72,5 +72,8 @@ func init() {
 		Factory: func() core.Provider {
 			return NewProvider()
 		},
+		// Cloudflare SDK has built-in rate limiting with automatic backoff,
+		// so no external rate limiting is needed.
+		RateLimitConfig: nil,
 	})
 }

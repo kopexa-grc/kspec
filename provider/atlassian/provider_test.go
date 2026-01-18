@@ -1,3 +1,6 @@
+// Copyright (c) Kopexa GmbH
+// SPDX-License-Identifier: Elastic-2.0
+
 package atlassian
 
 import (
@@ -6,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/kopexa-grc/kspec/core"
+	"github.com/kopexa-grc/kspec/provider/atlassian/resources"
 )
 
 func TestProvider_Name(t *testing.T) {
@@ -124,16 +128,18 @@ func TestDiscoverCloudID_UnreachableHost(t *testing.T) {
 // basic error handling.
 
 func TestConnection_Resources(t *testing.T) {
-	conn := &Connection{
-		jiraClient:       nil,
-		confluenceClient: nil,
-		adminClient:      nil,
-		site:             "test.atlassian.net",
-		cloudID:          "test-cloud-id",
-		orgID:            "test-org-id",
+	// Create a client with nil underlying clients for testing
+	client := &Client{
+		jira:       nil,
+		confluence: nil,
+		admin:      nil,
+		site:       "test.atlassian.net",
+		cloudID:    "test-cloud-id",
+		orgID:      "test-org-id",
 	}
+	conn := &Connection{client: client}
 
-	resources := conn.Resources()
+	resourceList := conn.Resources()
 
 	expectedNames := []string{
 		"atlassian_jira_project",
@@ -150,12 +156,12 @@ func TestConnection_Resources(t *testing.T) {
 		"atlassian_scim_group",
 	}
 
-	if len(resources) != len(expectedNames) {
-		t.Errorf("Resources() returned %d resources, want %d", len(resources), len(expectedNames))
+	if len(resourceList) != len(expectedNames) {
+		t.Errorf("Resources() returned %d resources, want %d", len(resourceList), len(expectedNames))
 	}
 
 	nameMap := make(map[string]bool)
-	for _, r := range resources {
+	for _, r := range resourceList {
 		nameMap[r.Name()] = true
 	}
 
@@ -167,113 +173,113 @@ func TestConnection_Resources(t *testing.T) {
 }
 
 // Resource name tests
-func TestJiraProjectResource_Name(t *testing.T) {
-	r := &JiraProjectResource{}
+func TestJiraProject_Name(t *testing.T) {
+	r := resources.NewJiraProject(nil)
 	if got := r.Name(); got != "atlassian_jira_project" {
 		t.Errorf("Name() = %v, want atlassian_jira_project", got)
 	}
 }
 
-func TestJiraPermissionSchemeResource_Name(t *testing.T) {
-	r := &JiraPermissionSchemeResource{}
+func TestJiraPermissionScheme_Name(t *testing.T) {
+	r := resources.NewJiraPermissionScheme(nil)
 	if got := r.Name(); got != "atlassian_jira_permission_scheme" {
 		t.Errorf("Name() = %v, want atlassian_jira_permission_scheme", got)
 	}
 }
 
-func TestJiraSecuritySchemeResource_Name(t *testing.T) {
-	r := &JiraSecuritySchemeResource{}
+func TestJiraSecurityScheme_Name(t *testing.T) {
+	r := resources.NewJiraSecurityScheme(nil)
 	if got := r.Name(); got != "atlassian_jira_security_scheme" {
 		t.Errorf("Name() = %v, want atlassian_jira_security_scheme", got)
 	}
 }
 
-func TestJiraUserResource_Name(t *testing.T) {
-	r := &JiraUserResource{}
+func TestJiraUser_Name(t *testing.T) {
+	r := resources.NewJiraUser(nil)
 	if got := r.Name(); got != "atlassian_jira_user" {
 		t.Errorf("Name() = %v, want atlassian_jira_user", got)
 	}
 }
 
-func TestConfluenceSpaceResource_Name(t *testing.T) {
-	r := &ConfluenceSpaceResource{}
+func TestConfluenceSpace_Name(t *testing.T) {
+	r := resources.NewConfluenceSpace(nil)
 	if got := r.Name(); got != "atlassian_confluence_space" {
 		t.Errorf("Name() = %v, want atlassian_confluence_space", got)
 	}
 }
 
-func TestConfluencePageResource_Name(t *testing.T) {
-	r := &ConfluencePageResource{}
+func TestConfluencePage_Name(t *testing.T) {
+	r := resources.NewConfluencePage(nil)
 	if got := r.Name(); got != "atlassian_confluence_page" {
 		t.Errorf("Name() = %v, want atlassian_confluence_page", got)
 	}
 }
 
-func TestAdminOrganizationResource_Name(t *testing.T) {
-	r := &AdminOrganizationResource{}
+func TestAdminOrganization_Name(t *testing.T) {
+	r := resources.NewAdminOrganization(nil, "")
 	if got := r.Name(); got != "atlassian_organization" {
 		t.Errorf("Name() = %v, want atlassian_organization", got)
 	}
 }
 
-func TestAdminUserResource_Name(t *testing.T) {
-	r := &AdminUserResource{}
+func TestAdminUser_Name(t *testing.T) {
+	r := resources.NewAdminUser(nil, "")
 	if got := r.Name(); got != "atlassian_admin_user" {
 		t.Errorf("Name() = %v, want atlassian_admin_user", got)
 	}
 }
 
-func TestAdminGroupResource_Name(t *testing.T) {
-	r := &AdminGroupResource{}
+func TestAdminGroup_Name(t *testing.T) {
+	r := resources.NewAdminGroup(nil, "")
 	if got := r.Name(); got != "atlassian_admin_group" {
 		t.Errorf("Name() = %v, want atlassian_admin_group", got)
 	}
 }
 
-func TestAdminPolicyResource_Name(t *testing.T) {
-	r := &AdminPolicyResource{}
+func TestAdminPolicy_Name(t *testing.T) {
+	r := resources.NewAdminPolicy(nil, "")
 	if got := r.Name(); got != "atlassian_auth_policy" {
 		t.Errorf("Name() = %v, want atlassian_auth_policy", got)
 	}
 }
 
-func TestSCIMUserResource_Name(t *testing.T) {
-	r := &SCIMUserResource{}
+func TestSCIMUser_Name(t *testing.T) {
+	r := resources.NewSCIMUser(nil, "")
 	if got := r.Name(); got != "atlassian_scim_user" {
 		t.Errorf("Name() = %v, want atlassian_scim_user", got)
 	}
 }
 
-func TestSCIMGroupResource_Name(t *testing.T) {
-	r := &SCIMGroupResource{}
+func TestSCIMGroup_Name(t *testing.T) {
+	r := resources.NewSCIMGroup(nil, "")
 	if got := r.Name(); got != "atlassian_scim_group" {
 		t.Errorf("Name() = %v, want atlassian_scim_group", got)
 	}
 }
 
-// JiraSecuritySchemeResource returns nil (placeholder)
-func TestJiraSecuritySchemeResource_Fetch(t *testing.T) {
-	r := &JiraSecuritySchemeResource{}
-	resources, err := r.Fetch(context.Background(), core.Asset{})
+// JiraSecurityScheme returns nil (placeholder)
+func TestJiraSecurityScheme_Fetch(t *testing.T) {
+	r := resources.NewJiraSecurityScheme(nil)
+	resourceList, err := r.Fetch(context.Background(), core.Asset{})
 
 	if err != nil {
 		t.Errorf("Fetch() unexpected error = %v", err)
 	}
-	if resources != nil {
-		t.Errorf("Fetch() expected nil (placeholder), got %v", resources)
+	if resourceList != nil {
+		t.Errorf("Fetch() expected nil (placeholder), got %v", resourceList)
 	}
 }
 
-// AdminGroupResource returns nil (placeholder)
-func TestAdminGroupResource_Fetch(t *testing.T) {
-	r := &AdminGroupResource{}
-	resources, err := r.Fetch(context.Background(), core.Asset{})
+// AdminGroup returns nil (placeholder)
+func TestAdminGroup_Fetch(t *testing.T) {
+	r := resources.NewAdminGroup(nil, "")
+	resourceList, err := r.Fetch(context.Background(), core.Asset{})
 
 	if err != nil {
 		t.Errorf("Fetch() unexpected error = %v", err)
 	}
-	if resources != nil {
-		t.Errorf("Fetch() expected nil (placeholder), got %v", resources)
+	if resourceList != nil {
+		t.Errorf("Fetch() expected nil (placeholder), got %v", resourceList)
 	}
 }
 

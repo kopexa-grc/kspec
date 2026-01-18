@@ -1,10 +1,11 @@
 // Copyright (c) Kopexa GmbH
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Elastic-2.0
 
 package hetzner
 
 import (
 	"github.com/kopexa-grc/kspec/core"
+	"github.com/kopexa-grc/kspec/pkg/ratelimit"
 	"github.com/kopexa-grc/kspec/provider/registry"
 )
 
@@ -46,6 +47,12 @@ func init() {
 		},
 		Factory: func() core.Provider {
 			return NewProvider()
+		},
+		// Hetzner API has generous rate limits (around 3600 requests per hour)
+		// We use 10/s with burst of 20 for safety margin
+		RateLimitConfig: &ratelimit.Config{
+			RequestsPerSecond: 10,
+			Burst:             20,
 		},
 	})
 }

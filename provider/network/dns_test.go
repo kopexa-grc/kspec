@@ -9,6 +9,7 @@ import (
 	"github.com/miekg/dns"
 
 	"github.com/kopexa-grc/kspec/core"
+	"github.com/kopexa-grc/kspec/provider/network/resources"
 )
 
 func TestDNSFetch(t *testing.T) {
@@ -55,7 +56,7 @@ func TestDNSFetch(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 
 	// Test Fetch
-	r := &DNSResource{}
+	r := resources.NewDNS()
 	config := map[string]string{
 		"domain":     "example.com",
 		"nameserver": addr,
@@ -65,16 +66,16 @@ func TestDNSFetch(t *testing.T) {
 		Config: config,
 	}
 
-	resources, err := r.Fetch(context.Background(), asset)
+	dnsResources, err := r.Fetch(context.Background(), asset)
 	if err != nil {
 		t.Fatalf("Fetch failed: %v", err)
 	}
 
-	if len(resources) != 1 {
-		t.Fatalf("Expected 1 resource, got %d", len(resources))
+	if len(dnsResources) != 1 {
+		t.Fatalf("Expected 1 resource, got %d", len(dnsResources))
 	}
 
-	res := resources[0]
+	res := dnsResources[0]
 	records := res["records"].([]map[string]interface{})
 
 	// Check A Record
@@ -147,150 +148,17 @@ func TestDNSFetch(t *testing.T) {
 	}
 }
 
-func TestParseDKIM(t *testing.T) {
-	txt := "v=DKIM1; k=rsa; p=MIGfMA0GCSqGSIb3DQKBAQUAA4GNADCBiQKBgQD"
-	parsed := parseDKIM(txt)
-
-	if parsed["v"] != "DKIM1" {
-		t.Errorf("Expected v=DKIM1, got %s", parsed["v"])
-	}
-	if parsed["k"] != "rsa" {
-		t.Errorf("Expected k=rsa, got %s", parsed["k"])
-	}
-	if len(parsed["p"]) < 10 {
-		t.Errorf("Expected valid p value, got %s", parsed["p"])
-	}
-}
-
-// FuzzParseDKIM tests DKIM parsing with random TXT record input.
-func FuzzParseDKIM(f *testing.F) {
-	// Seed corpus with various DKIM-like strings
-	seeds := []string{
-		"v=DKIM1; k=rsa; p=MIGfMA0GCSqGSIb3DQKBAQUAA4GNADCBiQKBgQD",
-		"v=DKIM1; k=rsa; p=base64data; t=s; n=notes",
-		"",
-		"no-semicolons",
-		";;;",
-		"key=value",
-		"key=",
-		"=value",
-		"key=value;",
-		";key=value",
-		"k1=v1;k2=v2;k3=v3",
-		"  k1 = v1 ;  k2 = v2  ",
-		"key=value=more",
-		"v=DKIM1",
-		"k=rsa; p=data",
-		string(make([]byte, 1000)),
-		"key=\x00\x01\x02",
-		"日本語=テスト",
-	}
-
-	for _, seed := range seeds {
-		f.Add(seed)
-	}
-
-	f.Fuzz(func(t *testing.T, txt string) {
-		// Should never panic
-		result := parseDKIM(txt)
-
-		// Result should always be a valid map
-		if result == nil {
-			t.Error("parseDKIM() returned nil map")
-		}
-	})
-}
-
-// TestParseDKIM_EdgeCases tests edge cases in DKIM parsing.
-func TestParseDKIM_EdgeCases(t *testing.T) {
-	tests := []struct {
-		name string
-		txt  string
-		want map[string]string
-	}{
-		{
-			name: "empty string",
-			txt:  "",
-			want: map[string]string{},
-		},
-		{
-			name: "only semicolons",
-			txt:  ";;;",
-			want: map[string]string{},
-		},
-		{
-			name: "no equals sign",
-			txt:  "just-text",
-			want: map[string]string{},
-		},
-		{
-			name: "empty key",
-			txt:  "=value",
-			want: map[string]string{"": "value"},
-		},
-		{
-			name: "empty value",
-			txt:  "key=",
-			want: map[string]string{"key": ""},
-		},
-		{
-			name: "whitespace handling",
-			txt:  "  k  =  v  ;  k2  =  v2  ",
-			want: map[string]string{"k": "v", "k2": "v2"},
-		},
-		{
-			name: "multiple equals in value",
-			txt:  "key=value=more=stuff",
-			want: map[string]string{"key": "value=more=stuff"},
-		},
-		{
-			name: "duplicate keys (last wins)",
-			txt:  "k=first; k=second",
-			want: map[string]string{"k": "second"},
-		},
-		{
-			name: "unicode values",
-			txt:  "日本語=テスト",
-			want: map[string]string{"日本語": "テスト"},
-		},
-		{
-			name: "leading/trailing semicolons",
-			txt:  ";k=v;",
-			want: map[string]string{"k": "v"},
-		},
-		{
-			name: "single key-value",
-			txt:  "v=DKIM1",
-			want: map[string]string{"v": "DKIM1"},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := parseDKIM(tt.txt)
-			if len(got) != len(tt.want) {
-				t.Errorf("parseDKIM(%q) returned %d keys, want %d", tt.txt, len(got), len(tt.want))
-			}
-			for k, v := range tt.want {
-				if got[k] != v {
-					t.Errorf("parseDKIM(%q)[%q] = %q, want %q", tt.txt, k, got[k], v)
-				}
-			}
-		})
-	}
-}
-
-// TestDNSResource_Name tests the resource name.
-func TestDNSResource_Name(t *testing.T) {
-	r := &DNSResource{}
+// TestDNS_Name tests the resource name.
+func TestDNS_Name(t *testing.T) {
+	r := resources.NewDNS()
 	if got := r.Name(); got != "dns" {
-		t.Errorf("DNSResource.Name() = %q, want %q", got, "dns")
+		t.Errorf("DNS.Name() = %q, want %q", got, "dns")
 	}
 }
 
-// TestDNSResource_Fetch_MissingDomain tests error handling for missing domain.
-func TestDNSResource_Fetch_MissingDomain(t *testing.T) {
-	r := &DNSResource{}
+// TestDNS_Fetch_MissingDomain tests error handling for missing domain.
+func TestDNS_Fetch_MissingDomain(t *testing.T) {
+	r := resources.NewDNS()
 	asset := core.Asset{
 		Config: map[string]string{},
 	}

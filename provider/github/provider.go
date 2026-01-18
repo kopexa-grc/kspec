@@ -1,3 +1,6 @@
+// Copyright (c) Kopexa GmbH
+// SPDX-License-Identifier: Elastic-2.0
+
 // Package github provides GitHub repository and organization scanning
 // capabilities for security policy evaluation.
 package github
@@ -5,12 +8,10 @@ package github
 import (
 	"context"
 	"fmt"
-	"net/http"
-
-	"github.com/google/go-github/v62/github"
-	"golang.org/x/oauth2"
 
 	"github.com/kopexa-grc/kspec/core"
+	"github.com/kopexa-grc/kspec/provider/github/resources"
+	"github.com/kopexa-grc/kspec/provider/registry"
 )
 
 // Provider implements the core.Provider interface for GitHub.
@@ -28,55 +29,66 @@ func (p *Provider) Name() string {
 
 // Connect establishes a connection to GitHub APIs.
 func (p *Provider) Connect(ctx context.Context, config map[string]string) (core.Connection, error) {
-	// Try to parse credentials from config
-	var token string
+	// Resolve token from config
+	token, err := resolveToken(config)
+	if err != nil {
+		return nil, err
+	}
 
-	// Attempt to parse credential
+	// Get rate limiter from provider definition
+	def, ok := registry.Get("github")
+	if !ok {
+		return nil, fmt.Errorf("github provider not registered")
+	}
+
+	// Create client with rate limiting
+	client := NewClient(ctx, ClientConfig{
+		Token:   token,
+		Limiter: def.NewRateLimiter(),
+	})
+
+	return &Connection{client: client}, nil
+}
+
+// resolveToken extracts the token from config using various methods.
+func resolveToken(config map[string]string) (string, error) {
+	// Try to parse credentials from config
 	cred, err := core.ParseCredentialFromConfig(config)
 	if err != nil {
 		// Fall back to legacy token support if credential parsing fails
-		token = config["token"]
-	} else {
-		// Resolve token based on credential type
-		switch cred.Type { //nolint:exhaustive // Only specific credential types are supported for GitHub
-		case core.CredentialTypeBearer:
-			token = cred.Secret
-		case core.CredentialTypeEnv:
-			token, err = cred.ResolveSecret()
-			if err != nil {
-				return nil, fmt.Errorf("failed to resolve credential from environment: %w", err)
-			}
-		case core.CredentialTypePassword:
-			// For GitHub, password auth typically means Personal Access Token in the secret field
-			token = cred.Secret
-		default:
-			return nil, fmt.Errorf("unsupported credential type for GitHub provider: %s", cred.Type)
-		}
+		return config["token"], nil //nolint:nilerr // Intentional fallback to legacy config
 	}
 
-	var tc *http.Client
-	if token != "" {
-		ts := oauth2.StaticTokenSource(
-			&oauth2.Token{AccessToken: token},
-		)
-		tc = oauth2.NewClient(ctx, ts)
+	// Resolve token based on credential type
+	switch cred.Type { //nolint:exhaustive // Only specific credential types are supported for GitHub
+	case core.CredentialTypeBearer:
+		return cred.Secret, nil
+	case core.CredentialTypeEnv:
+		return cred.ResolveSecret()
+	case core.CredentialTypePassword:
+		return cred.Secret, nil
+	default:
+		return "", fmt.Errorf("unsupported credential type for GitHub provider: %s", cred.Type)
 	}
-
-	client := github.NewClient(tc)
-	return &Connection{client: client}, nil
 }
 
 // Connection represents an active connection to GitHub APIs.
 type Connection struct {
-	client *github.Client
+	client *Client
 }
 
 // Resources returns all available GitHub resources.
 func (c *Connection) Resources() []core.ResourceSpec {
+	gh := c.client.GitHub()
 	return []core.ResourceSpec{
-		&RepoResource{client: c.client},
-		&TeamResource{client: c.client},
-		&OrganizationResource{client: c.client},
-		&BranchResource{client: c.client},
+		resources.NewOrganization(gh),
+		resources.NewRepository(gh),
+		resources.NewTeam(gh),
+		resources.NewBranch(gh),
 	}
+}
+
+// Client returns the underlying GitHub client for direct access if needed.
+func (c *Connection) Client() *Client {
+	return c.client
 }

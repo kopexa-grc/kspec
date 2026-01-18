@@ -1,5 +1,5 @@
 // Copyright (c) Kopexa GmbH
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Elastic-2.0
 
 // Package registry provides a dynamic provider registration system.
 package registry
@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/kopexa-grc/kspec/core"
+	"github.com/kopexa-grc/kspec/pkg/ratelimit"
 )
 
 // ProviderDefinition describes a provider and its configuration requirements.
@@ -33,6 +34,10 @@ type ProviderDefinition struct {
 	// ConfigMapping maps flag names to config keys if they differ.
 	// If not set, flag names are used directly as config keys.
 	ConfigMapping map[string]string
+
+	// RateLimitConfig defines provider-specific rate limiting.
+	// If nil, the provider's SDK handles rate limiting internally.
+	RateLimitConfig *ratelimit.Config
 }
 
 // FlagDefinition describes a CLI flag for a provider.
@@ -158,4 +163,18 @@ func (p *ProviderDefinition) GetScannerKey(assetTypeName string) string {
 		return p.Name
 	}
 	return p.Name + "-" + assetTypeName
+}
+
+// NewRateLimiter creates a rate limiter for this provider.
+// Returns nil if the provider handles rate limiting internally (RateLimitConfig is nil).
+func (p *ProviderDefinition) NewRateLimiter() *ratelimit.Limiter {
+	if p.RateLimitConfig == nil {
+		return nil
+	}
+	return ratelimit.New(p.Name, *p.RateLimitConfig)
+}
+
+// NeedsRateLimiting returns true if the provider requires external rate limiting.
+func (p *ProviderDefinition) NeedsRateLimiting() bool {
+	return p.RateLimitConfig != nil
 }

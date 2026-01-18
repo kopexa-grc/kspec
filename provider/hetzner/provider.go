@@ -1,3 +1,6 @@
+// Copyright (c) Kopexa GmbH
+// SPDX-License-Identifier: Elastic-2.0
+
 package hetzner
 
 import (
@@ -5,9 +8,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/hetznercloud/hcloud-go/v2/hcloud"
-
 	"github.com/kopexa-grc/kspec/core"
+	"github.com/kopexa-grc/kspec/provider/hetzner/resources"
+	"github.com/kopexa-grc/kspec/provider/registry"
 )
 
 // Provider implements the core.Provider interface for Hetzner Cloud.
@@ -47,11 +50,20 @@ func (p *Provider) Connect(ctx context.Context, config map[string]string) (core.
 		projectName = "default"
 	}
 
-	// Create Hetzner Cloud client
-	client := hcloud.NewClient(hcloud.WithToken(apiToken))
+	// Get rate limiter from provider definition
+	def, ok := registry.Get("hetzner")
+	if !ok {
+		return nil, fmt.Errorf("hetzner provider not registered")
+	}
+
+	// Create client with rate limiting
+	client := NewClient(ctx, ClientConfig{
+		Token:   apiToken,
+		Limiter: def.NewRateLimiter(),
+	})
 
 	// Verify connection by fetching locations
-	_, err := client.Location.All(ctx)
+	_, err := client.HCloud().Location.All(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("hetzner: failed to connect: %w", err)
 	}
@@ -64,31 +76,37 @@ func (p *Provider) Connect(ctx context.Context, config map[string]string) (core.
 
 // Connection represents an active connection to Hetzner Cloud.
 type Connection struct {
-	client      *hcloud.Client
+	client      *Client
 	projectName string
 }
 
 // Resources returns all available Hetzner Cloud resources.
 func (c *Connection) Resources() []core.ResourceSpec {
+	hc := c.client.HCloud()
 	return []core.ResourceSpec{
 		// Infrastructure
-		&LocationResource{client: c.client},
-		&DatacenterResource{client: c.client},
-		&ServerTypeResource{client: c.client},
-		&ISOResource{client: c.client},
+		resources.NewLocation(hc),
+		resources.NewDatacenter(hc),
+		resources.NewServerType(hc),
+		resources.NewISO(hc),
 		// Compute
-		&ServerResource{client: c.client},
+		resources.NewServer(hc),
 		// Storage
-		&VolumeResource{client: c.client},
+		resources.NewVolume(hc),
 		// Networking
-		&NetworkResource{client: c.client},
-		&FloatingIPResource{client: c.client},
-		&PrimaryIPResource{client: c.client},
+		resources.NewNetwork(hc),
+		resources.NewFloatingIP(hc),
+		resources.NewPrimaryIP(hc),
 		// Security
-		&FirewallResource{client: c.client},
+		resources.NewFirewall(hc),
 		// Images
-		&ImageResource{client: c.client},
+		resources.NewImage(hc),
 		// SSH Keys
-		&SSHKeyResource{client: c.client},
+		resources.NewSSHKey(hc),
 	}
+}
+
+// Client returns the underlying Hetzner client for direct access if needed.
+func (c *Connection) Client() *Client {
+	return c.client
 }

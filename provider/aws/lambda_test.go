@@ -1,5 +1,5 @@
 // Copyright (c) Kopexa GmbH
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Elastic-2.0
 
 package aws
 
@@ -13,10 +13,11 @@ import (
 	"go.uber.org/mock/gomock"
 
 	"github.com/kopexa-grc/kspec/core"
+	"github.com/kopexa-grc/kspec/provider/aws/resources"
 )
 
 func TestLambdaFunctionResource_Name(t *testing.T) {
-	r := &LambdaFunctionResource{}
+	r := resources.NewLambdaFunction(nil, nil)
 	if got := r.Name(); got != "aws_lambda_function" {
 		t.Errorf("Name() = %v, want aws_lambda_function", got)
 	}
@@ -30,17 +31,18 @@ func TestLambdaFunctionResource_Fetch_EmptyFunctions(t *testing.T) {
 		ListFunctions(gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(&lambda.ListFunctionsOutput{Functions: []types.FunctionConfiguration{}}, nil)
 
-	r := &LambdaFunctionResource{
-		client: mock,
-		conn:   &Connection{regions: []string{"us-east-1"}},
+	factory := func(region string) resources.LambdaClient {
+		return mock
 	}
-	resources, err := r.Fetch(context.Background(), core.Asset{})
+
+	r := resources.NewLambdaFunction(factory, []string{"us-east-1"})
+	rs, err := r.Fetch(context.Background(), core.Asset{})
 
 	if err != nil {
 		t.Fatalf("Fetch() error = %v", err)
 	}
-	if len(resources) != 0 {
-		t.Errorf("Fetch() returned %d resources, want 0", len(resources))
+	if len(rs) != 0 {
+		t.Errorf("Fetch() returned %d resources, want 0", len(rs))
 	}
 }
 
@@ -93,20 +95,21 @@ func TestLambdaFunctionResource_Fetch_SecureFunction(t *testing.T) {
 		GetFunctionUrlConfig(gomock.Any(), gomock.Any()).
 		Return(nil, &types.ResourceNotFoundException{})
 
-	r := &LambdaFunctionResource{
-		client: mock,
-		conn:   &Connection{regions: []string{"us-east-1"}},
+	factory := func(region string) resources.LambdaClient {
+		return mock
 	}
-	resources, err := r.Fetch(context.Background(), core.Asset{})
+
+	r := resources.NewLambdaFunction(factory, []string{"us-east-1"})
+	rs, err := r.Fetch(context.Background(), core.Asset{})
 
 	if err != nil {
 		t.Fatalf("Fetch() error = %v", err)
 	}
-	if len(resources) != 1 {
-		t.Fatalf("Fetch() returned %d resources, want 1", len(resources))
+	if len(rs) != 1 {
+		t.Fatalf("Fetch() returned %d resources, want 1", len(rs))
 	}
 
-	res := resources[0]
+	res := rs[0]
 	if res["name"] != fnName {
 		t.Errorf("name = %v, want %v", res["name"], fnName)
 	}
@@ -148,17 +151,18 @@ func TestLambdaFunctionResource_Fetch_DeprecatedRuntime(t *testing.T) {
 	mock.EXPECT().GetPolicy(gomock.Any(), gomock.Any()).Return(nil, &types.ResourceNotFoundException{})
 	mock.EXPECT().GetFunctionUrlConfig(gomock.Any(), gomock.Any()).Return(nil, &types.ResourceNotFoundException{})
 
-	r := &LambdaFunctionResource{
-		client: mock,
-		conn:   &Connection{regions: []string{"us-east-1"}},
+	factory := func(region string) resources.LambdaClient {
+		return mock
 	}
-	resources, err := r.Fetch(context.Background(), core.Asset{})
+
+	r := resources.NewLambdaFunction(factory, []string{"us-east-1"})
+	rs, err := r.Fetch(context.Background(), core.Asset{})
 
 	if err != nil {
 		t.Fatalf("Fetch() error = %v", err)
 	}
 
-	res := resources[0]
+	res := rs[0]
 	if res["has_deprecated_runtime"] != true {
 		t.Errorf("has_deprecated_runtime = %v, want true for python2.7", res["has_deprecated_runtime"])
 	}
@@ -194,17 +198,18 @@ func TestLambdaFunctionResource_Fetch_PublicFunctionURL(t *testing.T) {
 			AuthType:    types.FunctionUrlAuthTypeNone, // Public!
 		}, nil)
 
-	r := &LambdaFunctionResource{
-		client: mock,
-		conn:   &Connection{regions: []string{"us-east-1"}},
+	factory := func(region string) resources.LambdaClient {
+		return mock
 	}
-	resources, err := r.Fetch(context.Background(), core.Asset{})
+
+	r := resources.NewLambdaFunction(factory, []string{"us-east-1"})
+	rs, err := r.Fetch(context.Background(), core.Asset{})
 
 	if err != nil {
 		t.Fatalf("Fetch() error = %v", err)
 	}
 
-	res := resources[0]
+	res := rs[0]
 	if res["has_function_url"] != true {
 		t.Errorf("has_function_url = %v, want true", res["has_function_url"])
 	}
@@ -232,17 +237,18 @@ func TestLambdaFunctionResource_Fetch_ContainerImage(t *testing.T) {
 	mock.EXPECT().GetPolicy(gomock.Any(), gomock.Any()).Return(nil, &types.ResourceNotFoundException{})
 	mock.EXPECT().GetFunctionUrlConfig(gomock.Any(), gomock.Any()).Return(nil, &types.ResourceNotFoundException{})
 
-	r := &LambdaFunctionResource{
-		client: mock,
-		conn:   &Connection{regions: []string{"us-east-1"}},
+	factory := func(region string) resources.LambdaClient {
+		return mock
 	}
-	resources, err := r.Fetch(context.Background(), core.Asset{})
+
+	r := resources.NewLambdaFunction(factory, []string{"us-east-1"})
+	rs, err := r.Fetch(context.Background(), core.Asset{})
 
 	if err != nil {
 		t.Fatalf("Fetch() error = %v", err)
 	}
 
-	res := resources[0]
+	res := rs[0]
 	if res["is_container"] != true {
 		t.Errorf("is_container = %v, want true", res["is_container"])
 	}
@@ -275,17 +281,18 @@ func TestLambdaFunctionResource_Fetch_WithResourcePolicy(t *testing.T) {
 
 	mock.EXPECT().GetFunctionUrlConfig(gomock.Any(), gomock.Any()).Return(nil, &types.ResourceNotFoundException{})
 
-	r := &LambdaFunctionResource{
-		client: mock,
-		conn:   &Connection{regions: []string{"us-east-1"}},
+	factory := func(region string) resources.LambdaClient {
+		return mock
 	}
-	resources, err := r.Fetch(context.Background(), core.Asset{})
+
+	r := resources.NewLambdaFunction(factory, []string{"us-east-1"})
+	rs, err := r.Fetch(context.Background(), core.Asset{})
 
 	if err != nil {
 		t.Fatalf("Fetch() error = %v", err)
 	}
 
-	res := resources[0]
+	res := rs[0]
 	if res["has_resource_policy"] != true {
 		t.Errorf("has_resource_policy = %v, want true", res["has_resource_policy"])
 	}

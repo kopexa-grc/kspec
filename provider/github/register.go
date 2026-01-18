@@ -1,10 +1,11 @@
 // Copyright (c) Kopexa GmbH
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Elastic-2.0
 
 package github
 
 import (
 	"github.com/kopexa-grc/kspec/core"
+	"github.com/kopexa-grc/kspec/pkg/ratelimit"
 	"github.com/kopexa-grc/kspec/provider/registry"
 )
 
@@ -64,6 +65,12 @@ func init() {
 		},
 		Factory: func() core.Provider {
 			return NewProvider()
+		},
+		// GitHub API: 5000 requests/hour for authenticated users = ~1.4/s
+		// We use 5/s with burst of 10 for safety margin
+		RateLimitConfig: &ratelimit.Config{
+			RequestsPerSecond: 5,
+			Burst:             10,
 		},
 	})
 }

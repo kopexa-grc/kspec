@@ -15,8 +15,22 @@ import (
 	"github.com/kopexa-grc/kspec/core"
 	"github.com/kopexa-grc/kspec/pkg/concurrency"
 	"github.com/kopexa-grc/kspec/pkg/ratelimit"
-	"github.com/kopexa-grc/kspec/provider"
+	"github.com/kopexa-grc/kspec/provider/registry"
 )
+
+// getRateLimiter returns the rate limiter for the provider from the registry.
+// Returns a NopLimiter if the provider doesn't need rate limiting or isn't found.
+func getRateLimiter(providerName string) *ratelimit.Limiter {
+	def, ok := registry.Get(providerName)
+	if !ok {
+		return ratelimit.NopLimiter()
+	}
+	limiter := def.NewRateLimiter()
+	if limiter == nil {
+		return ratelimit.NopLimiter()
+	}
+	return limiter
+}
 
 // discoveryResult holds the result of a single resource discovery.
 type discoveryResult struct {
@@ -56,8 +70,8 @@ func (s *Scanner) discoverConcurrent(ctx context.Context, tree *common.ResourceT
 	// Calculate optimal workers
 	workers := concurrency.DiscoveryWorkers(s.config.Concurrency, len(discoverers))
 
-	// Create rate limiter for the provider
-	limiter := provider.NewRateLimiter(s.config.ProviderName)
+	// Get rate limiter from provider registry
+	limiter := getRateLimiter(s.config.ProviderName)
 
 	// Use conc pool for parallel discovery
 	p := pool.NewWithResults[discoveryResult]().
@@ -113,8 +127,8 @@ func (s *Scanner) scanResourcesConcurrent(ctx context.Context, tree *common.Reso
 	// Calculate optimal workers for resource type fetching
 	workers := concurrency.FetchWorkers(s.config.Concurrency, len(resourceOrder))
 
-	// Create rate limiter for the provider
-	limiter := provider.NewRateLimiter(s.config.ProviderName)
+	// Get rate limiter from provider registry
+	limiter := getRateLimiter(s.config.ProviderName)
 
 	// Mutex for tree updates (tree is not thread-safe)
 	var treeMu sync.Mutex

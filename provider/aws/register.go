@@ -1,10 +1,11 @@
 // Copyright (c) Kopexa GmbH
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Elastic-2.0
 
 package aws
 
 import (
 	"github.com/kopexa-grc/kspec/core"
+	"github.com/kopexa-grc/kspec/pkg/ratelimit"
 	"github.com/kopexa-grc/kspec/provider/registry"
 )
 
@@ -70,6 +71,12 @@ func init() {
 			"session-token":     "session_token",
 			"role-arn":          "role_arn",
 			"external-id":       "external_id",
+		},
+		// AWS SDK v2 has built-in retry, but we add rate limiting for safety
+		// when making many API calls during scanning. Conservative limit for IAM.
+		RateLimitConfig: &ratelimit.Config{
+			RequestsPerSecond: 10,
+			Burst:             20,
 		},
 		Factory: func() core.Provider {
 			return NewProvider()

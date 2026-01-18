@@ -1,8 +1,8 @@
 # kspec Makefile
 # Run `make help` for available commands
 
-.PHONY: help build install clean test lint lint-fix fmt vet check \
-        run dev release snapshot hooks deps tidy schema
+.PHONY: help build install clean test test-fast test-integration test-all \
+        lint lint-fix fmt vet check run dev release snapshot hooks deps tidy schema
 
 # Build variables
 BINARY_NAME := kspec
@@ -66,9 +66,20 @@ schema: ## Generate JSON schema from Policy struct
 
 ##@ Testing
 
-test: ## Run tests
-	@echo "$(BLUE)Running tests...$(RESET)"
+test: ## Run unit tests
+	@echo "$(BLUE)Running unit tests...$(RESET)"
 	go test -v -race ./...
+
+test-fast: ## Run fast tests (mocked integration tests)
+	@echo "$(BLUE)Running fast tests...$(RESET)"
+	go test -v -tags=fast ./...
+
+test-integration: ## Run integration tests (container-based, slow)
+	@echo "$(BLUE)Running integration tests...$(RESET)"
+	go test -v -tags=integration ./...
+
+test-all: test test-fast ## Run all tests (unit + fast)
+	@echo "$(GREEN)All tests passed!$(RESET)"
 
 test-coverage: ## Run tests with coverage
 	@echo "$(BLUE)Running tests with coverage...$(RESET)"

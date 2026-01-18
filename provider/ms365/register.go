@@ -1,9 +1,13 @@
 // Copyright (c) Kopexa GmbH
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Elastic-2.0
 
 package ms365
 
-import "github.com/kopexa-grc/kspec/provider/registry"
+import (
+	"github.com/kopexa-grc/kspec/core"
+	"github.com/kopexa-grc/kspec/pkg/ratelimit"
+	"github.com/kopexa-grc/kspec/provider/registry"
+)
 
 func init() {
 	registry.Register(&registry.ProviderDefinition{
@@ -48,6 +52,16 @@ func init() {
 			"tenant-id":     "tenant_id",
 			"client-secret": "client_secret",
 		},
-		Factory: NewProvider,
+		Factory: func() core.Provider {
+			return NewProvider()
+		},
+		// Microsoft Graph API: throttling limits vary by endpoint
+		// Most endpoints: 10,000 requests per 10 minutes
+		// We use 10/s with burst of 20 for safety margin
+		// Graph SDK has built-in throttling handling, but rate limiting adds safety
+		RateLimitConfig: &ratelimit.Config{
+			RequestsPerSecond: 10,
+			Burst:             20,
+		},
 	})
 }

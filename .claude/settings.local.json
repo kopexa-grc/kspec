@@ -44,7 +44,22 @@
       "Bash(mockgen --version:*)",
       "Bash(go generate:*)",
       "Bash(git restore:*)",
-      "Bash(make:*)"
+      "Bash(make:*)",
+      "Bash(echo:*)",
+      "Bash(git rm:*)",
+      "Bash(gh pr create:*)",
+      "Bash(gh pr view:*)",
+      "Bash(gh api:*)",
+      "Bash(git reset:*)",
+      "Bash(gh pr edit:*)",
+      "Bash(gh pr checks:*)",
+      "Bash(gh run view:*)",
+      "Bash(gh pr merge:*)",
+      "Bash(for file in /Users/juliankoehn/workbox/kspec/policies/*.yml /Users/juliankoehn/workbox/kspec/policies/*.yaml)",
+      "Bash(done)",
+      "Bash(gh pr comment:*)",
+      "Bash(for dir in /Users/juliankoehn/workbox/kspec/provider/*/)",
+      "Bash(xargs:*)"
     ]
   }
 }

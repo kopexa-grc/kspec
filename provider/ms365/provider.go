@@ -1,3 +1,8 @@
+// Copyright (c) Kopexa GmbH
+// SPDX-License-Identifier: Elastic-2.0
+
+// Package ms365 provides Microsoft 365 (Microsoft Graph API) scanning
+// capabilities for security policy evaluation.
 package ms365
 
 import (
@@ -9,13 +14,15 @@ import (
 	msgraphsdk "github.com/microsoftgraph/msgraph-sdk-go"
 
 	"github.com/kopexa-grc/kspec/core"
+	"github.com/kopexa-grc/kspec/provider/ms365/resources"
+	"github.com/kopexa-grc/kspec/provider/registry"
 )
 
 // Provider implements the core.Provider interface for Microsoft 365.
 type Provider struct{}
 
 // NewProvider creates a new MS365 provider.
-func NewProvider() core.Provider {
+func NewProvider() *Provider {
 	return &Provider{}
 }
 
@@ -26,8 +33,7 @@ func (p *Provider) Name() string {
 
 // Connection represents an active connection to Microsoft 365 Graph API.
 type Connection struct {
-	client   *msgraphsdk.GraphServiceClient
-	tenantID string
+	client *Client
 }
 
 // Connect establishes a connection to Microsoft 365 Graph API.
@@ -55,59 +61,76 @@ func (p *Provider) Connect(ctx context.Context, config map[string]string) (core.
 	}
 
 	// Create Graph client
-	client, err := msgraphsdk.NewGraphServiceClientWithCredentials(credential, []string{"https://graph.microsoft.com/.default"})
+	graphClient, err := msgraphsdk.NewGraphServiceClientWithCredentials(credential, []string{"https://graph.microsoft.com/.default"})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create Graph client: %w", err)
 	}
 
+	// Get rate limiter from provider definition
+	def, ok := registry.Get("ms365")
+	if !ok {
+		return nil, fmt.Errorf("ms365 provider not registered")
+	}
+
+	// Create client with rate limiting
+	client := NewClient(ClientConfig{
+		Graph:   graphClient,
+		Limiter: def.NewRateLimiter(),
+	})
+
 	return &Connection{
-		client:   client,
-		tenantID: tenantID,
+		client: client,
 	}, nil
 }
 
 // Resources returns all available Microsoft 365 resources.
 func (c *Connection) Resources() []core.ResourceSpec {
+	graph := c.client.Graph()
 	return []core.ResourceSpec{
 		// Tenant and organization
-		&TenantResource{client: c.client},
+		resources.NewTenant(graph),
 
 		// Users and groups
-		&UserResource{client: c.client},
-		&GroupResource{client: c.client},
+		resources.NewUser(graph),
+		resources.NewGroup(graph),
 
 		// Applications and service principals
-		&ApplicationResource{client: c.client},
-		&ServicePrincipalResource{client: c.client},
+		resources.NewApplication(graph),
+		resources.NewServicePrincipal(graph),
 
 		// Devices
-		&DeviceResource{client: c.client},
-		&ManagedDeviceResource{client: c.client},
-		&DeviceConfigurationResource{client: c.client},
-		&DeviceCompliancePolicyResource{client: c.client},
+		resources.NewDevice(graph),
+		resources.NewManagedDevice(graph),
+		resources.NewDeviceConfiguration(graph),
+		resources.NewDeviceCompliancePolicy(graph),
 
 		// Domains
-		&DomainResource{client: c.client},
+		resources.NewDomain(graph),
 
 		// Identity and access
-		&ConditionalAccessPolicyResource{client: c.client},
-		&NamedLocationResource{client: c.client},
+		resources.NewConditionalAccessPolicy(graph),
+		resources.NewNamedLocation(graph),
 
 		// Directory roles
-		&DirectoryRoleResource{client: c.client},
+		resources.NewDirectoryRole(graph),
 
 		// Policies
-		&AuthorizationPolicyResource{client: c.client},
-		&AuthenticationMethodPolicyResource{client: c.client},
+		resources.NewAuthorizationPolicy(graph),
+		resources.NewAuthenticationMethodPolicy(graph),
 
 		// Security
-		&RiskyUserResource{client: c.client},
-		&SecureScoreResource{client: c.client},
+		resources.NewRiskyUser(graph),
+		resources.NewSecureScore(graph),
 
 		// Teams
-		&TeamResource{client: c.client},
+		resources.NewTeam(graph),
 
 		// Settings
-		&DirectorySettingResource{client: c.client},
+		resources.NewDirectorySetting(graph),
 	}
+}
+
+// Client returns the underlying MS365 client for direct access if needed.
+func (c *Connection) Client() *Client {
+	return c.client
 }

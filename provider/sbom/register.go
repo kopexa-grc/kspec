@@ -1,5 +1,5 @@
 // Copyright (c) Kopexa GmbH
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Elastic-2.0
 
 package sbom
 
@@ -61,5 +61,7 @@ func init() {
 		Factory: func() core.Provider {
 			return NewProvider()
 		},
+		// SBOM provider parses local files, no rate limiting needed
+		RateLimitConfig: nil,
 	})
 }

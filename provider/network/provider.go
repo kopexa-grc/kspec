@@ -1,3 +1,6 @@
+// Copyright (c) Kopexa GmbH
+// SPDX-License-Identifier: Elastic-2.0
+
 // Package network provides network-related scanning capabilities including
 // TLS certificates, HTTP security headers, and DNS configuration.
 package network
@@ -6,6 +9,7 @@ import (
 	"context"
 
 	"github.com/kopexa-grc/kspec/core"
+	"github.com/kopexa-grc/kspec/provider/network/resources"
 )
 
 // Provider implements a network-based provider for scanning remote hosts
@@ -35,9 +39,9 @@ type Connection struct{}
 // Resources returns the list of available resource types for network scanning.
 func (c *Connection) Resources() []core.ResourceSpec {
 	return []core.ResourceSpec{
-		&CertificatesResource{},
-		&DNSResource{},
-		&HTTPResource{},
-		&TLSResource{},
+		resources.NewCertificate(),
+		resources.NewDNS(),
+		resources.NewHTTP(),
+		resources.NewTLS(),
 	}
 }
