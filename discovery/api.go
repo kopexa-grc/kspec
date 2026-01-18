@@ -92,22 +92,24 @@ func QuickInventory(ctx context.Context, providerName string, config map[string]
 }
 
 // ListResourceTypes returns the available resource types for a provider.
-// This doesn't make any API calls - it just returns what's registered.
-func ListResourceTypes(providerName string) ([]string, error) {
-	// Use a minimal config to get the resource registry
-	ctx := context.Background()
+// Note: This requires provider initialization which may need credentials.
+// For a credential-free list, use the provider registry directly.
+func ListResourceTypes(ctx context.Context, providerName string, config map[string]string) ([]string, error) {
 	discConfig := Config{
 		ProviderName:   providerName,
-		ProviderConfig: map[string]string{},
+		ProviderConfig: config,
 		Mode:           ModeRegistry,
 	}
 
 	disc := NewDiscoverer(discConfig)
+	if err := disc.Initialize(ctx); err != nil {
+		return nil, err
+	}
 
-	// Try to get resource specs from registry (this may fail without credentials)
-	// For now, return empty - providers can add a method to return their resource types
-	_ = disc
-	_ = ctx
+	types := make([]string, 0, len(disc.registry))
+	for t := range disc.registry {
+		types = append(types, t)
+	}
 
-	return nil, nil
+	return types, nil
 }

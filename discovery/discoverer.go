@@ -78,88 +78,67 @@ func (d *Discoverer) Registry() map[string]core.ResourceSpec {
 	return d.registry
 }
 
-// Discover performs resource discovery without policy evaluation.
-// It traverses the resource graph starting from the asset entry point.
-//
-//nolint:dupl // Similar structure to Evaluate but different event types and return values
-func (d *Discoverer) Discover(ctx context.Context, asset core.Asset) (*Result, error) {
-	startTime := time.Now()
+// traversalSetup contains common setup data for discovery/evaluation.
+type traversalSetup struct {
+	startTime time.Time
+	root      *common.ResourceNode
+}
+
+// setupTraversal performs common setup for both Discover and Evaluate.
+func (d *Discoverer) setupTraversal(asset core.Asset) *traversalSetup {
 	d.config.Asset = asset
 	d.errors = make([]Error, 0)
 
-	// Create root node first so we can include it in events
 	root := d.createRootNode(asset)
-
-	// Create tree for events and store it for all event emissions
-	// Initialize AllNodes map for navigation to work
 	d.tree = &common.ResourceTree{
 		Root:     root,
 		Current:  root,
 		AllNodes: map[string]*common.ResourceNode{root.ID: root},
 	}
 
-	// Emit tree created (for UI initialization)
 	d.emit(Event{Type: EventTreeCreated, Node: root, ResourceType: root.ResourceType})
 
-	// Emit discovery started with root node
-	d.emit(Event{Type: EventDiscoveryStarted, Node: root, ResourceType: root.ResourceType})
-	d.emit(Event{Type: EventNodeScanning, Node: root, ResourceType: root.ResourceType})
+	return &traversalSetup{
+		startTime: time.Now(),
+		root:      root,
+	}
+}
 
-	// Perform graph traversal (no policies)
-	d.traverse(ctx, root, nil)
-
-	// Mark root as complete
+// finalizeTraversal marks traversal as complete.
+func (d *Discoverer) finalizeTraversal(root *common.ResourceNode) {
 	root.State = common.AssetStateComplete
+}
 
-	// Emit discovery complete
-	d.emit(Event{Type: EventDiscoveryComplete, Node: root, ResourceType: root.ResourceType})
+// Discover performs resource discovery without policy evaluation.
+// It traverses the resource graph starting from the asset entry point.
+func (d *Discoverer) Discover(ctx context.Context, asset core.Asset) (*Result, error) {
+	setup := d.setupTraversal(asset)
 
-	// Build result
-	result := d.buildDiscoverResult(root, startTime)
+	d.emit(Event{Type: EventDiscoveryStarted, Node: setup.root, ResourceType: setup.root.ResourceType})
+	d.emit(Event{Type: EventNodeScanning, Node: setup.root, ResourceType: setup.root.ResourceType})
 
-	return result, nil
+	d.traverse(ctx, setup.root, nil)
+	d.finalizeTraversal(setup.root)
+
+	d.emit(Event{Type: EventDiscoveryComplete, Node: setup.root, ResourceType: setup.root.ResourceType})
+
+	return d.buildDiscoverResult(setup.root, setup.startTime), nil
 }
 
 // Evaluate performs resource discovery with policy evaluation.
 // It traverses the resource graph and evaluates policies on each node.
-//
-//nolint:dupl // Similar structure to Discover but includes policy evaluation
 func (d *Discoverer) Evaluate(ctx context.Context, asset core.Asset, policies []core.Policy) (*EvaluateResult, error) {
-	startTime := time.Now()
-	d.config.Asset = asset
-	d.errors = make([]Error, 0)
+	setup := d.setupTraversal(asset)
 
-	// Create root node first so we can include it in events
-	root := d.createRootNode(asset)
+	d.emit(Event{Type: EventEvaluateStarted, Node: setup.root, ResourceType: setup.root.ResourceType})
+	d.emit(Event{Type: EventNodeScanning, Node: setup.root, ResourceType: setup.root.ResourceType})
 
-	// Create tree for events and store it for all event emissions
-	// Initialize AllNodes map for navigation to work
-	d.tree = &common.ResourceTree{
-		Root:     root,
-		Current:  root,
-		AllNodes: map[string]*common.ResourceNode{root.ID: root},
-	}
+	d.traverse(ctx, setup.root, policies)
+	d.finalizeTraversal(setup.root)
 
-	// Emit tree created (for UI initialization)
-	d.emit(Event{Type: EventTreeCreated, Node: root, ResourceType: root.ResourceType})
+	d.emit(Event{Type: EventEvaluateComplete, Node: setup.root, ResourceType: setup.root.ResourceType})
 
-	// Emit evaluation started with root node
-	d.emit(Event{Type: EventEvaluateStarted, Node: root, ResourceType: root.ResourceType})
-	d.emit(Event{Type: EventNodeScanning, Node: root, ResourceType: root.ResourceType})
-
-	// Perform graph traversal WITH policies
-	d.traverse(ctx, root, policies)
-
-	// Mark root as complete
-	root.State = common.AssetStateComplete
-
-	// Emit evaluation complete
-	d.emit(Event{Type: EventEvaluateComplete, Node: root, ResourceType: root.ResourceType})
-
-	// Build result
-	result := d.buildEvaluateResult(root, startTime)
-
-	return result, nil
+	return d.buildEvaluateResult(setup.root, setup.startTime), nil
 }
 
 // createRootNode creates the root node for traversal.

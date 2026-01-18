@@ -80,14 +80,18 @@ func (tc *traverseContext) worker() {
 func (tc *traverseContext) processWorkItem(item workItem) {
 	defer tc.wg.Done()
 
-	// Skip if context is canceled
-	if tc.ctx.Err() != nil {
+	// Acquire semaphore with context cancellation support
+	select {
+	case tc.sem <- struct{}{}:
+		defer func() { <-tc.sem }()
+	case <-tc.ctx.Done():
 		return
 	}
 
-	// Acquire semaphore for concurrent API calls
-	tc.sem <- struct{}{}
-	defer func() { <-tc.sem }()
+	// Check context again after acquiring semaphore
+	if tc.ctx.Err() != nil {
+		return
+	}
 
 	tc.traverseNode(item.node, item.spec)
 }
