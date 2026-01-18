@@ -14,8 +14,6 @@ import (
 	"github.com/kopexa-grc/kspec/pkg/ptr"
 )
 
-const tagKeyName = "Name"
-
 // EC2Client is the interface for EC2 operations.
 type EC2Client interface {
 	DescribeInstances(ctx context.Context, params *ec2.DescribeInstancesInput, optFns ...func(*ec2.Options)) (*ec2.DescribeInstancesOutput, error)

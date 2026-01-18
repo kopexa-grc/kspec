@@ -45,17 +45,16 @@ func TestSafeGo(t *testing.T) {
 
 	t.Run("recovers from error panic", func(t *testing.T) {
 		var panicValue atomic.Value
-		var wg sync.WaitGroup
-		wg.Add(1)
+		done := make(chan struct{})
 
 		SafeGoWithHandler(func() {
-			defer wg.Done()
 			panic(errors.New("error panic"))
 		}, func(r any) {
 			panicValue.Store(r)
+			close(done)
 		})
 
-		wg.Wait()
+		<-done
 		if panicValue.Load() == nil {
 			t.Error("SafeGo did not capture panic value")
 		}

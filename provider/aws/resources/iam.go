@@ -600,7 +600,7 @@ func analyzePolicyPermissions(policy map[string]any) (hasStarAction, hasStarReso
 		}
 
 		// Only check Allow statements
-		if effect, ok := statement["Effect"].(string); ok && effect != "Allow" {
+		if effect, ok := statement["Effect"].(string); ok && effect != policyEffectAllow {
 			continue
 		}
 

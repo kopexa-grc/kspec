@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/kopexa-grc/kspec/core"
 )
@@ -46,7 +47,7 @@ func (r *File) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, er
 		"mode":       info.Mode().String(),
 		"mode_octal": fmt.Sprintf("%04o", info.Mode().Perm()),
 		"is_dir":     info.IsDir(),
-		"mod_time":   info.ModTime().Format("2006-01-02T15:04:05Z"),
+		"mod_time":   info.ModTime().UTC().Format(time.RFC3339),
 		"path":       path,
 		"exists":     true,
 	}

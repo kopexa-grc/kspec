@@ -49,7 +49,10 @@ func (s *GitHubBranchSuite) TestCases() []suites.TestCase {
 			Fixtures:     []core.Resource{ghsuites.InsecureDefaultBranch.Build()},
 			ExpectedResults: map[string]suites.ExpectedResult{
 				"kopexa-github-repository-security-default-branch-protection": {Pass: false},
-				// Other checks pass because the branch is not protected (query checks !protected first)
+				// Note: These checks pass because their policy queries use short-circuit evaluation.
+				// The queries check "!protected || <feature_enabled>" - when protected is false,
+				// the entire expression evaluates to true without checking the feature flag.
+				// This is intentional: unprotected branches can't have protection features enabled.
 				"kopexa-github-repository-security-prevent-force-pushes-default": {Pass: true},
 				"kopexa-github-repository-security-conversation-resolution":      {Pass: true},
 				"kopexa-github-repository-security-status-checks":                {Pass: true},
@@ -88,7 +91,8 @@ func (s *GitHubBranchSuite) TestCases() []suites.TestCase {
 			Fixtures:     []core.Resource{ghsuites.InsecureReleaseBranch.Build()},
 			ExpectedResults: map[string]suites.ExpectedResult{
 				"kopexa-github-repository-security-release-branch-protection": {Pass: false},
-				// Not protected, so force push check passes (query checks !protected first)
+				// Force push check passes due to short-circuit evaluation in policy query:
+				// "!protected || allow_force_pushes == false" evaluates to true when not protected.
 				"kopexa-github-repository-security-prevent-force-pushes-release": {Pass: true},
 			},
 		},

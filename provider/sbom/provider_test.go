@@ -91,9 +91,9 @@ func TestConnection_Resources(t *testing.T) {
 		t.Fatalf("Connect() error = %v", err)
 	}
 
-	resources := conn.Resources()
-	if len(resources) != 4 {
-		t.Errorf("Resources() returned %d resources, want 4", len(resources))
+	resourceSpecs := conn.Resources()
+	if len(resourceSpecs) != 4 {
+		t.Errorf("Resources() returned %d resources, want 4", len(resourceSpecs))
 	}
 
 	expectedNames := map[string]bool{
@@ -103,7 +103,7 @@ func TestConnection_Resources(t *testing.T) {
 		"sbom_dependency":    false,
 	}
 
-	for _, r := range resources {
+	for _, r := range resourceSpecs {
 		expectedNames[r.Name()] = true
 	}
 

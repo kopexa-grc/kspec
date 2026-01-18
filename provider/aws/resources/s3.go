@@ -244,7 +244,7 @@ func checkPublicBucketPolicy(policy map[string]any) bool {
 		}
 
 		// Only check Allow statements
-		if effect, ok := statement["Effect"].(string); ok && effect != "Allow" {
+		if effect, ok := statement["Effect"].(string); ok && effect != policyEffectAllow {
 			continue
 		}
 

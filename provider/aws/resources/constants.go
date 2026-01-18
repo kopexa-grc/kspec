@@ -5,6 +5,9 @@ package resources
 
 // Common AWS string constants used across resource fetchers.
 const (
+	// Tag keys
+	tagKeyName = "Name"
+
 	// Status values
 	statusActive    = "ACTIVE"
 	statusAvailable = "available"
