@@ -81,14 +81,12 @@ type Connection struct {
 }
 
 // Resources returns all available Hetzner Cloud resources.
+// Note: Only project-specific resources are included. Global catalog resources
+// (Location, Datacenter, ServerType, ISO, public Images) are excluded as they
+// are not owned by the customer and not relevant for security scanning.
 func (c *Connection) Resources() []core.ResourceSpec {
 	hc := c.client.HCloud()
 	return []core.ResourceSpec{
-		// Infrastructure
-		resources.NewLocation(hc),
-		resources.NewDatacenter(hc),
-		resources.NewServerType(hc),
-		resources.NewISO(hc),
 		// Compute
 		resources.NewServer(hc),
 		// Storage
@@ -99,8 +97,6 @@ func (c *Connection) Resources() []core.ResourceSpec {
 		resources.NewPrimaryIP(hc),
 		// Security
 		resources.NewFirewall(hc),
-		// Images
-		resources.NewImage(hc),
 		// SSH Keys
 		resources.NewSSHKey(hc),
 	}

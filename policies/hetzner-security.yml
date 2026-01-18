@@ -49,11 +49,6 @@ groups:
       - uid: kopexa-hetzner-security-floating-ips-not-blocked
       - uid: kopexa-hetzner-security-floating-ips-have-dns-ptr
 
-  - title: Hetzner Image Security
-    checks:
-      - uid: kopexa-hetzner-security-images-not-deprecated
-      - uid: kopexa-hetzner-security-server-types-not-deprecated
-
 scoring_system: highest impact
 
 queries:
@@ -260,31 +255,3 @@ queries:
     remediation: |
       Configure reverse DNS PTR records for your floating IPs:
       hcloud floating-ip set-rdns <ip-id> --ip <ip-address> --hostname <hostname>
-
-  # Image Security Checks
-  - uid: kopexa-hetzner-security-images-not-deprecated
-    title: Ensure images are not deprecated
-    resource: hcloud_image
-    severity: medium
-    query: |
-      resource.is_deprecated == false
-    docs: |
-      Deprecated images may have security vulnerabilities or lack support.
-      Update to newer, actively maintained images.
-    remediation: |
-      Update to a newer, non-deprecated image:
-      hcloud server rebuild <server-id> --image <new-image-id>
-
-  # Server Type Deprecation
-  - uid: kopexa-hetzner-security-server-types-not-deprecated
-    title: Ensure server types are not deprecated
-    resource: hcloud_server_type
-    severity: low
-    query: |
-      resource.is_deprecated == false
-    docs: |
-      Deprecated server types will eventually become unavailable.
-      Plan migration to newer server types before they are removed.
-    remediation: |
-      Consider migrating to a newer server type before deprecation:
-      hcloud server change-type <server-id> --server-type <new-type>
