@@ -39,6 +39,9 @@ type Connection struct{}
 // Resources returns the list of available resource types for network scanning.
 func (c *Connection) Resources() []core.ResourceSpec {
 	return []core.ResourceSpec{
+		// Root resource
+		resources.NewHost(),
+		// Child resources
 		resources.NewCertificate(),
 		resources.NewDNS(),
 		resources.NewHTTP(),
@@ -50,7 +53,7 @@ func (c *Connection) Resources() []core.ResourceSpec {
 func (c *Connection) EntryResourceType(assetType string) string {
 	switch assetType {
 	case "host":
-		return "certificate"
+		return "host"
 	default:
 		return ""
 	}
