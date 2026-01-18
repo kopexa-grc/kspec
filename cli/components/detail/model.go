@@ -1,3 +1,6 @@
+// Copyright (c) Kopexa GmbH
+// SPDX-License-Identifier: Elastic-2.0
+
 // Package detail provides the asset detail view component for the CLI.
 package detail
 

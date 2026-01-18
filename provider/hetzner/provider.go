@@ -87,6 +87,8 @@ type Connection struct {
 func (c *Connection) Resources() []core.ResourceSpec {
 	hc := c.client.HCloud()
 	return []core.ResourceSpec{
+		// Project (root)
+		resources.NewProject(hc),
 		// Compute
 		resources.NewServer(hc),
 		// Storage
@@ -99,6 +101,16 @@ func (c *Connection) Resources() []core.ResourceSpec {
 		resources.NewFirewall(hc),
 		// SSH Keys
 		resources.NewSSHKey(hc),
+	}
+}
+
+// EntryResourceType maps CLI asset types to internal resource type identifiers.
+func (c *Connection) EntryResourceType(assetType string) string {
+	switch assetType {
+	case "hetzner-project":
+		return "hetzner_project"
+	default:
+		return ""
 	}
 }
 

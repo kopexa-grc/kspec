@@ -119,9 +119,11 @@ func (r *IAMUser) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource,
 
 				var oldestKeyAge int
 				var hasActiveKeys bool
+				var activeKeyCount int
 				for _, key := range keysResp.AccessKeyMetadata {
 					if key.Status == types.StatusTypeActive {
 						hasActiveKeys = true
+						activeKeyCount++
 					}
 					if key.CreateDate != nil {
 						keyAge := int(time.Since(*key.CreateDate).Hours() / 24)
@@ -131,11 +133,13 @@ func (r *IAMUser) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource,
 					}
 				}
 				resource["has_active_access_keys"] = hasActiveKeys
+				resource["active_access_key_count"] = activeKeyCount
 				resource["access_key_age_days"] = oldestKeyAge
 				resource["access_keys_need_rotation"] = oldestKeyAge > 90
 			} else {
 				resource["has_access_keys"] = false
 				resource["access_key_count"] = 0
+				resource["active_access_key_count"] = 0
 			}
 
 			// Get user groups
@@ -184,6 +188,17 @@ func (r *IAMUser) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource,
 			hasConsole, _ := resource["has_console_access"].(bool) //nolint:errcheck // zero value is intentional default
 			hasMFA, _ := resource["has_mfa"].(bool)                //nolint:errcheck // zero value is intentional default
 			resource["console_without_mfa"] = hasConsole && !hasMFA
+
+			// Computed: Days since last activity (use password_last_used or create date)
+			switch {
+			case user.PasswordLastUsed != nil:
+				resource["last_activity_days"] = int(time.Since(*user.PasswordLastUsed).Hours() / 24)
+			case user.CreateDate != nil:
+				// If never logged in, use account creation date
+				resource["last_activity_days"] = int(time.Since(*user.CreateDate).Hours() / 24)
+			default:
+				resource["last_activity_days"] = -1 // Unknown
+			}
 
 			resources = append(resources, resource)
 		}
@@ -344,7 +359,12 @@ func (r *IAMGroup) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource
 				}
 				resource["members"] = memberNames
 				resource["member_count"] = len(memberNames)
+				resource["user_count"] = len(memberNames) // Alias for policy compatibility
 				resource["has_members"] = len(memberNames) > 0
+			} else {
+				resource["member_count"] = 0
+				resource["user_count"] = 0
+				resource["has_members"] = false
 			}
 
 			// Get attached policies
@@ -454,8 +474,16 @@ func (r *IAMPolicy) Fetch(ctx context.Context, asset core.Asset) ([]core.Resourc
 						resource["has_wildcard_actions"] = hasStarAction
 						resource["has_wildcard_resources"] = hasStarResource
 						resource["is_overly_permissive"] = hasStarAction && hasStarResource
+						// is_admin_policy: true if policy allows all actions on all resources
+						resource["is_admin_policy"] = hasStarAction && hasStarResource
+					} else {
+						resource["is_admin_policy"] = false
 					}
+				} else {
+					resource["is_admin_policy"] = false
 				}
+			} else {
+				resource["is_admin_policy"] = false
 			}
 
 			resources = append(resources, resource)

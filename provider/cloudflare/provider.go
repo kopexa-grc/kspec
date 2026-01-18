@@ -111,6 +111,18 @@ func (c *Connection) Resources() []core.ResourceSpec {
 	}
 }
 
+// EntryResourceType returns the entry point resource type for a given asset type.
+func (c *Connection) EntryResourceType(assetType string) string {
+	switch assetType {
+	case "cloudflare-account":
+		return "cloudflare_account"
+	case "cloudflare-zone":
+		return "cloudflare_zone"
+	default:
+		return ""
+	}
+}
+
 // Client returns the underlying Cloudflare client for direct access if needed.
 func (c *Connection) Client() *Client {
 	return c.client

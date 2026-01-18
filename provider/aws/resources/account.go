@@ -56,6 +56,24 @@ func (r *Account) Name() string {
 	return "aws_account"
 }
 
+// ChildResources implements core.ChildResourceProvider.
+// Returns the child resource types that belong to an AWS account.
+func (r *Account) ChildResources() []string {
+	return []string{
+		// IAM (global)
+		"aws_iam_user",
+		"aws_iam_role",
+		"aws_iam_group",
+		"aws_iam_policy",
+		// S3 (global)
+		"aws_s3_bucket",
+		// KMS
+		"aws_kms_key",
+		// Secrets Manager
+		"aws_secretsmanager_secret",
+	}
+}
+
 // Fetch retrieves AWS account information.
 func (r *Account) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
 	identity, err := r.stsClient.GetCallerIdentity(ctx, &sts.GetCallerIdentityInput{})
@@ -98,10 +116,22 @@ func (r *Account) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource,
 		resource["mfa_devices_count"] = summaryResp.SummaryMap["MFADevices"]
 		resource["access_keys_count"] = summaryResp.SummaryMap["AccessKeysPerUserQuota"]
 
-		// Check if account has MFA enabled (root account MFA)
-		if mfaDevices, ok := summaryResp.SummaryMap["AccountMFAEnabled"]; ok {
-			resource["account_mfa_enabled"] = mfaDevices > 0
+		// Check if root account has MFA enabled
+		if mfaEnabled, ok := summaryResp.SummaryMap["AccountMFAEnabled"]; ok {
+			resource["account_mfa_enabled"] = mfaEnabled > 0
+			resource["root_mfa_enabled"] = mfaEnabled > 0 // Alias for policy compatibility
 		}
+
+		// Check if root account has access keys
+		if accessKeysPresent, ok := summaryResp.SummaryMap["AccountAccessKeysPresent"]; ok {
+			resource["root_access_keys_active"] = accessKeysPresent > 0
+		} else {
+			resource["root_access_keys_active"] = false
+		}
+	} else {
+		// Set defaults when summary is not available
+		resource["root_mfa_enabled"] = false
+		resource["root_access_keys_active"] = false
 	}
 
 	// Get password policy for compliance checks

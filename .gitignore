@@ -1,8 +1,6 @@
 # Binaries
-/cnspec
-/cnquery
-kspec-engine
 /kspec
+kspec-engine
 *.exe
 *.test
 
@@ -27,3 +25,7 @@ go.work
 # Output
 scan_output.json
 *.log
+
+# Claude Code
+.claude/
+report.html

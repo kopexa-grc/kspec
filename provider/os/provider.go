@@ -42,3 +42,13 @@ func (c *Connection) Resources() []core.ResourceSpec {
 		resources.NewService(),
 	}
 }
+
+// EntryResourceType returns the entry point resource type for a given asset type.
+func (c *Connection) EntryResourceType(assetType string) string {
+	switch assetType {
+	case "local":
+		return "service"
+	default:
+		return ""
+	}
+}

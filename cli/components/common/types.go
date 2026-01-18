@@ -1,3 +1,6 @@
+// Copyright (c) Kopexa GmbH
+// SPDX-License-Identifier: Elastic-2.0
+
 package common
 
 // AssetState represents the current state of an asset

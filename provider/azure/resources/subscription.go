@@ -41,6 +41,46 @@ func (r *Subscription) Name() string {
 	return "azure_subscription"
 }
 
+// ChildResources implements core.ChildResourceProvider.
+// Returns the child resource types that belong to an Azure subscription.
+func (r *Subscription) ChildResources() []string {
+	return []string{
+		// Storage
+		"azure_storage_account",
+		// Databases
+		"azure_sql_server",
+		"azure_mysql_server",
+		"azure_postgresql_server",
+		"azure_mariadb_server",
+		"azure_cosmosdb_account",
+		"azure_redis_cache",
+		// Security
+		"azure_keyvault_vault",
+		"azure_security_assessment",
+		"azure_security_alert",
+		"azure_defender_setting",
+		"azure_secure_score",
+		// Networking
+		"azure_network_security_group",
+		// Compute
+		"azure_virtual_machine",
+		"azure_aks_cluster",
+		// Web
+		"azure_app_service",
+		// IoT
+		"azure_iot_hub",
+		// IAM
+		"azure_role_assignment",
+		"azure_role_definition",
+		// Policy
+		"azure_policy_assignment",
+		"azure_policy_definition",
+		"azure_policy_compliance",
+		// Advisor
+		"azure_advisor_recommendation",
+	}
+}
+
 // Fetch retrieves subscription-level resources from Azure.
 func (r *Subscription) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
 	if r.subscriptionID == "" {

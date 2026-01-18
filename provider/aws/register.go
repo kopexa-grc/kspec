@@ -56,6 +56,11 @@ func init() {
 				Description: "External ID for assume role",
 				EnvVar:      "AWS_EXTERNAL_ID",
 			},
+			{
+				Name:        "endpoint-url",
+				Description: "Custom endpoint URL (for LocalStack, etc.)",
+				EnvVar:      "AWS_ENDPOINT_URL",
+			},
 		},
 		AssetTypes: []registry.AssetDefinition{
 			{
@@ -71,6 +76,7 @@ func init() {
 			"session-token":     "session_token",
 			"role-arn":          "role_arn",
 			"external-id":       "external_id",
+			"endpoint-url":      "endpoint_url",
 		},
 		// AWS SDK v2 has built-in retry, but we add rate limiting for safety
 		// when making many API calls during scanning. Conservative limit for IAM.

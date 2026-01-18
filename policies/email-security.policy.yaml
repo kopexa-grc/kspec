@@ -43,11 +43,20 @@ queries:
     title: Ensure Reverse IP Lookup PTR record is set (DNS Forward confirmed)
     resource: dns
     docs: >
-       was macht das?
+      A PTR (Pointer) record enables reverse DNS lookups, mapping an IP address back to a hostname.
+      Forward-confirmed reverse DNS (FCrDNS) means the PTR record resolves to a hostname that,
+      when resolved forward, returns the original IP. This is critical for email deliverability
+      as many mail servers reject messages from IPs without valid PTR records matching the sending domain.
     audit: >
-      wie auditiere ich das?
+      1. Get the A record IP: dig +short A <domain>
+      2. Reverse the IP and query PTR: dig +short -x <ip>
+      3. Verify the PTR hostname contains or matches your domain.
+      Example: dig +short -x 93.184.216.34 should return a hostname like mail.example.com
+    remediation: |
+      Contact your hosting provider or ISP to set up a PTR record for your mail server's IP address.
+      The PTR record should resolve to a hostname that matches your sending domain.
     query: |
-      resource.records.filter(r, r.type == 'A').size() > 0 && 
+      resource.records.filter(r, r.type == 'A').size() > 0 &&
       dns(reverseIP(resource.records.filter(r, r.type == 'A')[0].data)).records.exists(r, r.type == 'PTR' && r.data.contains(asset.name))
   
   - uid: kopexa-email-security-txt-record

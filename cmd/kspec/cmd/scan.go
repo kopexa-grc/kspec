@@ -48,17 +48,22 @@ func createProviderCommand(def *registry.ProviderDefinition) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     def.Name,
 		Short:   def.Description,
-		Long:    def.Description,
+		Long:    buildMultiAssetLongDescription(def),
 		Aliases: def.Aliases,
 	}
 
-	// If provider has multiple asset types, create subcommands for each
-	// If only one asset type, make it the default behavior
+	// Always create subcommands for asset types
+	for i := range def.AssetTypes {
+		at := &def.AssetTypes[i]
+		assetCmd := createAssetCommand(def, at)
+		cmd.AddCommand(assetCmd)
+	}
+
+	// For single-asset providers, also allow direct execution without subcommand
+	// e.g., "kspec scan host julian.pro" instead of "kspec scan network host julian.pro"
 	if len(def.AssetTypes) == 1 {
-		// Single asset type - run directly on provider command
 		at := def.AssetTypes[0]
 		cmd.Use = buildAssetUsage(def.Name, &at)
-		cmd.Example = buildAssetExampleWithSubcmd(def.Name, def.Name, &at, def.Flags)
 		cmd.Args = buildArgsValidator(&at)
 		cmd.RunE = func(cmd *cobra.Command, args []string) error {
 			return runAssetScan(cmd, def, &at, args)
@@ -66,17 +71,9 @@ func createProviderCommand(def *registry.ProviderDefinition) *cobra.Command {
 		cmd.SilenceUsage = true
 		cmd.SilenceErrors = true
 
-		// Register flags
+		// Register flags for direct execution
 		registerCommonFlags(cmd)
 		registry.RegisterFlags(cmd, def)
-	} else {
-		// Multiple asset types - create subcommands
-		cmd.Long = buildMultiAssetLongDescription(def)
-		for i := range def.AssetTypes {
-			at := &def.AssetTypes[i]
-			assetCmd := createAssetCommand(def, at)
-			cmd.AddCommand(assetCmd)
-		}
 	}
 
 	return cmd
@@ -310,17 +307,24 @@ func runScanWithUI(ctx context.Context, cmd *cobra.Command, s *scanner.Scanner, 
 	s.OnEvent(func(event scanner.ScanEvent) {
 		switch event.Type {
 		case scanner.EventTreeCreated:
-			p.Send(cli.SetTreeMsg{Tree: event.Tree})
-		case scanner.EventDiscoveryStarted,
-			scanner.EventTreeUpdated,
+			if event.Tree != nil {
+				p.Send(cli.SetTreeMsg{Tree: event.Tree})
+			}
+		case scanner.EventDiscoveryStarted:
+			// Discovery started doesn't have tree yet, skip
+		case scanner.EventTreeUpdated,
 			scanner.EventDiscoveryComplete,
 			scanner.EventScanStarted,
 			scanner.EventScanComplete,
 			scanner.EventResourceScanning,
 			scanner.EventResourceComplete:
-			p.Send(cli.UpdateTreeMsg{Tree: event.Tree})
+			if event.Tree != nil {
+				p.Send(cli.UpdateTreeMsg{Tree: event.Tree})
+			}
 		case scanner.EventError:
-			p.Send(cli.UpdateTreeMsg{Tree: event.Tree})
+			if event.Tree != nil {
+				p.Send(cli.UpdateTreeMsg{Tree: event.Tree})
+			}
 		}
 	})
 
@@ -439,8 +443,33 @@ func logSummary(logger *zerolog.Logger, tree *common.ResourceTree) {
 	if tree.Root == nil {
 		return
 	}
-	total := tree.Root.ChecksPassed + tree.Root.ChecksFailed + tree.Root.ChecksSkipped
-	logger.Info().Int("total", total).Int("passed", tree.Root.ChecksPassed).Int("failed", tree.Root.ChecksFailed).Int("skipped", tree.Root.ChecksSkipped).Msg("Scan summary")
+	passed, failed, skipped := countChecksRecursive(tree.Root)
+	total := passed + failed + skipped
+	logger.Info().Int("total", total).Int("passed", passed).Int("failed", failed).Int("skipped", skipped).Msg("Scan summary")
+}
+
+// countChecksRecursive counts check results recursively through the tree.
+func countChecksRecursive(node *common.ResourceNode) (passed, failed, skipped int) {
+	passed += node.ChecksPassed
+	failed += node.ChecksFailed
+	skipped += node.ChecksSkipped
+
+	for _, child := range node.Children {
+		p, f, s := countChecksRecursive(child)
+		passed += p
+		failed += f
+		skipped += s
+	}
+
+	for _, subNodes := range node.SubResources {
+		for _, subNode := range subNodes {
+			passed += subNode.ChecksPassed
+			failed += subNode.ChecksFailed
+			skipped += subNode.ChecksSkipped
+		}
+	}
+
+	return passed, failed, skipped
 }
 
 func loadAndFilterPolicies(cmd *cobra.Command, providerName string) ([]core.Policy, error) {

@@ -38,6 +38,19 @@ type ProviderDefinition struct {
 	// RateLimitConfig defines provider-specific rate limiting.
 	// If nil, the provider's SDK handles rate limiting internally.
 	RateLimitConfig *ratelimit.Config
+
+	// ResourceHierarchy defines parent-child relationships between resource types.
+	// Maps child resource type -> parent resource type.
+	// Example: {"github_repo": "github_organization", "github_team": "github_organization"}
+	ResourceHierarchy map[string]string
+
+	// ResourceGroups defines visual groupings for resource types.
+	// Maps resource type -> group name (e.g., "compute", "storage", "identity").
+	ResourceGroups map[string]string
+
+	// RootResourceType is the top-level resource type for this provider.
+	// Example: "github_organization" for GitHub, "aws_account" for AWS.
+	RootResourceType string
 }
 
 // FlagDefinition describes a CLI flag for a provider.
@@ -177,4 +190,30 @@ func (p *ProviderDefinition) NewRateLimiter() *ratelimit.Limiter {
 // NeedsRateLimiting returns true if the provider requires external rate limiting.
 func (p *ProviderDefinition) NeedsRateLimiting() bool {
 	return p.RateLimitConfig != nil
+}
+
+// GetParentType returns the parent resource type for a child type.
+// Returns empty string if no parent is defined.
+func (p *ProviderDefinition) GetParentType(childType string) string {
+	if p.ResourceHierarchy == nil {
+		return ""
+	}
+	return p.ResourceHierarchy[childType]
+}
+
+// GetResourceGroup returns the visual group for a resource type.
+// Returns "other" if no group is defined.
+func (p *ProviderDefinition) GetResourceGroup(resourceType string) string {
+	if p.ResourceGroups == nil {
+		return "other"
+	}
+	if group, ok := p.ResourceGroups[resourceType]; ok {
+		return group
+	}
+	return "other"
+}
+
+// GetRootType returns the root resource type for this provider.
+func (p *ProviderDefinition) GetRootType() string {
+	return p.RootResourceType
 }

@@ -101,3 +101,27 @@ func (r *Zone) SubResources() []core.ResourceSpec {
 		NewFirewallRule(r.client),
 	}
 }
+
+// BuildChildAsset implements core.AssetContextProvider.
+// Passes the zone_id to child resources.
+func (r *Zone) BuildChildAsset(parentData core.Resource, baseAsset core.Asset) core.Asset {
+	asset := core.Asset{
+		Type:   baseAsset.Type,
+		Name:   baseAsset.Name,
+		Config: make(map[string]string),
+	}
+
+	// Copy base config
+	for k, v := range baseAsset.Config {
+		asset.Config[k] = v
+	}
+
+	// Add zone_id from parent data for sub-resource fetching
+	if id, ok := parentData["id"]; ok {
+		if idStr, ok := id.(string); ok {
+			asset.Config["zone_id"] = idStr
+		}
+	}
+
+	return asset
+}

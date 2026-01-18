@@ -1,3 +1,6 @@
+// Copyright (c) Kopexa GmbH
+// SPDX-License-Identifier: Elastic-2.0
+
 // Package cli provides the terminal user interface for kspec security scanning.
 package cli
 

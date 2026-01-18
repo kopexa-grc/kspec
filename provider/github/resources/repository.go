@@ -37,6 +37,28 @@ func (r *Repository) SubResources() []core.ResourceSpec {
 	}
 }
 
+// BuildChildAsset implements core.AssetContextProvider.
+// Passes the repository name to child resources (branches).
+func (r *Repository) BuildChildAsset(parentData core.Resource, baseAsset core.Asset) core.Asset {
+	asset := core.Asset{
+		Type:   baseAsset.Type,
+		Name:   baseAsset.Name,
+		Config: make(map[string]string),
+	}
+
+	// Copy base config
+	for k, v := range baseAsset.Config {
+		asset.Config[k] = v
+	}
+
+	// Add repo name from parent data for branch fetching
+	if name, ok := parentData["name"]; ok {
+		asset.Config["repo"] = fmt.Sprintf("%v", name)
+	}
+
+	return asset
+}
+
 // Fetch retrieves repository data for a single repo or all repos in an organization.
 func (r *Repository) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
 	config := asset.Config

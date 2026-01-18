@@ -113,6 +113,18 @@ func (c *Connection) Resources() []core.ResourceSpec {
 	}
 }
 
+// EntryResourceType returns the entry point resource type for a given asset type.
+func (c *Connection) EntryResourceType(assetType string) string {
+	switch assetType {
+	case "atlassian-site":
+		return "atlassian_jira_project"
+	case "atlassian-org":
+		return "atlassian_organization"
+	default:
+		return ""
+	}
+}
+
 // Client returns the underlying Atlassian client for direct access if needed.
 func (c *Connection) Client() *Client {
 	return c.client

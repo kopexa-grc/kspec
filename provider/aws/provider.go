@@ -1,3 +1,6 @@
+// Copyright (c) Kopexa GmbH
+// SPDX-License-Identifier: Elastic-2.0
+
 // Package aws provides a kspec provider for AWS cloud resources.
 package aws
 
@@ -72,6 +75,7 @@ func (p *Provider) Name() string {
 //   - session_token: AWS session token (for temporary credentials)
 //   - role_arn: IAM role ARN to assume (for cross-account access)
 //   - external_id: External ID for assume role
+//   - endpoint_url: Custom endpoint URL (for LocalStack, etc.)
 func (p *Provider) Connect(ctx context.Context, cfg map[string]string) (core.Connection, error) {
 	// Build AWS config options
 	opts := []func(*config.LoadOptions) error{}
@@ -79,6 +83,12 @@ func (p *Provider) Connect(ctx context.Context, cfg map[string]string) (core.Con
 	// Set region
 	region := getRegion(cfg)
 	opts = append(opts, config.WithRegion(region))
+
+	// Custom endpoint URL (for LocalStack, etc.)
+	endpointURL := cfg["endpoint_url"]
+	if endpointURL == "" {
+		endpointURL = os.Getenv("AWS_ENDPOINT_URL")
+	}
 
 	// Profile support
 	if profile := cfg["profile"]; profile != "" {
@@ -111,6 +121,11 @@ func (p *Provider) Connect(ctx context.Context, cfg map[string]string) (core.Con
 	awsCfg, err := config.LoadDefaultConfig(ctx, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("aws: failed to load config: %w", err)
+	}
+
+	// Apply custom endpoint URL if specified (for LocalStack, etc.)
+	if endpointURL != "" {
+		awsCfg.BaseEndpoint = aws.String(endpointURL)
 	}
 
 	// STS Assume Role support for cross-account access
@@ -383,6 +398,16 @@ func (c *Connection) Resources() []core.ResourceSpec {
 		// Auto Scaling (regional)
 		resources.NewAutoScalingGroup(autoscalingFactory, c.accountID, c.regions),
 		resources.NewAutoScalingLaunchConfiguration(autoscalingFactory, c.accountID, c.regions),
+	}
+}
+
+// EntryResourceType returns the entry resource type for a given asset type.
+func (c *Connection) EntryResourceType(assetType string) string {
+	switch assetType {
+	case "aws-account":
+		return "aws_account"
+	default:
+		return ""
 	}
 }
 

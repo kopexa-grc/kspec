@@ -1,3 +1,6 @@
+// Copyright (c) Kopexa GmbH
+// SPDX-License-Identifier: Elastic-2.0
+
 package browser
 
 import (
@@ -711,9 +714,20 @@ func (m *Model) buildListTable() {
 				countStr = "-"
 			}
 
-			if child.HasChecks() || child.TotalChecks() > 0 {
-				checksStr = child.ChecksString()
-			} else {
+			// Show checks based on node state
+			switch child.State {
+			case common.AssetStatePending, common.AssetStateDiscovery, common.AssetStateScanning:
+				// Still processing - show spinner
+				checksStr = "⏳ scanning..."
+			case common.AssetStateComplete:
+				if child.HasChecks() || child.TotalChecks() > 0 {
+					checksStr = child.ChecksString()
+				} else {
+					checksStr = "no policies"
+				}
+			case common.AssetStateError:
+				checksStr = "⚠ error"
+			default:
 				checksStr = "-"
 			}
 		}

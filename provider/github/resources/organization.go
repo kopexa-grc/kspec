@@ -28,6 +28,12 @@ func (r *Organization) Name() string {
 	return "github_organization"
 }
 
+// ChildResources implements core.ChildResourceProvider.
+// Returns the child resource types that belong to an organization.
+func (r *Organization) ChildResources() []string {
+	return []string{"github_repo", "github_team", "github_user"}
+}
+
 // Fetch retrieves organization details including security settings.
 func (r *Organization) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
 	config := asset.Config
@@ -90,12 +96,12 @@ func (r *Organization) Discover(ctx context.Context, asset core.Asset) (map[stri
 	}
 
 	// 3. Discover repositories in the organization
-	opts := &github.RepositoryListByOrgOptions{
+	repoOpts := &github.RepositoryListByOrgOptions{
 		ListOptions: github.ListOptions{PerPage: 100},
 	}
 	repoCount := 0
 	for {
-		repos, resp, err := r.client.Repositories.ListByOrg(ctx, orgName, opts)
+		repos, resp, err := r.client.Repositories.ListByOrg(ctx, orgName, repoOpts)
 		if err != nil {
 			break
 		}
@@ -104,11 +110,33 @@ func (r *Organization) Discover(ctx context.Context, asset core.Asset) (map[stri
 		if resp.NextPage == 0 {
 			break
 		}
-		opts.Page = resp.NextPage
+		repoOpts.Page = resp.NextPage
 	}
 
 	if repoCount > 0 {
 		discovered["github_repo"] = repoCount
+	}
+
+	// 4. Discover members in the organization
+	memberOpts := &github.ListMembersOptions{
+		ListOptions: github.ListOptions{PerPage: 100},
+	}
+	memberCount := 0
+	for {
+		members, resp, err := r.client.Organizations.ListMembers(ctx, orgName, memberOpts)
+		if err != nil {
+			break
+		}
+		memberCount += len(members)
+
+		if resp.NextPage == 0 {
+			break
+		}
+		memberOpts.Page = resp.NextPage
+	}
+
+	if memberCount > 0 {
+		discovered["github_user"] = memberCount
 	}
 
 	return discovered, nil
