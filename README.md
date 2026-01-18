@@ -32,6 +32,7 @@ Whether you are auditing cloud configurations, verifying GitHub repository secur
 - **Multi-Cloud Support**: Scan AWS accounts, Azure subscriptions, Microsoft 365 tenants, and GitHub organizations from a single tool
 - **Policy-as-Code**: Define your security expectations in clear, version-controlled YAML with CEL expressions
 - **Extensible Provider Architecture**: Modular design with providers for Azure, MS365, GitHub, Network, and more
+- **Resource Discovery**: Inventory resources across providers without policy evaluation using `kspec discover`
 - **Interactive TUI**: Beautiful terminal UI showing real-time scan progress and results
 - **High Performance**: Built in Go for speed, portability, and minimal overhead
 - **CI/CD Ready**: Non-interactive mode with structured logging (`--no-ui`) and multiple export formats
@@ -80,7 +81,7 @@ export AWS_SECRET_ACCESS_KEY="your-secret-key"
 export AWS_REGION="us-east-1"
 
 # Scan an AWS account
-kspec scan aws -f policies/aws-security.yml
+kspec scan aws account -f policies/aws-security.yml
 ```
 
 ### Scan GitHub Organization
@@ -96,20 +97,20 @@ kspec scan github org <organization-name> -f policies/github-security.yml
 ### Scan Azure Subscription
 
 ```bash
-# Set Azure credentials
+# Set Azure credentials (or use `az login` for CLI auth)
 export AZURE_TENANT_ID="your-tenant-id"
 export AZURE_CLIENT_ID="your-client-id"
 export AZURE_CLIENT_SECRET="your-client-secret"
 
 # Scan a subscription
-kspec scan azure <subscription-id> -f policies/azure-security.yml
+kspec scan azure subscription <subscription-id> -f policies/azure-security.yml
 ```
 
 ### Scan Microsoft 365 Tenant
 
 ```bash
 # Scan M365 tenant
-kspec scan ms365 <tenant-id> \
+kspec scan ms365 tenant <tenant-id> \
   --client-id <client-id> \
   --client-secret <client-secret> \
   -f policies/ms365-security.yml
@@ -118,8 +119,9 @@ kspec scan ms365 <tenant-id> \
 ### Scan Network Host
 
 ```bash
-# Scan TLS and HTTP security
-kspec scan network host example.com -f policies/tls-security.yml
+# Scan TLS and HTTP security (both variants work)
+kspec scan host example.com -f policies/tls-security.yml
+# or: kspec scan network host example.com -f policies/tls-security.yml
 ```
 
 ### Scan Hetzner Cloud Project
@@ -129,7 +131,25 @@ kspec scan network host example.com -f policies/tls-security.yml
 export HCLOUD_TOKEN="your-api-token"
 
 # Scan all resources in a project
-kspec scan hetzner -f policies/hetzner-security.yml
+kspec scan hetzner project -f policies/hetzner-security.yml
+```
+
+### Discover Resources (Without Policy Evaluation)
+
+Use `discover` to inventory resources without running policy checks:
+
+```bash
+# Discover AWS resources
+kspec discover aws account
+
+# Discover GitHub organization resources
+kspec discover github org <organization-name>
+
+# Output as JSON for integration with other tools
+kspec discover azure subscription <sub-id> -o json
+
+# Output as tree view
+kspec discover hetzner project -o tree
 ```
 
 ## Output Options
@@ -140,19 +160,19 @@ Export scan results to CSV, XLSX, JSON, or HTML for compliance reporting:
 
 ```bash
 # Export to CSV
-kspec scan aws -f policies/aws-security.yml -o report.csv
+kspec scan aws account -f policies/aws-security.yml -o report.csv
 
 # Export to Excel
-kspec scan azure <sub-id> -f policies/azure-security.yml -o report.xlsx
+kspec scan azure subscription <sub-id> -f policies/azure-security.yml -o report.xlsx
 
 # Export to JSON
 kspec scan github org <org-name> -f policies/github-security.yml -o report.json
 
 # Export to HTML (visual report)
-kspec scan aws -f policies/aws-security.yml -o report.html
+kspec scan aws account -f policies/aws-security.yml -o report.html
 
 # Specify format explicitly
-kspec scan aws -f policies/aws-security.yml -o report --export-format xlsx
+kspec scan aws account -f policies/aws-security.yml -o report --export-format xlsx
 ```
 
 ### HTML Reports
@@ -160,7 +180,7 @@ kspec scan aws -f policies/aws-security.yml -o report --export-format xlsx
 Share scan results with stakeholders who don't have CLI access. HTML reports are self-contained files you can email, upload to Confluence, or attach to audit documentation.
 
 ```bash
-kspec scan aws -f policies/aws-security.yml -o compliance-report.html
+kspec scan aws account -f policies/aws-security.yml -o compliance-report.html
 ```
 
 <a href="https://kopexa.com" rel="noopener noreferrer nofollow">
@@ -173,10 +193,10 @@ Use `--no-ui` for CI/CD pipelines with structured logging via zerolog:
 
 ```bash
 # Run without interactive UI
-kspec scan aws -f policies/aws-security.yml --no-ui
+kspec scan aws account -f policies/aws-security.yml --no-ui
 
 # Combine with export
-kspec scan azure <sub-id> -f policies/azure-security.yml --no-ui -o results.csv
+kspec scan azure subscription <sub-id> -f policies/azure-security.yml --no-ui -o results.csv
 ```
 
 Output example:
@@ -197,13 +217,13 @@ kspec uses adaptive concurrency to parallelize resource discovery and scanning. 
 
 ```bash
 # Auto concurrency (default) - scales based on available CPUs
-kspec scan aws -f policies/aws-security.yml
+kspec scan aws account -f policies/aws-security.yml
 
 # Limit maximum concurrent workers
-kspec scan aws -f policies/aws-security.yml --max-workers 10
+kspec scan aws account -f policies/aws-security.yml --max-workers 10
 
 # Disable concurrency (run sequentially for debugging)
-kspec scan aws -f policies/aws-security.yml --sequential
+kspec scan aws account -f policies/aws-security.yml --sequential
 ```
 
 The scanner parallelizes:
@@ -325,7 +345,7 @@ jobs:
           AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
           AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
         run: |
-          ./kspec scan azure ${{ secrets.AZURE_SUBSCRIPTION_ID }} \
+          ./kspec scan azure subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }} \
             -f policies/azure-security.yml \
             --no-ui \
             -o scan-results.csv
