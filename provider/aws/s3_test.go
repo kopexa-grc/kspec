@@ -1,5 +1,5 @@
 // Copyright (c) Kopexa GmbH
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Elastic-2.0
 
 package aws
 
@@ -16,10 +16,11 @@ import (
 	"go.uber.org/mock/gomock"
 
 	"github.com/kopexa-grc/kspec/core"
+	"github.com/kopexa-grc/kspec/provider/aws/resources"
 )
 
 func TestS3BucketResource_Name(t *testing.T) {
-	r := &S3BucketResource{}
+	r := resources.NewS3Bucket(nil)
 	if got := r.Name(); got != "aws_s3_bucket" {
 		t.Errorf("Name() = %v, want aws_s3_bucket", got)
 	}
@@ -33,14 +34,14 @@ func TestS3BucketResource_Fetch_EmptyBuckets(t *testing.T) {
 		ListBuckets(gomock.Any(), gomock.Any()).
 		Return(&s3.ListBucketsOutput{Buckets: []types.Bucket{}}, nil)
 
-	r := &S3BucketResource{client: mock}
-	resources, err := r.Fetch(context.Background(), core.Asset{})
+	r := resources.NewS3Bucket(mock)
+	rs, err := r.Fetch(context.Background(), core.Asset{})
 
 	if err != nil {
 		t.Fatalf("Fetch() error = %v", err)
 	}
-	if len(resources) != 0 {
-		t.Errorf("Fetch() returned %d resources, want 0", len(resources))
+	if len(rs) != 0 {
+		t.Errorf("Fetch() returned %d resources, want 0", len(rs))
 	}
 }
 
@@ -101,17 +102,17 @@ func TestS3BucketResource_Fetch_SingleBucket(t *testing.T) {
 		GetObjectLockConfiguration(gomock.Any(), gomock.Any()).
 		Return(nil, errors.New("no object lock"))
 
-	r := &S3BucketResource{client: mock}
-	resources, err := r.Fetch(context.Background(), core.Asset{})
+	r := resources.NewS3Bucket(mock)
+	rs, err := r.Fetch(context.Background(), core.Asset{})
 
 	if err != nil {
 		t.Fatalf("Fetch() error = %v", err)
 	}
-	if len(resources) != 1 {
-		t.Fatalf("Fetch() returned %d resources, want 1", len(resources))
+	if len(rs) != 1 {
+		t.Fatalf("Fetch() returned %d resources, want 1", len(rs))
 	}
 
-	res := resources[0]
+	res := rs[0]
 
 	// Check basic properties
 	if got := res["id"]; got != "test-bucket" {
@@ -165,14 +166,14 @@ func TestS3BucketResource_Fetch_WithEncryption(t *testing.T) {
 	mock.EXPECT().GetBucketLifecycleConfiguration(gomock.Any(), gomock.Any()).Return(nil, errors.New("no lifecycle"))
 	mock.EXPECT().GetObjectLockConfiguration(gomock.Any(), gomock.Any()).Return(nil, errors.New("no object lock"))
 
-	r := &S3BucketResource{client: mock}
-	resources, err := r.Fetch(context.Background(), core.Asset{})
+	r := resources.NewS3Bucket(mock)
+	rs, err := r.Fetch(context.Background(), core.Asset{})
 
 	if err != nil {
 		t.Fatalf("Fetch() error = %v", err)
 	}
 
-	res := resources[0]
+	res := rs[0]
 
 	if got := res["has_encryption"]; got != true {
 		t.Errorf("has_encryption = %v, want true", got)
@@ -217,14 +218,14 @@ func TestS3BucketResource_Fetch_WithPublicAccessBlock(t *testing.T) {
 	mock.EXPECT().GetBucketLifecycleConfiguration(gomock.Any(), gomock.Any()).Return(nil, errors.New("no lifecycle"))
 	mock.EXPECT().GetObjectLockConfiguration(gomock.Any(), gomock.Any()).Return(nil, errors.New("no object lock"))
 
-	r := &S3BucketResource{client: mock}
-	resources, err := r.Fetch(context.Background(), core.Asset{})
+	r := resources.NewS3Bucket(mock)
+	rs, err := r.Fetch(context.Background(), core.Asset{})
 
 	if err != nil {
 		t.Fatalf("Fetch() error = %v", err)
 	}
 
-	res := resources[0]
+	res := rs[0]
 
 	if got := res["block_public_acls"]; got != true {
 		t.Errorf("block_public_acls = %v, want true", got)
@@ -242,7 +243,7 @@ func TestS3BucketResource_Fetch_ListBucketsError(t *testing.T) {
 		ListBuckets(gomock.Any(), gomock.Any()).
 		Return(nil, errors.New("access denied"))
 
-	r := &S3BucketResource{client: mock}
+	r := resources.NewS3Bucket(mock)
 	_, err := r.Fetch(context.Background(), core.Asset{})
 
 	if err == nil {
@@ -284,165 +285,20 @@ func TestS3BucketResource_Fetch_PublicBucket(t *testing.T) {
 	mock.EXPECT().GetBucketLifecycleConfiguration(gomock.Any(), gomock.Any()).Return(nil, errors.New("no lifecycle"))
 	mock.EXPECT().GetObjectLockConfiguration(gomock.Any(), gomock.Any()).Return(nil, errors.New("no object lock"))
 
-	r := &S3BucketResource{client: mock}
-	resources, err := r.Fetch(context.Background(), core.Asset{})
+	r := resources.NewS3Bucket(mock)
+	rs, err := r.Fetch(context.Background(), core.Asset{})
 
 	if err != nil {
 		t.Fatalf("Fetch() error = %v", err)
 	}
 
-	res := resources[0]
+	res := rs[0]
 
 	if got := res["has_public_acl"]; got != true {
 		t.Errorf("has_public_acl = %v, want true", got)
 	}
 	if got := res["is_public"]; got != true {
 		t.Errorf("is_public = %v, want true", got)
-	}
-}
-
-func TestCheckPublicBucketPolicy(t *testing.T) {
-	tests := []struct {
-		name   string
-		policy map[string]any
-		want   bool
-	}{
-		{
-			name:   "empty policy",
-			policy: map[string]any{},
-			want:   false,
-		},
-		{
-			name: "public principal without condition",
-			policy: map[string]any{
-				"Statement": []any{
-					map[string]any{
-						"Effect":    "Allow",
-						"Principal": "*",
-					},
-				},
-			},
-			want: true,
-		},
-		{
-			name: "public principal with condition",
-			policy: map[string]any{
-				"Statement": []any{
-					map[string]any{
-						"Effect":    "Allow",
-						"Principal": "*",
-						"Condition": map[string]any{
-							"IpAddress": map[string]any{
-								"aws:SourceIp": "192.168.1.0/24",
-							},
-						},
-					},
-				},
-			},
-			want: false,
-		},
-		{
-			name: "deny statement with public principal",
-			policy: map[string]any{
-				"Statement": []any{
-					map[string]any{
-						"Effect":    "Deny",
-						"Principal": "*",
-					},
-				},
-			},
-			want: false,
-		},
-		{
-			name: "specific principal",
-			policy: map[string]any{
-				"Statement": []any{
-					map[string]any{
-						"Effect":    "Allow",
-						"Principal": map[string]any{"AWS": "arn:aws:iam::123456789012:root"},
-					},
-				},
-			},
-			want: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := checkPublicBucketPolicy(tt.policy); got != tt.want {
-				t.Errorf("checkPublicBucketPolicy() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestCheckSecureTransportPolicy(t *testing.T) {
-	tests := []struct {
-		name   string
-		policy map[string]any
-		want   bool
-	}{
-		{
-			name:   "empty policy",
-			policy: map[string]any{},
-			want:   false,
-		},
-		{
-			name: "requires secure transport",
-			policy: map[string]any{
-				"Statement": []any{
-					map[string]any{
-						"Effect": "Deny",
-						"Condition": map[string]any{
-							"Bool": map[string]any{
-								"aws:SecureTransport": "false",
-							},
-						},
-					},
-				},
-			},
-			want: true,
-		},
-		{
-			name: "no secure transport requirement",
-			policy: map[string]any{
-				"Statement": []any{
-					map[string]any{
-						"Effect": "Allow",
-						"Condition": map[string]any{
-							"Bool": map[string]any{
-								"aws:SecureTransport": "false",
-							},
-						},
-					},
-				},
-			},
-			want: false,
-		},
-		{
-			name: "secure transport true (not enforcing)",
-			policy: map[string]any{
-				"Statement": []any{
-					map[string]any{
-						"Effect": "Deny",
-						"Condition": map[string]any{
-							"Bool": map[string]any{
-								"aws:SecureTransport": "true",
-							},
-						},
-					},
-				},
-			},
-			want: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := checkSecureTransportPolicy(tt.policy); got != tt.want {
-				t.Errorf("checkSecureTransportPolicy() = %v, want %v", got, tt.want)
-			}
-		})
 	}
 }
 

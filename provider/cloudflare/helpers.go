@@ -1,3 +1,6 @@
+// Copyright (c) Kopexa GmbH
+// SPDX-License-Identifier: Elastic-2.0
+
 package cloudflare
 
 import (
@@ -8,6 +11,7 @@ import (
 
 // resolveAccountID returns the account ID from the resource config or asset config.
 // Returns an error if no account ID is found.
+// This is kept here for backward compatibility with existing tests.
 func resolveAccountID(resourceAccountID string, asset core.Asset, resourceName string) (string, error) {
 	accountID := resourceAccountID
 	if accountID == "" {
@@ -21,6 +25,7 @@ func resolveAccountID(resourceAccountID string, asset core.Asset, resourceName s
 
 // itemsToResources converts a slice of items to core.Resource objects via JSON marshaling.
 // It adds the accountID to each resource and optionally applies a callback for additional fields.
+// This is kept here for backward compatibility with existing tests.
 func itemsToResources[T any](
 	items []T,
 	accountID string,

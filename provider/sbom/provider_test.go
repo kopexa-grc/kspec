@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/kopexa-grc/kspec/provider/sbom/resources"
 )
 
 func TestProvider_Name(t *testing.T) {
@@ -89,9 +91,9 @@ func TestConnection_Resources(t *testing.T) {
 		t.Fatalf("Connect() error = %v", err)
 	}
 
-	resources := conn.Resources()
-	if len(resources) != 4 {
-		t.Errorf("Resources() returned %d resources, want 4", len(resources))
+	resourceSpecs := conn.Resources()
+	if len(resourceSpecs) != 4 {
+		t.Errorf("Resources() returned %d resources, want 4", len(resourceSpecs))
 	}
 
 	expectedNames := map[string]bool{
@@ -101,7 +103,7 @@ func TestConnection_Resources(t *testing.T) {
 		"sbom_dependency":    false,
 	}
 
-	for _, r := range resources {
+	for _, r := range resourceSpecs {
 		expectedNames[r.Name()] = true
 	}
 
@@ -116,44 +118,44 @@ func TestDetectFormat(t *testing.T) {
 	tests := []struct {
 		name string
 		data string
-		want Format
+		want resources.Format
 	}{
 		{
 			name: "CycloneDX JSON",
 			data: `{"bomFormat": "CycloneDX", "specVersion": "1.4"}`,
-			want: FormatCycloneDX,
+			want: resources.FormatCycloneDX,
 		},
 		{
 			name: "CycloneDX XML-style",
 			data: `bomFormat=CycloneDX`,
-			want: FormatCycloneDX,
+			want: resources.FormatCycloneDX,
 		},
 		{
 			name: "SPDX JSON",
 			data: `{"spdxVersion": "SPDX-2.3"}`,
-			want: FormatSPDX,
+			want: resources.FormatSPDX,
 		},
 		{
 			name: "SPDX tag-value",
 			data: `SPDXVersion: SPDX-2.3`,
-			want: FormatSPDX,
+			want: resources.FormatSPDX,
 		},
 		{
 			name: "unknown format",
 			data: `{"name": "some-package"}`,
-			want: FormatUnknown,
+			want: resources.FormatUnknown,
 		},
 		{
 			name: "empty content",
 			data: ``,
-			want: FormatUnknown,
+			want: resources.FormatUnknown,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := detectFormat([]byte(tt.data)); got != tt.want {
-				t.Errorf("detectFormat() = %v, want %v", got, tt.want)
+			if got := resources.DetectFormat([]byte(tt.data)); got != tt.want {
+				t.Errorf("DetectFormat() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -182,27 +184,27 @@ func TestParseSBOMFile(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := parseSBOMFile(tt.file)
+			result, err := resources.ParseSBOMFile(tt.file)
 
 			if (err != nil) != tt.wantErr {
-				t.Errorf("parseSBOMFile() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("ParseSBOMFile() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 
 			if !tt.wantErr {
 				if result == nil {
-					t.Error("parseSBOMFile() returned nil")
+					t.Error("ParseSBOMFile() returned nil")
 					return
 				}
 
 				format, ok := result["_format"].(string)
 				if !ok || format != tt.wantFormat {
-					t.Errorf("parseSBOMFile() format = %v, want %v", format, tt.wantFormat)
+					t.Errorf("ParseSBOMFile() format = %v, want %v", format, tt.wantFormat)
 				}
 
 				filePath, ok := result["_file_path"].(string)
 				if !ok || filePath != tt.file {
-					t.Errorf("parseSBOMFile() file_path = %v, want %v", filePath, tt.file)
+					t.Errorf("ParseSBOMFile() file_path = %v, want %v", filePath, tt.file)
 				}
 			}
 		})
@@ -210,13 +212,13 @@ func TestParseSBOMFile(t *testing.T) {
 }
 
 func TestParseSBOMFiles_Directory(t *testing.T) {
-	results, err := parseSBOMFiles("testdata", true)
+	results, err := resources.ParseSBOMFiles("testdata", true)
 	if err != nil {
-		t.Fatalf("parseSBOMFiles() error = %v", err)
+		t.Fatalf("ParseSBOMFiles() error = %v", err)
 	}
 
 	if len(results) < 2 {
-		t.Errorf("parseSBOMFiles() found %d files, want at least 2", len(results))
+		t.Errorf("ParseSBOMFiles() found %d files, want at least 2", len(results))
 	}
 
 	hasFormat := map[string]bool{}
@@ -227,17 +229,17 @@ func TestParseSBOMFiles_Directory(t *testing.T) {
 	}
 
 	if !hasFormat["cyclonedx"] {
-		t.Error("parseSBOMFiles() did not find CycloneDX file")
+		t.Error("ParseSBOMFiles() did not find CycloneDX file")
 	}
 	if !hasFormat["spdx"] {
-		t.Error("parseSBOMFiles() did not find SPDX file")
+		t.Error("ParseSBOMFiles() did not find SPDX file")
 	}
 }
 
 func TestParseSBOMFile_NonExistent(t *testing.T) {
-	_, err := parseSBOMFile("/nonexistent/file.json")
+	_, err := resources.ParseSBOMFile("/nonexistent/file.json")
 	if err == nil {
-		t.Error("parseSBOMFile() expected error for nonexistent file")
+		t.Error("ParseSBOMFile() expected error for nonexistent file")
 	}
 }
 
@@ -251,9 +253,9 @@ func TestParseSBOMFile_InvalidJSON(t *testing.T) {
 		t.Fatalf("Failed to create temp file: %v", err)
 	}
 
-	_, err := parseSBOMFile(tmpFile)
+	_, err := resources.ParseSBOMFile(tmpFile)
 	if err == nil {
-		t.Error("parseSBOMFile() expected error for invalid JSON")
+		t.Error("ParseSBOMFile() expected error for invalid JSON")
 	}
 }
 
@@ -285,11 +287,11 @@ func FuzzDetectFormat(f *testing.F) {
 
 	f.Fuzz(func(t *testing.T, data string) {
 		// Should never panic
-		result := detectFormat([]byte(data))
+		result := resources.DetectFormat([]byte(data))
 
 		// Result should always be one of the known formats
-		if result != FormatCycloneDX && result != FormatSPDX && result != FormatUnknown {
-			t.Errorf("detectFormat() returned unexpected format: %v", result)
+		if result != resources.FormatCycloneDX && result != resources.FormatSPDX && result != resources.FormatUnknown {
+			t.Errorf("DetectFormat() returned unexpected format: %v", result)
 		}
 	})
 }
@@ -337,7 +339,7 @@ func FuzzParseSBOMContent(f *testing.F) {
 		}
 
 		// Should never panic
-		_, _ = parseSBOMFile(tmpFile)
+		_, _ = resources.ParseSBOMFile(tmpFile)
 	})
 }
 
@@ -373,55 +375,55 @@ func TestDetectFormat_EdgeCases(t *testing.T) {
 	tests := []struct {
 		name string
 		data string
-		want Format
+		want resources.Format
 	}{
 		{
 			name: "bomFormat in middle of string",
 			data: `some text "bomFormat" more text`,
-			want: FormatCycloneDX,
+			want: resources.FormatCycloneDX,
 		},
 		{
 			name: "spdxVersion case sensitive",
 			data: `{"SPDXVERSION": "2.3"}`,
-			want: FormatUnknown, // Case sensitive match
+			want: resources.FormatUnknown, // Case sensitive match
 		},
 		{
 			name: "bomFormat case sensitive",
 			data: `{"BOMFORMAT": "CycloneDX"}`,
-			want: FormatUnknown, // Case sensitive match
+			want: resources.FormatUnknown, // Case sensitive match
 		},
 		{
 			name: "very long content with format at end",
 			data: string(make([]byte, 10000)) + `"bomFormat"`,
-			want: FormatCycloneDX,
+			want: resources.FormatCycloneDX,
 		},
 		{
 			name: "binary-like content",
 			data: "\x00\x01\x02\x03",
-			want: FormatUnknown,
+			want: resources.FormatUnknown,
 		},
 		{
 			name: "unicode content",
 			data: `{"名前": "bomFormat"}`,
-			want: FormatCycloneDX,
+			want: resources.FormatCycloneDX,
 		},
 		{
 			name: "escaped quotes around bomFormat",
 			data: `{"key": "\"bomFormat\""}`,
-			want: FormatUnknown, // Escaped quotes means it's just a string value, not a key
+			want: resources.FormatUnknown, // Escaped quotes means it's just a string value, not a key
 		},
 		{
 			name: "bomFormat as actual key",
 			data: `{"key": "value", "bomFormat": "CycloneDX"}`,
-			want: FormatCycloneDX,
+			want: resources.FormatCycloneDX,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := detectFormat([]byte(tt.data))
+			got := resources.DetectFormat([]byte(tt.data))
 			if got != tt.want {
-				t.Errorf("detectFormat() = %v, want %v", got, tt.want)
+				t.Errorf("DetectFormat() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -437,11 +439,11 @@ func TestParseSBOMFile_UnknownFormat(t *testing.T) {
 		t.Fatalf("Failed to create temp file: %v", err)
 	}
 
-	result, err := parseSBOMFile(tmpFile)
+	result, err := resources.ParseSBOMFile(tmpFile)
 	if err != nil {
-		t.Errorf("parseSBOMFile() unexpected error: %v", err)
+		t.Errorf("ParseSBOMFile() unexpected error: %v", err)
 	}
 	if result != nil {
-		t.Error("parseSBOMFile() expected nil result for unknown format")
+		t.Error("ParseSBOMFile() expected nil result for unknown format")
 	}
 }

@@ -1,9 +1,12 @@
 // Copyright (c) Kopexa GmbH
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Elastic-2.0
 
 package azure
 
-import "github.com/kopexa-grc/kspec/provider/registry"
+import (
+	"github.com/kopexa-grc/kspec/pkg/ratelimit"
+	"github.com/kopexa-grc/kspec/provider/registry"
+)
 
 func init() {
 	registry.Register(&registry.ProviderDefinition{
@@ -54,5 +57,12 @@ func init() {
 			"resource-group": "resource_group",
 		},
 		Factory: NewProvider,
+		// Azure ARM API rate limits vary by resource type (typically 200-1200 requests/5min).
+		// We use conservative limits: 10/s with burst of 20 for safety.
+		// Azure SDK has built-in retry, but proactive rate limiting helps avoid throttling.
+		RateLimitConfig: &ratelimit.Config{
+			RequestsPerSecond: 10,
+			Burst:             20,
+		},
 	})
 }

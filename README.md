@@ -191,6 +191,28 @@ Output example:
 12:35:00 INF Scan summary total=10 passed=8 failed=1 skipped=1
 ```
 
+### Concurrency Control
+
+kspec uses adaptive concurrency to parallelize resource discovery and scanning. By default, it automatically scales workers based on your system's CPU cores.
+
+```bash
+# Auto concurrency (default) - scales based on available CPUs
+kspec scan aws -f policies/aws-security.yml
+
+# Limit maximum concurrent workers
+kspec scan aws -f policies/aws-security.yml --max-workers 10
+
+# Disable concurrency (run sequentially for debugging)
+kspec scan aws -f policies/aws-security.yml --sequential
+```
+
+The scanner parallelizes:
+- **Resource discovery** - Multiple resource types discovered concurrently
+- **Resource fetching** - Instances fetched in parallel with rate limiting
+- **Policy evaluation** - CPU-bound checks run concurrently
+
+Built-in rate limiting prevents API throttling for each provider (AWS, Azure, GitHub, etc.).
+
 ## Policy Library
 
 The repository includes pre-built security policies:

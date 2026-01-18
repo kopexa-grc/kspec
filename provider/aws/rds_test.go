@@ -1,5 +1,5 @@
 // Copyright (c) Kopexa GmbH
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Elastic-2.0
 
 package aws
 
@@ -13,10 +13,11 @@ import (
 	"go.uber.org/mock/gomock"
 
 	"github.com/kopexa-grc/kspec/core"
+	"github.com/kopexa-grc/kspec/provider/aws/resources"
 )
 
 func TestRDSInstanceResource_Name(t *testing.T) {
-	r := &RDSInstanceResource{}
+	r := resources.NewRDSInstance(nil, nil)
 	if got := r.Name(); got != "aws_rds_instance" {
 		t.Errorf("Name() = %v, want aws_rds_instance", got)
 	}
@@ -30,17 +31,18 @@ func TestRDSInstanceResource_Fetch_EmptyInstances(t *testing.T) {
 		DescribeDBInstances(gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(&rds.DescribeDBInstancesOutput{DBInstances: []types.DBInstance{}}, nil)
 
-	r := &RDSInstanceResource{
-		client: mock,
-		conn:   &Connection{regions: []string{"us-east-1"}},
+	factory := func(region string) resources.RDSClient {
+		return mock
 	}
-	resources, err := r.Fetch(context.Background(), core.Asset{})
+
+	r := resources.NewRDSInstance(factory, []string{"us-east-1"})
+	rs, err := r.Fetch(context.Background(), core.Asset{})
 
 	if err != nil {
 		t.Fatalf("Fetch() error = %v", err)
 	}
-	if len(resources) != 0 {
-		t.Errorf("Fetch() returned %d resources, want 0", len(resources))
+	if len(rs) != 0 {
+		t.Errorf("Fetch() returned %d resources, want 0", len(rs))
 	}
 }
 
@@ -89,20 +91,21 @@ func TestRDSInstanceResource_Fetch_SecureInstance(t *testing.T) {
 			},
 		}, nil)
 
-	r := &RDSInstanceResource{
-		client: mock,
-		conn:   &Connection{regions: []string{"us-east-1"}},
+	factory := func(region string) resources.RDSClient {
+		return mock
 	}
-	resources, err := r.Fetch(context.Background(), core.Asset{})
+
+	r := resources.NewRDSInstance(factory, []string{"us-east-1"})
+	rs, err := r.Fetch(context.Background(), core.Asset{})
 
 	if err != nil {
 		t.Fatalf("Fetch() error = %v", err)
 	}
-	if len(resources) != 1 {
-		t.Fatalf("Fetch() returned %d resources, want 1", len(resources))
+	if len(rs) != 1 {
+		t.Fatalf("Fetch() returned %d resources, want 1", len(rs))
 	}
 
-	res := resources[0]
+	res := rs[0]
 	if res["id"] != dbIdentifier {
 		t.Errorf("id = %v, want %v", res["id"], dbIdentifier)
 	}
@@ -156,17 +159,18 @@ func TestRDSInstanceResource_Fetch_InsecureInstance(t *testing.T) {
 			},
 		}, nil)
 
-	r := &RDSInstanceResource{
-		client: mock,
-		conn:   &Connection{regions: []string{"us-east-1"}},
+	factory := func(region string) resources.RDSClient {
+		return mock
 	}
-	resources, err := r.Fetch(context.Background(), core.Asset{})
+
+	r := resources.NewRDSInstance(factory, []string{"us-east-1"})
+	rs, err := r.Fetch(context.Background(), core.Asset{})
 
 	if err != nil {
 		t.Fatalf("Fetch() error = %v", err)
 	}
 
-	res := resources[0]
+	res := rs[0]
 	if res["is_encrypted"] != false {
 		t.Errorf("is_encrypted = %v, want false", res["is_encrypted"])
 	}
@@ -182,7 +186,7 @@ func TestRDSInstanceResource_Fetch_InsecureInstance(t *testing.T) {
 }
 
 func TestRDSClusterResource_Name(t *testing.T) {
-	r := &RDSClusterResource{}
+	r := resources.NewRDSCluster(nil, nil)
 	if got := r.Name(); got != "aws_rds_cluster" {
 		t.Errorf("Name() = %v, want aws_rds_cluster", got)
 	}
@@ -196,17 +200,18 @@ func TestRDSClusterResource_Fetch_EmptyClusters(t *testing.T) {
 		DescribeDBClusters(gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(&rds.DescribeDBClustersOutput{DBClusters: []types.DBCluster{}}, nil)
 
-	r := &RDSClusterResource{
-		client: mock,
-		conn:   &Connection{regions: []string{"us-east-1"}},
+	factory := func(region string) resources.RDSClient {
+		return mock
 	}
-	resources, err := r.Fetch(context.Background(), core.Asset{})
+
+	r := resources.NewRDSCluster(factory, []string{"us-east-1"})
+	rs, err := r.Fetch(context.Background(), core.Asset{})
 
 	if err != nil {
 		t.Fatalf("Fetch() error = %v", err)
 	}
-	if len(resources) != 0 {
-		t.Errorf("Fetch() returned %d resources, want 0", len(resources))
+	if len(rs) != 0 {
+		t.Errorf("Fetch() returned %d resources, want 0", len(rs))
 	}
 }
 
@@ -248,20 +253,21 @@ func TestRDSClusterResource_Fetch_AuroraCluster(t *testing.T) {
 			},
 		}, nil)
 
-	r := &RDSClusterResource{
-		client: mock,
-		conn:   &Connection{regions: []string{"us-east-1"}},
+	factory := func(region string) resources.RDSClient {
+		return mock
 	}
-	resources, err := r.Fetch(context.Background(), core.Asset{})
+
+	r := resources.NewRDSCluster(factory, []string{"us-east-1"})
+	rs, err := r.Fetch(context.Background(), core.Asset{})
 
 	if err != nil {
 		t.Fatalf("Fetch() error = %v", err)
 	}
-	if len(resources) != 1 {
-		t.Fatalf("Fetch() returned %d resources, want 1", len(resources))
+	if len(rs) != 1 {
+		t.Fatalf("Fetch() returned %d resources, want 1", len(rs))
 	}
 
-	res := resources[0]
+	res := rs[0]
 	if res["id"] != clusterID {
 		t.Errorf("id = %v, want %v", res["id"], clusterID)
 	}
@@ -301,17 +307,18 @@ func TestRDSClusterResource_Fetch_ServerlessCluster(t *testing.T) {
 			},
 		}, nil)
 
-	r := &RDSClusterResource{
-		client: mock,
-		conn:   &Connection{regions: []string{"us-east-1"}},
+	factory := func(region string) resources.RDSClient {
+		return mock
 	}
-	resources, err := r.Fetch(context.Background(), core.Asset{})
+
+	r := resources.NewRDSCluster(factory, []string{"us-east-1"})
+	rs, err := r.Fetch(context.Background(), core.Asset{})
 
 	if err != nil {
 		t.Fatalf("Fetch() error = %v", err)
 	}
 
-	res := resources[0]
+	res := rs[0]
 	if res["is_serverless"] != true {
 		t.Errorf("is_serverless = %v, want true", res["is_serverless"])
 	}

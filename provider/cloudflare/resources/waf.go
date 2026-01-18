@@ -1,0 +1,157 @@
+// Copyright (c) Kopexa GmbH
+// SPDX-License-Identifier: Elastic-2.0
+
+package resources
+
+import (
+	"context"
+	"encoding/json"
+
+	"github.com/cloudflare/cloudflare-go/v4"
+	"github.com/cloudflare/cloudflare-go/v4/rulesets"
+
+	"github.com/kopexa-grc/kspec/core"
+)
+
+// WAFRule fetches WAF rulesets for a zone.
+type WAFRule struct {
+	client *cloudflare.Client
+}
+
+// NewWAFRule creates a new WAFRule resource.
+func NewWAFRule(client *cloudflare.Client) *WAFRule {
+	return &WAFRule{client: client}
+}
+
+// Name returns the resource type name.
+func (r *WAFRule) Name() string {
+	return "cloudflare_waf_rule"
+}
+
+// Fetch retrieves WAF rulesets for a zone.
+func (r *WAFRule) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
+	zoneID := asset.Config["zone_id"]
+	if zoneID == "" {
+		return nil, nil
+	}
+
+	// List zone rulesets
+	result, err := r.client.Rulesets.List(ctx, rulesets.RulesetListParams{
+		ZoneID: cloudflare.F(zoneID),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	resources := make([]core.Resource, 0, len(result.Result))
+	for _, ruleset := range result.Result {
+		data, err := json.Marshal(ruleset)
+		if err != nil {
+			continue
+		}
+
+		var resourceMap map[string]interface{}
+		if err := json.Unmarshal(data, &resourceMap); err != nil {
+			continue
+		}
+
+		// Add security flags
+		r.addSecurityFlags(resourceMap)
+
+		resources = append(resources, resourceMap)
+	}
+
+	return resources, nil
+}
+
+func (r *WAFRule) addSecurityFlags(ruleset map[string]interface{}) {
+	kind := ""
+	if k, ok := ruleset["kind"].(string); ok {
+		kind = k
+	}
+	phase := ""
+	if p, ok := ruleset["phase"].(string); ok {
+		phase = p
+	}
+
+	// Identify WAF managed rulesets
+	ruleset["is_managed"] = kind == "managed"
+	ruleset["is_custom"] = kind == "custom" || kind == "zone"
+
+	// Identify OWASP ruleset
+	if name, ok := ruleset["name"].(string); ok {
+		ruleset["is_owasp"] = name == "Cloudflare OWASP Core Ruleset" ||
+			name == "Cloudflare Managed Ruleset"
+	}
+
+	// Check phase for WAF rules
+	ruleset["is_http_request_firewall"] = phase == "http_request_firewall_managed" ||
+		phase == "http_request_firewall_custom"
+}
+
+// FirewallRule fetches custom firewall rules for a zone.
+type FirewallRule struct {
+	client *cloudflare.Client
+}
+
+// NewFirewallRule creates a new FirewallRule resource.
+func NewFirewallRule(client *cloudflare.Client) *FirewallRule {
+	return &FirewallRule{client: client}
+}
+
+// Name returns the resource type name.
+func (r *FirewallRule) Name() string {
+	return "cloudflare_firewall_rule"
+}
+
+// Fetch retrieves custom firewall rules for a zone.
+func (r *FirewallRule) Fetch(ctx context.Context, asset core.Asset) ([]core.Resource, error) {
+	zoneID := asset.Config["zone_id"]
+	if zoneID == "" {
+		return nil, nil
+	}
+
+	var resources []core.Resource
+
+	// Get custom rulesets for http_request_firewall_custom phase
+	result, err := r.client.Rulesets.List(ctx, rulesets.RulesetListParams{
+		ZoneID: cloudflare.F(zoneID),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	for _, ruleset := range result.Result {
+		// Only process custom firewall rules
+		if ruleset.Phase != "http_request_firewall_custom" {
+			continue
+		}
+
+		// Get full ruleset with rules
+		fullRuleset, err := r.client.Rulesets.Get(ctx, ruleset.ID, rulesets.RulesetGetParams{
+			ZoneID: cloudflare.F(zoneID),
+		})
+		if err != nil {
+			continue
+		}
+
+		for _, rule := range fullRuleset.Rules {
+			data, err := json.Marshal(rule)
+			if err != nil {
+				continue
+			}
+
+			var resourceMap map[string]interface{}
+			if err := json.Unmarshal(data, &resourceMap); err != nil {
+				continue
+			}
+
+			resourceMap["zone_id"] = zoneID
+			resourceMap["ruleset_id"] = ruleset.ID
+
+			resources = append(resources, resourceMap)
+		}
+	}
+
+	return resources, nil
+}

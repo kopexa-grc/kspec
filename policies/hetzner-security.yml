@@ -43,16 +43,13 @@ groups:
     checks:
       - uid: kopexa-hetzner-security-use-modern-ssh-keys
       - uid: kopexa-hetzner-security-ssh-keys-have-labels
+      - uid: kopexa-hetzner-security-ssh-keys-rotation
+      - uid: kopexa-hetzner-security-ssh-keys-not-ancient
 
   - title: Hetzner IP Security
     checks:
       - uid: kopexa-hetzner-security-floating-ips-not-blocked
       - uid: kopexa-hetzner-security-floating-ips-have-dns-ptr
-
-  - title: Hetzner Image Security
-    checks:
-      - uid: kopexa-hetzner-security-images-not-deprecated
-      - uid: kopexa-hetzner-security-server-types-not-deprecated
 
 scoring_system: highest impact
 
@@ -87,16 +84,18 @@ queries:
   - uid: kopexa-hetzner-security-servers-use-private-networks
     title: Ensure servers are connected to private networks for internal communication
     resource: hcloud_server
-    severity: medium
+    severity: low
     query: |
       resource.has_private_network == true
     docs: |
       Private networks provide isolated communication between servers without
-      exposing traffic to the public internet. This is essential for secure
-      internal service communication.
+      exposing traffic to the public internet. This check is most relevant for
+      multi-server environments where internal services need to communicate.
+      For single-server deployments, this check may not be applicable.
     remediation: |
+      For multi-server environments:
       1. Create a private network in Hetzner Cloud Console
-      2. Attach servers to the private network
+      2. Attach all servers to the private network
       3. Configure internal services to use private network IPs
 
   - uid: kopexa-hetzner-security-servers-have-backups
@@ -235,6 +234,39 @@ queries:
       Add labels to SSH keys for better organization:
       hcloud ssh-key add-label <key-id> owner=team-name
 
+  - uid: kopexa-hetzner-security-ssh-keys-rotation
+    title: Ensure SSH keys are rotated annually
+    resource: hcloud_ssh_key
+    severity: medium
+    query: |
+      resource.needs_rotation == false
+    docs: |
+      SSH keys should be rotated at least annually as a security best practice.
+      Keys older than 365 days may have been compromised or shared inappropriately
+      over time. Regular rotation limits the exposure window of any single key.
+    remediation: |
+      1. Generate a new SSH key: ssh-keygen -t ed25519 -C "your_email@example.com"
+      2. Add the new key to Hetzner Cloud Console
+      3. Update servers to use the new key
+      4. Remove the old key from Hetzner Cloud Console
+
+  - uid: kopexa-hetzner-security-ssh-keys-not-ancient
+    title: Ensure SSH keys are not older than 2 years
+    resource: hcloud_ssh_key
+    severity: high
+    query: |
+      resource.is_old == false
+    docs: |
+      SSH keys older than 2 years pose a significant security risk. Extended key
+      lifespans increase the likelihood of key compromise, unauthorized sharing,
+      or use by former team members.
+    remediation: |
+      Immediately rotate any SSH keys older than 2 years:
+      1. Generate a new SSH key with Ed25519 algorithm
+      2. Replace the old key on all systems
+      3. Delete the old key from Hetzner Cloud Console
+      4. Document the rotation in your security log
+
   # Floating IP Security Checks
   - uid: kopexa-hetzner-security-floating-ips-not-blocked
     title: Ensure floating IPs are not blocked
@@ -260,31 +292,3 @@ queries:
     remediation: |
       Configure reverse DNS PTR records for your floating IPs:
       hcloud floating-ip set-rdns <ip-id> --ip <ip-address> --hostname <hostname>
-
-  # Image Security Checks
-  - uid: kopexa-hetzner-security-images-not-deprecated
-    title: Ensure images are not deprecated
-    resource: hcloud_image
-    severity: medium
-    query: |
-      resource.is_deprecated == false
-    docs: |
-      Deprecated images may have security vulnerabilities or lack support.
-      Update to newer, actively maintained images.
-    remediation: |
-      Update to a newer, non-deprecated image:
-      hcloud server rebuild <server-id> --image <new-image-id>
-
-  # Server Type Deprecation
-  - uid: kopexa-hetzner-security-server-types-not-deprecated
-    title: Ensure server types are not deprecated
-    resource: hcloud_server_type
-    severity: low
-    query: |
-      resource.is_deprecated == false
-    docs: |
-      Deprecated server types will eventually become unavailable.
-      Plan migration to newer server types before they are removed.
-    remediation: |
-      Consider migrating to a newer server type before deprecation:
-      hcloud server change-type <server-id> --server-type <new-type>

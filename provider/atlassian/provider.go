@@ -1,19 +1,18 @@
+// Copyright (c) Kopexa GmbH
+// SPDX-License-Identifier: Elastic-2.0
+
 // Package atlassian provides Atlassian Cloud (Jira, Confluence, Admin) scanning
 // capabilities for security policy evaluation.
 package atlassian
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"net/http"
 	"os"
 
-	"github.com/ctreminiom/go-atlassian/admin"
-	"github.com/ctreminiom/go-atlassian/confluence"
-	v3 "github.com/ctreminiom/go-atlassian/jira/v3"
-
 	"github.com/kopexa-grc/kspec/core"
+	"github.com/kopexa-grc/kspec/provider/atlassian/resources"
+	"github.com/kopexa-grc/kspec/provider/registry"
 )
 
 // Provider implements the core.Provider interface for Atlassian Cloud.
@@ -55,113 +54,66 @@ func (p *Provider) Connect(ctx context.Context, config map[string]string) (core.
 		return nil, fmt.Errorf("atlassian: site not specified. Set site or ATLASSIAN_SITE (e.g., yoursite.atlassian.net)")
 	}
 
-	// Create Jira client
-	jiraClient, err := v3.New(nil, site)
-	if err != nil {
-		return nil, fmt.Errorf("atlassian: failed to create Jira client: %w", err)
-	}
-	jiraClient.Auth.SetBasicAuth(email, apiToken)
-
-	// Create Confluence client
-	confluenceClient, err := confluence.New(nil, site)
-	if err != nil {
-		return nil, fmt.Errorf("atlassian: failed to create Confluence client: %w", err)
-	}
-	confluenceClient.Auth.SetBasicAuth(email, apiToken)
-
-	// Create Admin client (uses different base URL)
-	adminClient, err := admin.New(nil)
-	if err != nil {
-		return nil, fmt.Errorf("atlassian: failed to create Admin client: %w", err)
-	}
-	adminClient.Auth.SetBearerToken(apiToken)
-
-	// Discover Cloud ID from site
-	cloudID, err := discoverCloudID(site, email, apiToken)
-	if err != nil {
-		// Cloud ID is optional for some operations
-		cloudID = ""
-	}
-
 	// Get org ID from config or environment
 	orgID := config["org_id"]
 	if orgID == "" {
 		orgID = os.Getenv("ATLASSIAN_ORG_ID")
 	}
 
-	return &Connection{
-		jiraClient:       jiraClient,
-		confluenceClient: confluenceClient,
-		adminClient:      adminClient,
-		site:             site,
-		cloudID:          cloudID,
-		orgID:            orgID,
-		email:            email,
-		apiToken:         apiToken,
-	}, nil
+	// Get rate limiter from provider definition
+	def, ok := registry.Get("atlassian")
+	if !ok {
+		return nil, fmt.Errorf("atlassian provider not registered")
+	}
+
+	// Create client with rate limiting
+	client, err := NewClient(ctx, ClientConfig{
+		Email:    email,
+		APIToken: apiToken,
+		Site:     site,
+		OrgID:    orgID,
+		Limiter:  def.NewRateLimiter(),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &Connection{client: client}, nil
 }
 
 // Connection represents an active connection to Atlassian Cloud.
 type Connection struct {
-	jiraClient       *v3.Client
-	confluenceClient *confluence.Client
-	adminClient      *admin.Client
-	site             string
-	cloudID          string
-	orgID            string
-	email            string
-	apiToken         string
+	client *Client
 }
 
 // Resources returns all available Atlassian resources.
 func (c *Connection) Resources() []core.ResourceSpec {
+	jira := c.client.Jira()
+	confluence := c.client.Confluence()
+	admin := c.client.Admin()
+	orgID := c.client.OrgID()
+
 	return []core.ResourceSpec{
 		// Jira resources
-		&JiraProjectResource{client: c.jiraClient},
-		&JiraPermissionSchemeResource{client: c.jiraClient},
-		&JiraSecuritySchemeResource{client: c.jiraClient},
-		&JiraUserResource{client: c.jiraClient},
+		resources.NewJiraProject(jira),
+		resources.NewJiraPermissionScheme(jira),
+		resources.NewJiraSecurityScheme(jira),
+		resources.NewJiraUser(jira),
 		// Confluence resources
-		&ConfluenceSpaceResource{client: c.confluenceClient},
-		&ConfluencePageResource{client: c.confluenceClient},
+		resources.NewConfluenceSpace(confluence),
+		resources.NewConfluencePage(confluence),
 		// Admin resources (require org ID)
-		&AdminOrganizationResource{client: c.adminClient, orgID: c.orgID},
-		&AdminUserResource{client: c.adminClient, orgID: c.orgID},
-		&AdminGroupResource{client: c.adminClient, orgID: c.orgID},
-		&AdminPolicyResource{client: c.adminClient, orgID: c.orgID},
+		resources.NewAdminOrganization(admin, orgID),
+		resources.NewAdminUser(admin, orgID),
+		resources.NewAdminGroup(admin, orgID),
+		resources.NewAdminPolicy(admin, orgID),
 		// SCIM resources
-		&SCIMUserResource{client: c.adminClient, orgID: c.orgID},
-		&SCIMGroupResource{client: c.adminClient, orgID: c.orgID},
+		resources.NewSCIMUser(admin, orgID),
+		resources.NewSCIMGroup(admin, orgID),
 	}
 }
 
-// discoverCloudID fetches the Cloud ID from the Atlassian site.
-func discoverCloudID(site, email, apiToken string) (string, error) {
-	url := fmt.Sprintf("https://%s/_edge/tenant_info", site)
-
-	ctx := context.Background()
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, http.NoBody)
-	if err != nil {
-		return "", err
-	}
-	req.SetBasicAuth(email, apiToken)
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("failed to get tenant info: %s", resp.Status)
-	}
-
-	var info struct {
-		CloudID string `json:"cloudId"`
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&info); err != nil {
-		return "", err
-	}
-
-	return info.CloudID, nil
+// Client returns the underlying Atlassian client for direct access if needed.
+func (c *Connection) Client() *Client {
+	return c.client
 }

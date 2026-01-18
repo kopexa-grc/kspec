@@ -1,5 +1,5 @@
 // Copyright (c) Kopexa GmbH
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Elastic-2.0
 
 package os
 
@@ -25,5 +25,7 @@ func init() {
 		Factory: func() core.Provider {
 			return New()
 		},
+		// No rate limiting needed for local operations
+		RateLimitConfig: nil,
 	})
 }

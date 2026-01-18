@@ -22,6 +22,10 @@ groups:
       - uid: aws-iam-access-keys-rotated
       - uid: aws-iam-no-admin-privileges
       - uid: aws-iam-unused-credentials-disabled
+      - uid: aws-iam-password-policy
+      - uid: aws-iam-group-has-users
+      - uid: aws-iam-user-single-access-key
+      - uid: aws-iam-no-wildcard-policies
 
   - title: AWS S3 Security
     checks:
@@ -32,6 +36,7 @@ groups:
       - uid: aws-s3-bucket-ssl-requests-only
       - uid: aws-s3-bucket-public-access-block
       - uid: aws-s3-bucket-no-public-acl
+      - uid: aws-s3-account-level-public-access-block
 
   - title: AWS EC2 Security
     checks:
@@ -41,13 +46,21 @@ groups:
       - uid: aws-ec2-detailed-monitoring
       - uid: aws-ec2-security-group-no-ssh-from-internet
       - uid: aws-ec2-security-group-no-rdp-from-internet
+      - uid: aws-ec2-security-group-no-vnc-from-internet
       - uid: aws-ec2-security-group-no-unrestricted-ingress
+      - uid: aws-ec2-ebs-encryption-by-default
+      - uid: aws-ec2-volume-in-use
+      - uid: aws-ec2-no-secrets-in-user-data
+      - uid: aws-ec2-ebs-snapshot-not-public
+      - uid: aws-ec2-ebs-snapshot-encrypted
 
   - title: AWS VPC Security
     checks:
       - uid: aws-vpc-flow-logs-enabled
       - uid: aws-vpc-no-default-vpc
       - uid: aws-vpc-endpoint-enabled
+      - uid: aws-vpc-default-security-group-closed
+      - uid: aws-vpc-block-public-access
 
   - title: AWS KMS Security
     checks:
@@ -71,6 +84,8 @@ groups:
       - uid: aws-rds-iam-authentication
       - uid: aws-rds-backup-enabled
       - uid: aws-rds-auto-minor-upgrade
+      - uid: aws-rds-no-pending-maintenance
+      - uid: aws-rds-cluster-ssl-enforced
 
   - title: AWS Lambda Security
     checks:
@@ -78,6 +93,7 @@ groups:
       - uid: aws-lambda-no-public-url
       - uid: aws-lambda-no-deprecated-runtime
       - uid: aws-lambda-dlq-configured
+      - uid: aws-lambda-concurrency-configured
 
   - title: AWS EKS Security
     checks:
@@ -172,6 +188,10 @@ groups:
     checks:
       - uid: aws-apigateway-logging-enabled
       - uid: aws-apigateway-waf-enabled
+      - uid: aws-apigateway-cache-encrypted
+      - uid: aws-apigateway-require-authorization
+      - uid: aws-apigateway-tls-version
+      - uid: aws-apigateway-xray-enabled
 
   - title: AWS SSM Security
     checks:
@@ -181,6 +201,28 @@ groups:
     checks:
       - uid: aws-autoscaling-launch-config-imdsv2
       - uid: aws-autoscaling-ebs-encryption
+
+  - title: AWS Redshift Security
+    checks:
+      - uid: aws-redshift-not-public
+      - uid: aws-redshift-encryption-enabled
+      - uid: aws-redshift-audit-logging
+
+  - title: AWS EFS Security
+    checks:
+      - uid: aws-efs-encryption-enabled
+      - uid: aws-efs-encryption-in-transit
+
+  - title: AWS OpenSearch Security
+    checks:
+      - uid: aws-opensearch-encryption-at-rest
+      - uid: aws-opensearch-encryption-in-transit
+      - uid: aws-opensearch-not-public
+
+  - title: AWS SageMaker Security
+    checks:
+      - uid: aws-sagemaker-notebook-encryption
+      - uid: aws-sagemaker-notebook-not-public
 
 scoring_system: highest impact
 
@@ -1179,3 +1221,353 @@ queries:
       EBS encryption protects data at rest on launched instances.
     remediation: |
       Configure launch configurations with encrypted EBS volumes.
+
+  # Additional IAM Security Checks
+  - uid: aws-iam-password-policy
+    title: Ensure IAM password policy enforces strong requirements
+    resource: aws_iam_password_policy
+    severity: medium
+    query: |
+      resource.minimum_password_length >= 14 &&
+      resource.require_uppercase &&
+      resource.require_lowercase &&
+      resource.require_numbers &&
+      resource.require_symbols &&
+      resource.max_password_age <= 90 &&
+      resource.password_reuse_prevention >= 24
+    docs: |
+      A strong password policy reduces the risk of compromised credentials through brute-force attacks.
+    remediation: |
+      Configure the IAM password policy to require minimum 14 characters, uppercase, lowercase, numbers, symbols, 90-day expiration, and prevent reuse of last 24 passwords.
+
+  - uid: aws-iam-group-has-users
+    title: Ensure IAM groups have at least one user
+    resource: aws_iam_group
+    severity: low
+    query: |
+      resource.user_count > 0
+    docs: |
+      Empty IAM groups may indicate orphaned permissions or incomplete configuration.
+    remediation: |
+      Review empty IAM groups and either add users or delete the group if no longer needed.
+
+  - uid: aws-iam-user-single-access-key
+    title: Ensure IAM users have only one active access key
+    resource: aws_iam_user
+    severity: medium
+    query: |
+      resource.active_access_key_count <= 1
+    docs: |
+      Having multiple active access keys increases the attack surface and makes key rotation more complex.
+    remediation: |
+      Remove unused access keys and ensure each IAM user has only one active access key.
+
+  - uid: aws-iam-no-wildcard-policies
+    title: Ensure IAM policies do not use wildcards for actions or resources
+    resource: aws_iam_policy
+    severity: high
+    query: |
+      !resource.has_wildcard_actions && !resource.has_wildcard_resources
+    docs: |
+      Wildcard permissions violate the principle of least privilege and can grant excessive access.
+    remediation: |
+      Review IAM policies and replace wildcard permissions with specific actions and resources.
+
+  # Additional S3 Security Checks
+  - uid: aws-s3-account-level-public-access-block
+    title: Ensure S3 account-level public access block is enabled
+    resource: aws_s3_account
+    severity: critical
+    query: |
+      resource.block_public_acls &&
+      resource.ignore_public_acls &&
+      resource.block_public_policy &&
+      resource.restrict_public_buckets
+    docs: |
+      Account-level S3 public access block provides a global safety net preventing any bucket from being made public.
+    remediation: |
+      Enable all four S3 account-level public access block settings.
+
+  # Additional EC2 Security Checks
+  - uid: aws-ec2-security-group-no-vnc-from-internet
+    title: Ensure no security groups allow VNC from the internet
+    resource: aws_ec2_securitygroup
+    severity: critical
+    query: |
+      !resource.allows_vnc_from_internet
+    docs: |
+      VNC access from the internet exposes instances to unauthorized remote access attacks.
+    remediation: |
+      Restrict VNC access (ports 5900-5910) to specific IP ranges.
+
+  - uid: aws-ec2-ebs-encryption-by-default
+    title: Ensure EBS encryption by default is enabled
+    resource: aws_ec2_ebs_settings
+    severity: high
+    query: |
+      resource.encryption_by_default
+    docs: |
+      EBS encryption by default ensures all new EBS volumes are automatically encrypted.
+    remediation: |
+      Enable EBS encryption by default in the EC2 console or via AWS CLI.
+
+  - uid: aws-ec2-volume-in-use
+    title: Ensure EBS volumes are attached to EC2 instances
+    resource: aws_ec2_volume
+    severity: low
+    query: |
+      resource.is_attached
+    docs: |
+      Unattached EBS volumes may contain sensitive data and incur unnecessary costs.
+    remediation: |
+      Delete or attach orphaned EBS volumes.
+
+  - uid: aws-ec2-no-secrets-in-user-data
+    title: Ensure EC2 user data does not contain secrets
+    resource: aws_ec2_instance
+    severity: critical
+    query: |
+      !resource.user_data_has_secrets
+    docs: |
+      Secrets in EC2 user data can be exposed through the metadata service or console.
+    remediation: |
+      Store secrets in AWS Secrets Manager or SSM Parameter Store and retrieve them at runtime.
+
+  - uid: aws-ec2-ebs-snapshot-not-public
+    title: Ensure EBS snapshots are not publicly restorable
+    resource: aws_ec2_snapshot
+    severity: critical
+    query: |
+      !resource.is_public
+    docs: |
+      Public EBS snapshots can expose sensitive data to anyone with an AWS account.
+    remediation: |
+      Remove public permissions from EBS snapshots.
+
+  - uid: aws-ec2-ebs-snapshot-encrypted
+    title: Ensure EBS snapshots are encrypted
+    resource: aws_ec2_snapshot
+    severity: high
+    query: |
+      resource.is_encrypted
+    docs: |
+      Encrypted snapshots protect data at rest and comply with data protection requirements.
+    remediation: |
+      Create snapshots from encrypted volumes or copy unencrypted snapshots with encryption enabled.
+
+  # Additional VPC Security Checks
+  - uid: aws-vpc-default-security-group-closed
+    title: Ensure the default security group restricts all traffic
+    resource: aws_ec2_securitygroup
+    severity: medium
+    query: |
+      !resource.is_default || (!resource.has_ingress_rules && !resource.has_egress_rules)
+    docs: |
+      The default security group should not allow any traffic to minimize the attack surface.
+    remediation: |
+      Remove all inbound and outbound rules from the default security group in each VPC.
+
+  - uid: aws-vpc-block-public-access
+    title: Ensure VPC Block Public Access is enabled
+    resource: aws_vpc
+    severity: high
+    query: |
+      resource.block_public_access_enabled
+    docs: |
+      VPC Block Public Access prevents resources in the VPC from having public IP addresses.
+    remediation: |
+      Enable VPC Block Public Access to prevent public IP assignment.
+
+  # Additional RDS Security Checks
+  - uid: aws-rds-no-pending-maintenance
+    title: Ensure RDS instances have no pending maintenance actions
+    resource: aws_rds_instance
+    severity: medium
+    query: |
+      !resource.has_pending_maintenance
+    docs: |
+      Pending maintenance may include important security patches that should be applied promptly.
+    remediation: |
+      Apply pending maintenance actions to RDS instances during the next maintenance window.
+
+  - uid: aws-rds-cluster-ssl-enforced
+    title: Ensure RDS Aurora clusters enforce SSL connections
+    resource: aws_rds_cluster
+    severity: high
+    query: |
+      resource.ssl_enforced
+    docs: |
+      SSL enforcement ensures data in transit between clients and the database is encrypted.
+    remediation: |
+      Configure the RDS cluster parameter group to require SSL connections.
+
+  # Additional Lambda Security Checks
+  - uid: aws-lambda-concurrency-configured
+    title: Ensure Lambda functions have reserved concurrency configured
+    resource: aws_lambda_function
+    severity: low
+    query: |
+      resource.reserved_concurrent_executions > 0
+    docs: |
+      Reserved concurrency prevents runaway functions and ensures capacity for critical functions.
+    remediation: |
+      Configure reserved concurrency limits for Lambda functions based on expected workload.
+
+  # Additional API Gateway Security Checks
+  - uid: aws-apigateway-cache-encrypted
+    title: Ensure API Gateway cache is encrypted
+    resource: aws_apigateway_stage
+    severity: medium
+    query: |
+      !resource.cache_enabled || resource.cache_encrypted
+    docs: |
+      API Gateway cache encryption protects cached responses containing sensitive data.
+    remediation: |
+      Enable cache encryption in API Gateway stage settings.
+
+  - uid: aws-apigateway-require-authorization
+    title: Ensure API Gateway methods require authorization
+    resource: aws_apigateway_method
+    severity: high
+    query: |
+      resource.authorization_type != "NONE"
+    docs: |
+      API methods without authorization allow unauthenticated access to your APIs.
+    remediation: |
+      Configure API Gateway methods to require IAM, Cognito, or Lambda authorizer authentication.
+
+  - uid: aws-apigateway-tls-version
+    title: Ensure API Gateway uses TLS 1.2 or higher
+    resource: aws_apigateway_stage
+    severity: high
+    query: |
+      resource.minimum_tls_version >= "TLS_1_2"
+    docs: |
+      TLS 1.2 provides strong encryption and is required by many compliance frameworks.
+    remediation: |
+      Configure API Gateway custom domain to use a security policy requiring TLS 1.2.
+
+  - uid: aws-apigateway-xray-enabled
+    title: Ensure API Gateway has X-Ray tracing enabled
+    resource: aws_apigateway_stage
+    severity: low
+    query: |
+      resource.xray_tracing_enabled
+    docs: |
+      X-Ray tracing helps identify performance issues and security anomalies.
+    remediation: |
+      Enable X-Ray tracing on API Gateway stages.
+
+  # Redshift Security Checks
+  - uid: aws-redshift-not-public
+    title: Ensure Redshift clusters are not publicly accessible
+    resource: aws_redshift_cluster
+    severity: critical
+    query: |
+      !resource.is_public
+    docs: |
+      Publicly accessible Redshift clusters are exposed to internet attacks.
+    remediation: |
+      Disable public accessibility on Redshift clusters and use VPC for access.
+
+  - uid: aws-redshift-encryption-enabled
+    title: Ensure Redshift clusters have encryption enabled
+    resource: aws_redshift_cluster
+    severity: high
+    query: |
+      resource.is_encrypted
+    docs: |
+      Redshift encryption protects data at rest in the data warehouse.
+    remediation: |
+      Enable encryption when creating Redshift clusters (cannot be enabled after creation).
+
+  - uid: aws-redshift-audit-logging
+    title: Ensure Redshift clusters have audit logging enabled
+    resource: aws_redshift_cluster
+    severity: medium
+    query: |
+      resource.audit_logging_enabled
+    docs: |
+      Audit logging provides visibility into user activity and queries for security analysis.
+    remediation: |
+      Enable audit logging on Redshift clusters to an S3 bucket.
+
+  # EFS Security Checks
+  - uid: aws-efs-encryption-enabled
+    title: Ensure EFS file systems have encryption at rest enabled
+    resource: aws_efs_filesystem
+    severity: high
+    query: |
+      resource.is_encrypted
+    docs: |
+      EFS encryption protects data at rest stored in the file system.
+    remediation: |
+      Enable encryption when creating EFS file systems (cannot be enabled after creation).
+
+  - uid: aws-efs-encryption-in-transit
+    title: Ensure EFS file systems enforce encryption in transit
+    resource: aws_efs_filesystem
+    severity: high
+    query: |
+      resource.encryption_in_transit_enforced
+    docs: |
+      Encryption in transit protects data transferred between EFS and clients.
+    remediation: |
+      Configure EFS mount targets to require TLS and use the EFS mount helper with TLS option.
+
+  # OpenSearch Security Checks
+  - uid: aws-opensearch-encryption-at-rest
+    title: Ensure OpenSearch domains have encryption at rest enabled
+    resource: aws_opensearch_domain
+    severity: high
+    query: |
+      resource.encryption_at_rest_enabled
+    docs: |
+      Encryption at rest protects data stored in OpenSearch indices.
+    remediation: |
+      Enable encryption at rest when creating OpenSearch domains.
+
+  - uid: aws-opensearch-encryption-in-transit
+    title: Ensure OpenSearch domains enforce node-to-node encryption
+    resource: aws_opensearch_domain
+    severity: high
+    query: |
+      resource.node_to_node_encryption_enabled
+    docs: |
+      Node-to-node encryption protects data transferred between OpenSearch nodes.
+    remediation: |
+      Enable node-to-node encryption on OpenSearch domains.
+
+  - uid: aws-opensearch-not-public
+    title: Ensure OpenSearch domains are not publicly accessible
+    resource: aws_opensearch_domain
+    severity: critical
+    query: |
+      !resource.is_public
+    docs: |
+      Publicly accessible OpenSearch domains expose data to internet attacks.
+    remediation: |
+      Configure OpenSearch domains to use VPC access or restrict access policies.
+
+  # SageMaker Security Checks
+  - uid: aws-sagemaker-notebook-encryption
+    title: Ensure SageMaker notebook instances use KMS encryption
+    resource: aws_sagemaker_notebook
+    severity: high
+    query: |
+      resource.has_kms_encryption
+    docs: |
+      KMS encryption protects data stored on SageMaker notebook instances.
+    remediation: |
+      Configure SageMaker notebook instances to use a customer-managed KMS key.
+
+  - uid: aws-sagemaker-notebook-not-public
+    title: Ensure SageMaker notebook instances are not directly accessible from internet
+    resource: aws_sagemaker_notebook
+    severity: critical
+    query: |
+      !resource.direct_internet_access
+    docs: |
+      Direct internet access to notebook instances increases the attack surface.
+    remediation: |
+      Disable direct internet access and use VPC with NAT gateway for internet connectivity.

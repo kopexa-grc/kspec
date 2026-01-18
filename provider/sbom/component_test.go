@@ -5,35 +5,33 @@ import (
 	"testing"
 
 	"github.com/kopexa-grc/kspec/core"
+	"github.com/kopexa-grc/kspec/provider/sbom/resources"
 )
 
 func TestComponentResource_Name(t *testing.T) {
-	r := &ComponentResource{}
+	r := resources.NewComponent("", false)
 	if got := r.Name(); got != "sbom_component" {
 		t.Errorf("Name() = %v, want %v", got, "sbom_component")
 	}
 }
 
 func TestComponentResource_FetchCycloneDX(t *testing.T) {
-	r := &ComponentResource{
-		path:  "testdata/cyclonedx.json",
-		isDir: false,
-	}
+	r := resources.NewComponent("testdata/cyclonedx.json", false)
 
-	resources, err := r.Fetch(context.Background(), core.Asset{})
+	results, err := r.Fetch(context.Background(), core.Asset{})
 	if err != nil {
 		t.Fatalf("Fetch() error = %v", err)
 	}
 
-	if len(resources) != 4 {
-		t.Errorf("Fetch() returned %d components, want 4", len(resources))
+	if len(results) != 4 {
+		t.Errorf("Fetch() returned %d components, want 4", len(results))
 	}
 
 	// Find lodash component
 	var lodash core.Resource
-	for _, r := range resources {
-		if r["name"] == "lodash" {
-			lodash = r
+	for _, res := range results {
+		if res["name"] == "lodash" {
+			lodash = res
 			break
 		}
 	}
@@ -82,25 +80,22 @@ func TestComponentResource_FetchCycloneDX(t *testing.T) {
 }
 
 func TestComponentResource_FetchSPDX(t *testing.T) {
-	r := &ComponentResource{
-		path:  "testdata/spdx.json",
-		isDir: false,
-	}
+	r := resources.NewComponent("testdata/spdx.json", false)
 
-	resources, err := r.Fetch(context.Background(), core.Asset{})
+	results, err := r.Fetch(context.Background(), core.Asset{})
 	if err != nil {
 		t.Fatalf("Fetch() error = %v", err)
 	}
 
-	if len(resources) != 3 {
-		t.Errorf("Fetch() returned %d packages, want 3", len(resources))
+	if len(results) != 3 {
+		t.Errorf("Fetch() returned %d packages, want 3", len(results))
 	}
 
 	// Find lodash package
 	var lodash core.Resource
-	for _, r := range resources {
-		if r["name"] == "lodash" {
-			lodash = r
+	for _, res := range results {
+		if res["name"] == "lodash" {
+			lodash = res
 			break
 		}
 	}
@@ -140,21 +135,18 @@ func TestComponentResource_FetchSPDX(t *testing.T) {
 }
 
 func TestComponentResource_SPDXNoAssertion(t *testing.T) {
-	r := &ComponentResource{
-		path:  "testdata/spdx.json",
-		isDir: false,
-	}
+	r := resources.NewComponent("testdata/spdx.json", false)
 
-	resources, err := r.Fetch(context.Background(), core.Asset{})
+	results, err := r.Fetch(context.Background(), core.Asset{})
 	if err != nil {
 		t.Fatalf("Fetch() error = %v", err)
 	}
 
 	// Find unknown-pkg package
 	var unknown core.Resource
-	for _, r := range resources {
-		if r["name"] == "unknown-pkg" {
-			unknown = r
+	for _, res := range results {
+		if res["name"] == "unknown-pkg" {
+			unknown = res
 			break
 		}
 	}
@@ -174,25 +166,22 @@ func TestComponentResource_SPDXNoAssertion(t *testing.T) {
 }
 
 func TestComponentResource_FetchDirectory(t *testing.T) {
-	r := &ComponentResource{
-		path:  "testdata",
-		isDir: true,
-	}
+	r := resources.NewComponent("testdata", true)
 
-	resources, err := r.Fetch(context.Background(), core.Asset{})
+	results, err := r.Fetch(context.Background(), core.Asset{})
 	if err != nil {
 		t.Fatalf("Fetch() error = %v", err)
 	}
 
 	// Should have components from both files
-	if len(resources) < 5 {
-		t.Errorf("Fetch() returned %d components, want at least 5 (from both files)", len(resources))
+	if len(results) < 5 {
+		t.Errorf("Fetch() returned %d components, want at least 5 (from both files)", len(results))
 	}
 
 	// Check we have both formats
 	formats := map[string]bool{}
-	for _, r := range resources {
-		if format, ok := r["format"].(string); ok {
+	for _, res := range results {
+		if format, ok := res["format"].(string); ok {
 			formats[format] = true
 		}
 	}
@@ -206,18 +195,15 @@ func TestComponentResource_FetchDirectory(t *testing.T) {
 }
 
 func TestComponentResource_ComponentTypes(t *testing.T) {
-	r := &ComponentResource{
-		path:  "testdata/cyclonedx.json",
-		isDir: false,
-	}
+	r := resources.NewComponent("testdata/cyclonedx.json", false)
 
-	resources, err := r.Fetch(context.Background(), core.Asset{})
+	results, err := r.Fetch(context.Background(), core.Asset{})
 	if err != nil {
 		t.Fatalf("Fetch() error = %v", err)
 	}
 
 	types := map[string]int{}
-	for _, resource := range resources {
+	for _, resource := range results {
 		if resource["is_library"] == true {
 			types["library"]++
 		}
@@ -239,21 +225,18 @@ func TestComponentResource_ComponentTypes(t *testing.T) {
 }
 
 func TestComponentResource_ComponentWithoutVersion(t *testing.T) {
-	r := &ComponentResource{
-		path:  "testdata/cyclonedx.json",
-		isDir: false,
-	}
+	r := resources.NewComponent("testdata/cyclonedx.json", false)
 
-	resources, err := r.Fetch(context.Background(), core.Asset{})
+	results, err := r.Fetch(context.Background(), core.Asset{})
 	if err != nil {
 		t.Fatalf("Fetch() error = %v", err)
 	}
 
 	// Find no-version-lib
 	var noVersion core.Resource
-	for _, r := range resources {
-		if r["name"] == "no-version-lib" {
-			noVersion = r
+	for _, res := range results {
+		if res["name"] == "no-version-lib" {
+			noVersion = res
 			break
 		}
 	}

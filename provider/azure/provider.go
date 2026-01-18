@@ -1,3 +1,6 @@
+// Copyright (c) Kopexa GmbH
+// SPDX-License-Identifier: Elastic-2.0
+
 // Package azure provides Azure cloud resource scanning capabilities
 // for security policy evaluation.
 package azure
@@ -10,6 +13,8 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 
 	"github.com/kopexa-grc/kspec/core"
+	"github.com/kopexa-grc/kspec/provider/azure/resources"
+	"github.com/kopexa-grc/kspec/provider/registry"
 )
 
 // Provider implements the core.Provider interface for Azure cloud resources.
@@ -27,8 +32,7 @@ func (p *Provider) Name() string {
 
 // Connection represents an authenticated connection to Azure services.
 type Connection struct {
-	credential     azcore.TokenCredential
-	subscriptionID string
+	client *Client
 }
 
 // Connect establishes a connection to Azure using the provided configuration.
@@ -76,121 +80,68 @@ func (p *Provider) Connect(ctx context.Context, config map[string]string) (core.
 		}
 	}
 
+	// Get rate limiter from provider definition
+	def, ok := registry.Get("azure")
+	if !ok {
+		return nil, fmt.Errorf("azure provider not registered")
+	}
+
+	// Create client with rate limiting
+	client := NewClient(ClientConfig{
+		Credential:     azureCred,
+		SubscriptionID: subscriptionID,
+		Limiter:        def.NewRateLimiter(),
+	})
+
 	return &Connection{
-		credential:     azureCred,
-		subscriptionID: subscriptionID,
+		client: client,
 	}, nil
 }
 
 // Resources returns the list of available Azure resource types that can be scanned.
 func (c *Connection) Resources() []core.ResourceSpec {
+	cred := c.client.Credential()
+	subID := c.client.SubscriptionID()
 	return []core.ResourceSpec{
 		// Storage
-		&StorageAccountResource{
-			credential:     c.credential,
-			subscriptionID: c.subscriptionID,
-		},
+		resources.NewStorageAccount(cred, subID),
 		// Databases
-		&SqlServerResource{
-			credential:     c.credential,
-			subscriptionID: c.subscriptionID,
-		},
-		&MySQLServerResource{
-			credential:     c.credential,
-			subscriptionID: c.subscriptionID,
-		},
-		&PostgreSQLServerResource{
-			credential:     c.credential,
-			subscriptionID: c.subscriptionID,
-		},
-		&MariaDBServerResource{
-			credential:     c.credential,
-			subscriptionID: c.subscriptionID,
-		},
-		&CosmosDBAccountResource{
-			credential:     c.credential,
-			subscriptionID: c.subscriptionID,
-		},
-		&RedisCacheResource{
-			credential:     c.credential,
-			subscriptionID: c.subscriptionID,
-		},
+		resources.NewSqlServer(cred, subID),
+		resources.NewMySQLServer(cred, subID),
+		resources.NewPostgreSQLServer(cred, subID),
+		resources.NewMariaDBServer(cred, subID),
+		resources.NewCosmosDBAccount(cred, subID),
+		resources.NewRedisCache(cred, subID),
 		// Security
-		&KeyVaultResource{
-			credential:     c.credential,
-			subscriptionID: c.subscriptionID,
-		},
-		&SecurityAssessmentResource{
-			credential:     c.credential,
-			subscriptionID: c.subscriptionID,
-		},
-		&SecurityAlertResource{
-			credential:     c.credential,
-			subscriptionID: c.subscriptionID,
-		},
-		&DefenderSettingResource{
-			credential:     c.credential,
-			subscriptionID: c.subscriptionID,
-		},
-		&SecureScoreResource{
-			credential:     c.credential,
-			subscriptionID: c.subscriptionID,
-		},
+		resources.NewKeyVault(cred, subID),
+		resources.NewSecurityAssessment(cred, subID),
+		resources.NewSecurityAlert(cred, subID),
+		resources.NewDefenderSetting(cred, subID),
+		resources.NewSecureScore(cred, subID),
 		// Networking
-		&NetworkSecurityGroupResource{
-			credential:     c.credential,
-			subscriptionID: c.subscriptionID,
-		},
+		resources.NewNetworkSecurityGroup(cred, subID),
 		// Compute
-		&VirtualMachineResource{
-			credential:     c.credential,
-			subscriptionID: c.subscriptionID,
-		},
-		&AKSClusterResource{
-			credential:     c.credential,
-			subscriptionID: c.subscriptionID,
-		},
+		resources.NewVirtualMachine(cred, subID),
+		resources.NewAKSCluster(cred, subID),
 		// Web
-		&AppServiceResource{
-			credential:     c.credential,
-			subscriptionID: c.subscriptionID,
-		},
+		resources.NewAppService(cred, subID),
 		// IoT
-		&IoTHubResource{
-			credential:     c.credential,
-			subscriptionID: c.subscriptionID,
-		},
+		resources.NewIoTHub(cred, subID),
 		// IAM
-		&RoleAssignmentResource{
-			credential:     c.credential,
-			subscriptionID: c.subscriptionID,
-		},
-		&RoleDefinitionResource{
-			credential:     c.credential,
-			subscriptionID: c.subscriptionID,
-		},
+		resources.NewRoleAssignment(cred, subID),
+		resources.NewRoleDefinition(cred, subID),
 		// Policy
-		&PolicyAssignmentResource{
-			credential:     c.credential,
-			subscriptionID: c.subscriptionID,
-		},
-		&PolicyDefinitionResource{
-			credential:     c.credential,
-			subscriptionID: c.subscriptionID,
-		},
-		&PolicyComplianceResource{
-			credential:     c.credential,
-			subscriptionID: c.subscriptionID,
-		},
+		resources.NewPolicyAssignment(cred, subID),
+		resources.NewPolicyDefinition(cred, subID),
+		resources.NewPolicyCompliance(cred, subID),
 		// Advisor
-		&AdvisorRecommendationResource{
-			credential:     c.credential,
-			subscriptionID: c.subscriptionID,
-		},
+		resources.NewAdvisorRecommendation(cred, subID),
 		// Subscription
-		&SubscriptionResource{
-			credential:     c.credential,
-			subscriptionID: c.subscriptionID,
-		},
+		resources.NewSubscription(cred, subID),
 	}
+}
+
+// Client returns the underlying Azure client for direct access if needed.
+func (c *Connection) Client() *Client {
+	return c.client
 }

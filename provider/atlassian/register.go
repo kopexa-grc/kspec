@@ -1,10 +1,11 @@
 // Copyright (c) Kopexa GmbH
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Elastic-2.0
 
 package atlassian
 
 import (
 	"github.com/kopexa-grc/kspec/core"
+	"github.com/kopexa-grc/kspec/pkg/ratelimit"
 	"github.com/kopexa-grc/kspec/provider/registry"
 )
 
@@ -69,6 +70,12 @@ func init() {
 		},
 		Factory: func() core.Provider {
 			return NewProvider()
+		},
+		// Atlassian API: Rate limits vary by product but are generally generous
+		// We use 10/s with burst of 20 for safe operation across all APIs
+		RateLimitConfig: &ratelimit.Config{
+			RequestsPerSecond: 10,
+			Burst:             20,
 		},
 	})
 }

@@ -1,5 +1,5 @@
 // Copyright (c) Kopexa GmbH
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Elastic-2.0
 
 package aws
 
@@ -14,10 +14,11 @@ import (
 	"go.uber.org/mock/gomock"
 
 	"github.com/kopexa-grc/kspec/core"
+	"github.com/kopexa-grc/kspec/provider/aws/resources"
 )
 
 func TestEC2InstanceResource_Name(t *testing.T) {
-	r := &EC2InstanceResource{}
+	r := resources.NewEC2Instance(nil, "", nil)
 	if got := r.Name(); got != "aws_ec2_instance" {
 		t.Errorf("Name() = %v, want aws_ec2_instance", got)
 	}
@@ -32,17 +33,18 @@ func TestEC2InstanceResource_Fetch_EmptyInstances(t *testing.T) {
 		DescribeInstances(gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(&ec2.DescribeInstancesOutput{Reservations: []types.Reservation{}}, nil)
 
-	r := &EC2InstanceResource{
-		client: mock,
-		conn:   &Connection{regions: []string{"us-east-1"}, accountID: "123456789012"},
+	factory := func(region string) resources.EC2Client {
+		return mock
 	}
-	resources, err := r.Fetch(context.Background(), core.Asset{})
+
+	r := resources.NewEC2Instance(factory, "123456789012", []string{"us-east-1"})
+	rs, err := r.Fetch(context.Background(), core.Asset{})
 
 	if err != nil {
 		t.Fatalf("Fetch() error = %v", err)
 	}
-	if len(resources) != 0 {
-		t.Errorf("Fetch() returned %d resources, want 0", len(resources))
+	if len(rs) != 0 {
+		t.Errorf("Fetch() returned %d resources, want 0", len(rs))
 	}
 }
 
@@ -86,20 +88,21 @@ func TestEC2InstanceResource_Fetch_SingleInstance(t *testing.T) {
 			},
 		}, nil)
 
-	r := &EC2InstanceResource{
-		client: mock,
-		conn:   &Connection{regions: []string{"us-east-1"}, accountID: "123456789012"},
+	factory := func(region string) resources.EC2Client {
+		return mock
 	}
-	resources, err := r.Fetch(context.Background(), core.Asset{})
+
+	r := resources.NewEC2Instance(factory, "123456789012", []string{"us-east-1"})
+	rs, err := r.Fetch(context.Background(), core.Asset{})
 
 	if err != nil {
 		t.Fatalf("Fetch() error = %v", err)
 	}
-	if len(resources) != 1 {
-		t.Fatalf("Fetch() returned %d resources, want 1", len(resources))
+	if len(rs) != 1 {
+		t.Fatalf("Fetch() returned %d resources, want 1", len(rs))
 	}
 
-	res := resources[0]
+	res := rs[0]
 	if res["id"] != instanceID {
 		t.Errorf("id = %v, want %v", res["id"], instanceID)
 	}
@@ -140,17 +143,18 @@ func TestEC2InstanceResource_Fetch_PublicInstance(t *testing.T) {
 			},
 		}, nil)
 
-	r := &EC2InstanceResource{
-		client: mock,
-		conn:   &Connection{regions: []string{"us-east-1"}, accountID: "123456789012"},
+	factory := func(region string) resources.EC2Client {
+		return mock
 	}
-	resources, err := r.Fetch(context.Background(), core.Asset{})
+
+	r := resources.NewEC2Instance(factory, "123456789012", []string{"us-east-1"})
+	rs, err := r.Fetch(context.Background(), core.Asset{})
 
 	if err != nil {
 		t.Fatalf("Fetch() error = %v", err)
 	}
 
-	res := resources[0]
+	res := rs[0]
 	if res["is_public"] != true {
 		t.Errorf("is_public = %v, want true", res["is_public"])
 	}
@@ -160,7 +164,7 @@ func TestEC2InstanceResource_Fetch_PublicInstance(t *testing.T) {
 }
 
 func TestEC2SecurityGroupResource_Name(t *testing.T) {
-	r := &EC2SecurityGroupResource{}
+	r := resources.NewEC2SecurityGroup(nil, "", nil)
 	if got := r.Name(); got != "aws_ec2_securitygroup" {
 		t.Errorf("Name() = %v, want aws_ec2_securitygroup", got)
 	}
@@ -174,17 +178,18 @@ func TestEC2SecurityGroupResource_Fetch_EmptySecurityGroups(t *testing.T) {
 		DescribeSecurityGroups(gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(&ec2.DescribeSecurityGroupsOutput{SecurityGroups: []types.SecurityGroup{}}, nil)
 
-	r := &EC2SecurityGroupResource{
-		client: mock,
-		conn:   &Connection{regions: []string{"us-east-1"}, accountID: "123456789012"},
+	factory := func(region string) resources.EC2Client {
+		return mock
 	}
-	resources, err := r.Fetch(context.Background(), core.Asset{})
+
+	r := resources.NewEC2SecurityGroup(factory, "123456789012", []string{"us-east-1"})
+	rs, err := r.Fetch(context.Background(), core.Asset{})
 
 	if err != nil {
 		t.Fatalf("Fetch() error = %v", err)
 	}
-	if len(resources) != 0 {
-		t.Errorf("Fetch() returned %d resources, want 0", len(resources))
+	if len(rs) != 0 {
+		t.Errorf("Fetch() returned %d resources, want 0", len(rs))
 	}
 }
 
@@ -232,20 +237,21 @@ func TestEC2SecurityGroupResource_Fetch_SecureSecurityGroup(t *testing.T) {
 		DescribeNetworkInterfaces(gomock.Any(), gomock.Any()).
 		Return(&ec2.DescribeNetworkInterfacesOutput{NetworkInterfaces: []types.NetworkInterface{}}, nil)
 
-	r := &EC2SecurityGroupResource{
-		client: mock,
-		conn:   &Connection{regions: []string{"us-east-1"}, accountID: "123456789012"},
+	factory := func(region string) resources.EC2Client {
+		return mock
 	}
-	resources, err := r.Fetch(context.Background(), core.Asset{})
+
+	r := resources.NewEC2SecurityGroup(factory, "123456789012", []string{"us-east-1"})
+	rs, err := r.Fetch(context.Background(), core.Asset{})
 
 	if err != nil {
 		t.Fatalf("Fetch() error = %v", err)
 	}
-	if len(resources) != 1 {
-		t.Fatalf("Fetch() returned %d resources, want 1", len(resources))
+	if len(rs) != 1 {
+		t.Fatalf("Fetch() returned %d resources, want 1", len(rs))
 	}
 
-	res := resources[0]
+	res := rs[0]
 	if res["id"] != sgID {
 		t.Errorf("id = %v, want %v", res["id"], sgID)
 	}
@@ -289,17 +295,18 @@ func TestEC2SecurityGroupResource_Fetch_OpenSSH(t *testing.T) {
 		DescribeNetworkInterfaces(gomock.Any(), gomock.Any()).
 		Return(&ec2.DescribeNetworkInterfacesOutput{NetworkInterfaces: []types.NetworkInterface{}}, nil)
 
-	r := &EC2SecurityGroupResource{
-		client: mock,
-		conn:   &Connection{regions: []string{"us-east-1"}, accountID: "123456789012"},
+	factory := func(region string) resources.EC2Client {
+		return mock
 	}
-	resources, err := r.Fetch(context.Background(), core.Asset{})
+
+	r := resources.NewEC2SecurityGroup(factory, "123456789012", []string{"us-east-1"})
+	rs, err := r.Fetch(context.Background(), core.Asset{})
 
 	if err != nil {
 		t.Fatalf("Fetch() error = %v", err)
 	}
 
-	res := resources[0]
+	res := rs[0]
 	if res["has_unrestricted_ingress"] != true {
 		t.Errorf("has_unrestricted_ingress = %v, want true", res["has_unrestricted_ingress"])
 	}
@@ -309,7 +316,7 @@ func TestEC2SecurityGroupResource_Fetch_OpenSSH(t *testing.T) {
 }
 
 func TestEC2VolumeResource_Name(t *testing.T) {
-	r := &EC2VolumeResource{}
+	r := resources.NewEC2Volume(nil, "", nil)
 	if got := r.Name(); got != "aws_ec2_volume" {
 		t.Errorf("Name() = %v, want aws_ec2_volume", got)
 	}
@@ -343,20 +350,21 @@ func TestEC2VolumeResource_Fetch_EncryptedVolume(t *testing.T) {
 			},
 		}, nil)
 
-	r := &EC2VolumeResource{
-		client: mock,
-		conn:   &Connection{regions: []string{"us-east-1"}, accountID: "123456789012"},
+	factory := func(region string) resources.EC2Client {
+		return mock
 	}
-	resources, err := r.Fetch(context.Background(), core.Asset{})
+
+	r := resources.NewEC2Volume(factory, "123456789012", []string{"us-east-1"})
+	rs, err := r.Fetch(context.Background(), core.Asset{})
 
 	if err != nil {
 		t.Fatalf("Fetch() error = %v", err)
 	}
-	if len(resources) != 1 {
-		t.Fatalf("Fetch() returned %d resources, want 1", len(resources))
+	if len(rs) != 1 {
+		t.Fatalf("Fetch() returned %d resources, want 1", len(rs))
 	}
 
-	res := resources[0]
+	res := rs[0]
 	if res["id"] != volumeID {
 		t.Errorf("id = %v, want %v", res["id"], volumeID)
 	}
@@ -372,14 +380,14 @@ func TestEC2VolumeResource_Fetch_EncryptedVolume(t *testing.T) {
 }
 
 func TestEC2SnapshotResource_Name(t *testing.T) {
-	r := &EC2SnapshotResource{}
+	r := resources.NewEC2Snapshot(nil, "", nil)
 	if got := r.Name(); got != "aws_ec2_snapshot" {
 		t.Errorf("Name() = %v, want aws_ec2_snapshot", got)
 	}
 }
 
 func TestEC2KeyPairResource_Name(t *testing.T) {
-	r := &EC2KeyPairResource{}
+	r := resources.NewEC2KeyPair(nil, "", nil)
 	if got := r.Name(); got != "aws_ec2_keypair" {
 		t.Errorf("Name() = %v, want aws_ec2_keypair", got)
 	}
@@ -408,27 +416,28 @@ func TestEC2KeyPairResource_Fetch_KeyPairs(t *testing.T) {
 			},
 		}, nil)
 
-	r := &EC2KeyPairResource{
-		client: mock,
-		conn:   &Connection{regions: []string{"us-east-1"}, accountID: "123456789012"},
+	factory := func(region string) resources.EC2Client {
+		return mock
 	}
-	resources, err := r.Fetch(context.Background(), core.Asset{})
+
+	r := resources.NewEC2KeyPair(factory, "123456789012", []string{"us-east-1"})
+	rs, err := r.Fetch(context.Background(), core.Asset{})
 
 	if err != nil {
 		t.Fatalf("Fetch() error = %v", err)
 	}
-	if len(resources) != 2 {
-		t.Fatalf("Fetch() returned %d resources, want 2", len(resources))
+	if len(rs) != 2 {
+		t.Fatalf("Fetch() returned %d resources, want 2", len(rs))
 	}
 
 	// ED25519 key
-	res0 := resources[0]
+	res0 := rs[0]
 	if res0["is_modern_key_type"] != true {
 		t.Errorf("is_modern_key_type = %v, want true for ed25519", res0["is_modern_key_type"])
 	}
 
 	// RSA key
-	res1 := resources[1]
+	res1 := rs[1]
 	if res1["is_modern_key_type"] != false {
 		t.Errorf("is_modern_key_type = %v, want false for RSA", res1["is_modern_key_type"])
 	}

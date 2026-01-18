@@ -11,9 +11,39 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/credentials/stscreds"
+	"github.com/aws/aws-sdk-go-v2/service/acm"
+	"github.com/aws/aws-sdk-go-v2/service/apigateway"
+	"github.com/aws/aws-sdk-go-v2/service/apigatewayv2"
+	"github.com/aws/aws-sdk-go-v2/service/autoscaling"
+	"github.com/aws/aws-sdk-go-v2/service/cloudfront"
+	"github.com/aws/aws-sdk-go-v2/service/cloudtrail"
+	"github.com/aws/aws-sdk-go-v2/service/cloudwatch"
+	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
+	"github.com/aws/aws-sdk-go-v2/service/configservice"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/service/ecr"
+	"github.com/aws/aws-sdk-go-v2/service/ecs"
+	"github.com/aws/aws-sdk-go-v2/service/eks"
+	"github.com/aws/aws-sdk-go-v2/service/elasticache"
+	"github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2"
+	"github.com/aws/aws-sdk-go-v2/service/guardduty"
+	"github.com/aws/aws-sdk-go-v2/service/iam"
+	"github.com/aws/aws-sdk-go-v2/service/kms"
+	"github.com/aws/aws-sdk-go-v2/service/lambda"
+	"github.com/aws/aws-sdk-go-v2/service/organizations"
+	"github.com/aws/aws-sdk-go-v2/service/rds"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
+	"github.com/aws/aws-sdk-go-v2/service/securityhub"
+	"github.com/aws/aws-sdk-go-v2/service/sns"
+	"github.com/aws/aws-sdk-go-v2/service/sqs"
+	"github.com/aws/aws-sdk-go-v2/service/ssm"
 	"github.com/aws/aws-sdk-go-v2/service/sts"
+	"github.com/aws/aws-sdk-go-v2/service/wafv2"
 
 	"github.com/kopexa-grc/kspec/core"
+	"github.com/kopexa-grc/kspec/provider/aws/resources"
 )
 
 // DefaultRegion is the default AWS region used if none is specified.
@@ -151,99 +181,208 @@ func (c *Connection) ConfigForRegion(region string) aws.Config {
 
 // Resources returns all available AWS resources.
 func (c *Connection) Resources() []core.ResourceSpec {
+	// Global clients (IAM, S3, Organizations, STS are global services)
+	iamClient := iam.NewFromConfig(c.cfg)
+	s3Client := s3.NewFromConfig(c.cfg)
+	orgClient := organizations.NewFromConfig(c.cfg)
+	stsClient := sts.NewFromConfig(c.cfg)
+
+	// Regional client factory functions
+	ec2Factory := func(region string) resources.EC2Client {
+		return ec2.NewFromConfig(c.ConfigForRegion(region))
+	}
+	kmsFactory := func(region string) resources.KMSClient {
+		return kms.NewFromConfig(c.ConfigForRegion(region))
+	}
+	cloudtrailFactory := func(region string) resources.CloudTrailClient {
+		return cloudtrail.NewFromConfig(c.ConfigForRegion(region))
+	}
+	rdsFactory := func(region string) resources.RDSClient {
+		return rds.NewFromConfig(c.ConfigForRegion(region))
+	}
+	lambdaFactory := func(region string) resources.LambdaClient {
+		return lambda.NewFromConfig(c.ConfigForRegion(region))
+	}
+	eksFactory := func(region string) resources.EKSClient {
+		return eks.NewFromConfig(c.ConfigForRegion(region))
+	}
+	ecsFactory := func(region string) resources.ECSClient {
+		return ecs.NewFromConfig(c.ConfigForRegion(region))
+	}
+	dynamodbFactory := func(region string) resources.DynamoDBClient {
+		return dynamodb.NewFromConfig(c.ConfigForRegion(region))
+	}
+	elbFactory := func(region string) resources.ELBClient {
+		return elasticloadbalancingv2.NewFromConfig(c.ConfigForRegion(region))
+	}
+	cloudwatchLogsFactory := func(region string) resources.CloudWatchLogsClient {
+		return cloudwatchlogs.NewFromConfig(c.ConfigForRegion(region))
+	}
+	cloudwatchFactory := func(region string) resources.CloudWatchClient {
+		return cloudwatch.NewFromConfig(c.ConfigForRegion(region))
+	}
+	configFactory := func(region string) resources.ConfigClient {
+		return configservice.NewFromConfig(c.ConfigForRegion(region))
+	}
+	guarddutyFactory := func(region string) resources.GuardDutyClient {
+		return guardduty.NewFromConfig(c.ConfigForRegion(region))
+	}
+	securityhubFactory := func(region string) resources.SecurityHubClient {
+		return securityhub.NewFromConfig(c.ConfigForRegion(region))
+	}
+	secretsmanagerFactory := func(region string) resources.SecretsManagerClient {
+		return secretsmanager.NewFromConfig(c.ConfigForRegion(region))
+	}
+	snsFactory := func(region string) resources.SNSClient {
+		return sns.NewFromConfig(c.ConfigForRegion(region))
+	}
+	sqsFactory := func(region string) resources.SQSClient {
+		return sqs.NewFromConfig(c.ConfigForRegion(region))
+	}
+	ecrFactory := func(region string) resources.ECRClient {
+		return ecr.NewFromConfig(c.ConfigForRegion(region))
+	}
+	wafv2Factory := func(region string) resources.WAFv2Client {
+		return wafv2.NewFromConfig(c.ConfigForRegion(region))
+	}
+	acmFactory := func(region string) resources.ACMClient {
+		return acm.NewFromConfig(c.ConfigForRegion(region))
+	}
+	elasticacheFactory := func(region string) resources.ElastiCacheClient {
+		return elasticache.NewFromConfig(c.ConfigForRegion(region))
+	}
+	apigatewayFactory := func(region string) resources.APIGatewayClient {
+		return apigateway.NewFromConfig(c.ConfigForRegion(region))
+	}
+	apigatewayv2Factory := func(region string) resources.APIGatewayV2Client {
+		return apigatewayv2.NewFromConfig(c.ConfigForRegion(region))
+	}
+	ssmFactory := func(region string) resources.SSMClient {
+		return ssm.NewFromConfig(c.ConfigForRegion(region))
+	}
+	autoscalingFactory := func(region string) resources.AutoScalingClient {
+		return autoscaling.NewFromConfig(c.ConfigForRegion(region))
+	}
+
 	return []core.ResourceSpec{
-		// Account & Organization
-		&AccountResource{conn: c},
-		&OrganizationResource{conn: c},
-		// IAM
-		&IAMUserResource{conn: c},
-		&IAMRoleResource{conn: c},
-		&IAMGroupResource{conn: c},
-		&IAMPolicyResource{conn: c},
-		// S3
-		&S3BucketResource{conn: c},
-		// EC2
-		&EC2InstanceResource{conn: c},
-		&EC2VolumeResource{conn: c},
-		&EC2SnapshotResource{conn: c},
-		// EC2 Security
-		&EC2SecurityGroupResource{conn: c},
-		&EC2KeyPairResource{conn: c},
-		// VPC
-		&VPCResource{conn: c},
-		&VPCSubnetResource{conn: c},
-		&VPCEndpointResource{conn: c},
-		&VPCFlowLogResource{conn: c},
-		// KMS
-		&KMSKeyResource{conn: c},
-		// CloudTrail
-		&CloudTrailResource{conn: c},
-		// RDS
-		&RDSInstanceResource{conn: c},
-		&RDSClusterResource{conn: c},
-		// Lambda
-		&LambdaFunctionResource{conn: c},
-		// EKS
-		&EKSClusterResource{conn: c},
-		&EKSNodegroupResource{conn: c},
-		// ECS
-		&ECSClusterResource{conn: c},
-		&ECSServiceResource{conn: c},
-		// DynamoDB
-		&DynamoDBTableResource{conn: c},
-		// ELB
-		&ELBLoadBalancerResource{conn: c},
-		&ELBTargetGroupResource{conn: c},
-		&ELBListenerResource{conn: c},
-		// CloudWatch
-		&CloudWatchLogGroupResource{conn: c},
-		&CloudWatchAlarmResource{conn: c},
-		&CloudWatchMetricStreamResource{conn: c},
-		// Config
-		&ConfigRecorderResource{conn: c},
-		&ConfigRuleResource{conn: c},
-		&ConfigDeliveryChannelResource{conn: c},
-		&ConfigConformancePackResource{conn: c},
-		// GuardDuty
-		&GuardDutyDetectorResource{conn: c},
-		&GuardDutyFindingResource{conn: c},
-		// Security Hub
-		&SecurityHubResource{conn: c},
-		&SecurityHubFindingResource{conn: c},
-		&SecurityHubStandardResource{conn: c},
-		// Secrets Manager
-		&SecretsManagerSecretResource{conn: c},
-		// SNS
-		&SNSTopicResource{conn: c},
-		&SNSSubscriptionResource{conn: c},
-		// SQS
-		&SQSQueueResource{conn: c},
-		// ECR
-		&ECRRepositoryResource{conn: c},
-		&ECRImageResource{conn: c},
-		// WAF
-		&WAFWebACLResource{conn: c},
-		&WAFIPSetResource{conn: c},
-		&WAFRuleGroupResource{conn: c},
-		// ACM
-		&ACMCertificateResource{conn: c},
-		// ElastiCache
-		&ElastiCacheClusterResource{conn: c},
-		&ElastiCacheReplicationGroupResource{conn: c},
-		// CloudFront
-		&CloudFrontDistributionResource{conn: c},
-		// API Gateway
-		&APIGatewayRestAPIResource{conn: c},
-		&APIGatewayStageResource{conn: c},
-		&APIGatewayV2APIResource{conn: c},
-		// SSM
-		&SSMInstanceResource{conn: c},
-		&SSMParameterResource{conn: c},
-		&SSMDocumentResource{conn: c},
-		&SSMPatchBaselineResource{conn: c},
-		// Auto Scaling
-		&AutoScalingGroupResource{conn: c},
-		&AutoScalingLaunchConfigurationResource{conn: c},
+		// Account & Organization (global services)
+		resources.NewAccount(stsClient, iamClient, orgClient),
+		resources.NewOrganization(orgClient),
+
+		// IAM (global service)
+		resources.NewIAMUser(iamClient, c.accountID),
+		resources.NewIAMRole(iamClient, c.accountID),
+		resources.NewIAMGroup(iamClient),
+		resources.NewIAMPolicy(iamClient),
+
+		// S3 (global service)
+		resources.NewS3Bucket(s3Client),
+
+		// EC2 (regional)
+		resources.NewEC2Instance(ec2Factory, c.accountID, c.regions),
+		resources.NewEC2Volume(ec2Factory, c.accountID, c.regions),
+		resources.NewEC2Snapshot(ec2Factory, c.accountID, c.regions),
+		resources.NewEC2SecurityGroup(ec2Factory, c.accountID, c.regions),
+		resources.NewEC2KeyPair(ec2Factory, c.accountID, c.regions),
+
+		// VPC (regional, uses EC2 client)
+		resources.NewVPC(ec2Factory, c.accountID, c.regions),
+		resources.NewVPCSubnet(ec2Factory, c.accountID, c.regions),
+		resources.NewVPCEndpoint(ec2Factory, c.accountID, c.regions),
+		resources.NewVPCFlowLog(ec2Factory, c.accountID, c.regions),
+
+		// KMS (regional)
+		resources.NewKMSKey(kmsFactory, c.accountID, c.regions),
+
+		// CloudTrail (regional)
+		resources.NewCloudTrail(cloudtrailFactory, c.accountID, c.regions),
+
+		// RDS (regional)
+		resources.NewRDSInstance(rdsFactory, c.regions),
+		resources.NewRDSCluster(rdsFactory, c.regions),
+
+		// Lambda (regional)
+		resources.NewLambdaFunction(lambdaFactory, c.regions),
+
+		// EKS (regional)
+		resources.NewEKSCluster(eksFactory, c.accountID, c.regions),
+		resources.NewEKSNodegroup(eksFactory, c.accountID, c.regions),
+
+		// ECS (regional)
+		resources.NewECSCluster(ecsFactory, c.accountID, c.regions),
+		resources.NewECSService(ecsFactory, c.accountID, c.regions),
+
+		// DynamoDB (regional)
+		resources.NewDynamoDBTable(dynamodbFactory, c.accountID, c.regions),
+
+		// ELB (regional)
+		resources.NewELBLoadBalancer(elbFactory, c.accountID, c.regions),
+		resources.NewELBTargetGroup(elbFactory, c.accountID, c.regions),
+		resources.NewELBListener(elbFactory, c.accountID, c.regions),
+
+		// CloudWatch (regional)
+		resources.NewCloudWatchLogGroup(cloudwatchLogsFactory, c.accountID, c.regions),
+		resources.NewCloudWatchAlarm(cloudwatchFactory, c.accountID, c.regions),
+		resources.NewCloudWatchMetricStream(cloudwatchFactory, c.accountID, c.regions),
+
+		// Config (regional)
+		resources.NewConfigRecorder(configFactory, c.accountID, c.regions),
+		resources.NewConfigRule(configFactory, c.accountID, c.regions),
+		resources.NewConfigDeliveryChannel(configFactory, c.accountID, c.regions),
+		resources.NewConfigConformancePack(configFactory, c.accountID, c.regions),
+
+		// GuardDuty (regional)
+		resources.NewGuardDutyDetector(guarddutyFactory, c.accountID, c.regions),
+		resources.NewGuardDutyFinding(guarddutyFactory, c.accountID, c.regions),
+
+		// Security Hub (regional)
+		resources.NewSecurityHub(securityhubFactory, c.accountID, c.regions),
+		resources.NewSecurityHubFinding(securityhubFactory, c.accountID, c.regions),
+		resources.NewSecurityHubStandard(securityhubFactory, c.accountID, c.regions),
+
+		// Secrets Manager (regional)
+		resources.NewSecretsManagerSecret(secretsmanagerFactory, c.accountID, c.regions),
+
+		// SNS (regional)
+		resources.NewSNSTopic(snsFactory, c.accountID, c.regions),
+		resources.NewSNSSubscription(snsFactory, c.accountID, c.regions),
+
+		// SQS (regional)
+		resources.NewSQSQueue(sqsFactory, c.accountID, c.regions),
+
+		// ECR (regional)
+		resources.NewECRRepository(ecrFactory, c.accountID, c.regions),
+		resources.NewECRImage(ecrFactory, c.accountID, c.regions),
+
+		// WAF (regional)
+		resources.NewWAFWebACL(wafv2Factory, c.accountID, c.regions),
+		resources.NewWAFIPSet(wafv2Factory, c.accountID, c.regions),
+		resources.NewWAFRuleGroup(wafv2Factory, c.accountID, c.regions),
+
+		// ACM (regional)
+		resources.NewACMCertificate(acmFactory, c.accountID, c.regions),
+
+		// ElastiCache (regional)
+		resources.NewElastiCacheCluster(elasticacheFactory, c.accountID, c.regions),
+		resources.NewElastiCacheReplicationGroup(elasticacheFactory, c.accountID, c.regions),
+
+		// CloudFront (global service, always us-east-1)
+		resources.NewCloudFrontDistribution(cloudfront.NewFromConfig(c.ConfigForRegion("us-east-1")), c.accountID),
+
+		// API Gateway (regional)
+		resources.NewAPIGatewayRestAPI(apigatewayFactory, c.accountID, c.regions),
+		resources.NewAPIGatewayStage(apigatewayFactory, c.accountID, c.regions),
+		resources.NewAPIGatewayV2API(apigatewayv2Factory, c.accountID, c.regions),
+
+		// SSM (regional)
+		resources.NewSSMInstance(ssmFactory, c.accountID, c.regions),
+		resources.NewSSMParameter(ssmFactory, c.accountID, c.regions),
+		resources.NewSSMDocument(ssmFactory, c.accountID, c.regions),
+		resources.NewSSMPatchBaseline(ssmFactory, c.accountID, c.regions),
+
+		// Auto Scaling (regional)
+		resources.NewAutoScalingGroup(autoscalingFactory, c.accountID, c.regions),
+		resources.NewAutoScalingLaunchConfiguration(autoscalingFactory, c.accountID, c.regions),
 	}
 }
 

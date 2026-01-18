@@ -1,10 +1,11 @@
 // Copyright (c) Kopexa GmbH
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Elastic-2.0
 
 package factorial
 
 import (
 	"github.com/kopexa-grc/kspec/core"
+	"github.com/kopexa-grc/kspec/pkg/ratelimit"
 	"github.com/kopexa-grc/kspec/provider/registry"
 )
 
@@ -40,6 +41,12 @@ func init() {
 		},
 		Factory: func() core.Provider {
 			return NewProvider()
+		},
+		// Factorial HR API: Conservative rate limiting for HR API
+		// We use 5/s with burst of 10 to be respectful of the API
+		RateLimitConfig: &ratelimit.Config{
+			RequestsPerSecond: 5,
+			Burst:             10,
 		},
 	})
 }

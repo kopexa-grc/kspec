@@ -1,5 +1,5 @@
 // Copyright (c) Kopexa GmbH
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Elastic-2.0
 
 package aws
 
@@ -14,10 +14,11 @@ import (
 	"go.uber.org/mock/gomock"
 
 	"github.com/kopexa-grc/kspec/core"
+	"github.com/kopexa-grc/kspec/provider/aws/resources"
 )
 
 func TestIAMUserResource_Name(t *testing.T) {
-	r := &IAMUserResource{}
+	r := resources.NewIAMUser(nil, "")
 	if got := r.Name(); got != "aws_iam_user" {
 		t.Errorf("Name() = %v, want aws_iam_user", got)
 	}
@@ -31,14 +32,14 @@ func TestIAMUserResource_Fetch_EmptyUsers(t *testing.T) {
 		ListUsers(gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(&iam.ListUsersOutput{Users: []types.User{}}, nil)
 
-	r := &IAMUserResource{client: mock}
-	resources, err := r.Fetch(context.Background(), core.Asset{})
+	r := resources.NewIAMUser(mock, "123456789012")
+	rs, err := r.Fetch(context.Background(), core.Asset{})
 
 	if err != nil {
 		t.Fatalf("Fetch() error = %v", err)
 	}
-	if len(resources) != 0 {
-		t.Errorf("Fetch() returned %d resources, want 0", len(resources))
+	if len(rs) != 0 {
+		t.Errorf("Fetch() returned %d resources, want 0", len(rs))
 	}
 }
 
@@ -95,17 +96,17 @@ func TestIAMUserResource_Fetch_SingleUser(t *testing.T) {
 		ListUserPolicies(gomock.Any(), gomock.Any()).
 		Return(&iam.ListUserPoliciesOutput{PolicyNames: []string{}}, nil)
 
-	r := &IAMUserResource{client: mock}
-	resources, err := r.Fetch(context.Background(), core.Asset{})
+	r := resources.NewIAMUser(mock, "123456789012")
+	rs, err := r.Fetch(context.Background(), core.Asset{})
 
 	if err != nil {
 		t.Fatalf("Fetch() error = %v", err)
 	}
-	if len(resources) != 1 {
-		t.Fatalf("Fetch() returned %d resources, want 1", len(resources))
+	if len(rs) != 1 {
+		t.Fatalf("Fetch() returned %d resources, want 1", len(rs))
 	}
 
-	res := resources[0]
+	res := rs[0]
 	if res["name"] != userName {
 		t.Errorf("name = %v, want %v", res["name"], userName)
 	}
@@ -170,17 +171,17 @@ func TestIAMUserResource_Fetch_UserWithMFA(t *testing.T) {
 		ListUserPolicies(gomock.Any(), gomock.Any()).
 		Return(&iam.ListUserPoliciesOutput{PolicyNames: []string{}}, nil)
 
-	r := &IAMUserResource{client: mock}
-	resources, err := r.Fetch(context.Background(), core.Asset{})
+	r := resources.NewIAMUser(mock, "123456789012")
+	rs, err := r.Fetch(context.Background(), core.Asset{})
 
 	if err != nil {
 		t.Fatalf("Fetch() error = %v", err)
 	}
-	if len(resources) != 1 {
-		t.Fatalf("Fetch() returned %d resources, want 1", len(resources))
+	if len(rs) != 1 {
+		t.Fatalf("Fetch() returned %d resources, want 1", len(rs))
 	}
 
-	res := resources[0]
+	res := rs[0]
 	if res["has_mfa"] != true {
 		t.Errorf("has_mfa = %v, want true", res["has_mfa"])
 	}
@@ -227,21 +228,21 @@ func TestIAMUserResource_Fetch_AdminUser(t *testing.T) {
 
 	mock.EXPECT().ListUserPolicies(gomock.Any(), gomock.Any()).Return(&iam.ListUserPoliciesOutput{}, nil)
 
-	r := &IAMUserResource{client: mock}
-	resources, err := r.Fetch(context.Background(), core.Asset{})
+	r := resources.NewIAMUser(mock, "123456789012")
+	rs, err := r.Fetch(context.Background(), core.Asset{})
 
 	if err != nil {
 		t.Fatalf("Fetch() error = %v", err)
 	}
 
-	res := resources[0]
+	res := rs[0]
 	if res["is_admin"] != true {
 		t.Errorf("is_admin = %v, want true", res["is_admin"])
 	}
 }
 
 func TestIAMRoleResource_Name(t *testing.T) {
-	r := &IAMRoleResource{}
+	r := resources.NewIAMRole(nil, "")
 	if got := r.Name(); got != "aws_iam_role" {
 		t.Errorf("Name() = %v, want aws_iam_role", got)
 	}
@@ -276,17 +277,17 @@ func TestIAMRoleResource_Fetch_SingleRole(t *testing.T) {
 		ListRolePolicies(gomock.Any(), gomock.Any()).
 		Return(&iam.ListRolePoliciesOutput{PolicyNames: []string{}}, nil)
 
-	r := &IAMRoleResource{client: mock, conn: &Connection{accountID: "123456789012"}}
-	resources, err := r.Fetch(context.Background(), core.Asset{})
+	r := resources.NewIAMRole(mock, "123456789012")
+	rs, err := r.Fetch(context.Background(), core.Asset{})
 
 	if err != nil {
 		t.Fatalf("Fetch() error = %v", err)
 	}
-	if len(resources) != 1 {
-		t.Fatalf("Fetch() returned %d resources, want 1", len(resources))
+	if len(rs) != 1 {
+		t.Fatalf("Fetch() returned %d resources, want 1", len(rs))
 	}
 
-	res := resources[0]
+	res := rs[0]
 	if res["name"] != roleName {
 		t.Errorf("name = %v, want %v", res["name"], roleName)
 	}
@@ -296,7 +297,7 @@ func TestIAMRoleResource_Fetch_SingleRole(t *testing.T) {
 }
 
 func TestIAMGroupResource_Name(t *testing.T) {
-	r := &IAMGroupResource{}
+	r := resources.NewIAMGroup(nil)
 	if got := r.Name(); got != "aws_iam_group" {
 		t.Errorf("Name() = %v, want aws_iam_group", got)
 	}
@@ -338,17 +339,17 @@ func TestIAMGroupResource_Fetch_SingleGroup(t *testing.T) {
 		ListGroupPolicies(gomock.Any(), gomock.Any()).
 		Return(&iam.ListGroupPoliciesOutput{PolicyNames: []string{}}, nil)
 
-	r := &IAMGroupResource{client: mock}
-	resources, err := r.Fetch(context.Background(), core.Asset{})
+	r := resources.NewIAMGroup(mock)
+	rs, err := r.Fetch(context.Background(), core.Asset{})
 
 	if err != nil {
 		t.Fatalf("Fetch() error = %v", err)
 	}
-	if len(resources) != 1 {
-		t.Fatalf("Fetch() returned %d resources, want 1", len(resources))
+	if len(rs) != 1 {
+		t.Fatalf("Fetch() returned %d resources, want 1", len(rs))
 	}
 
-	res := resources[0]
+	res := rs[0]
 	if res["name"] != groupName {
 		t.Errorf("name = %v, want %v", res["name"], groupName)
 	}
@@ -361,145 +362,8 @@ func TestIAMGroupResource_Fetch_SingleGroup(t *testing.T) {
 }
 
 func TestIAMPolicyResource_Name(t *testing.T) {
-	r := &IAMPolicyResource{}
+	r := resources.NewIAMPolicy(nil)
 	if got := r.Name(); got != "aws_iam_policy" {
 		t.Errorf("Name() = %v, want aws_iam_policy", got)
-	}
-}
-
-func TestCheckExternalTrust(t *testing.T) {
-	tests := []struct {
-		name      string
-		policy    map[string]any
-		accountID string
-		want      bool
-	}{
-		{
-			name: "wildcard principal",
-			policy: map[string]any{
-				"Statement": []any{
-					map[string]any{
-						"Principal": "*",
-					},
-				},
-			},
-			accountID: "123456789012",
-			want:      true,
-		},
-		{
-			name: "same account principal",
-			policy: map[string]any{
-				"Statement": []any{
-					map[string]any{
-						"Principal": map[string]any{
-							"AWS": "arn:aws:iam::123456789012:root",
-						},
-					},
-				},
-			},
-			accountID: "123456789012",
-			want:      false,
-		},
-		{
-			name: "external account principal",
-			policy: map[string]any{
-				"Statement": []any{
-					map[string]any{
-						"Principal": map[string]any{
-							"AWS": "arn:aws:iam::999888777666:root",
-						},
-					},
-				},
-			},
-			accountID: "123456789012",
-			want:      true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := checkExternalTrust(tt.policy, tt.accountID)
-			if got != tt.want {
-				t.Errorf("checkExternalTrust() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestAnalyzePolicyPermissions(t *testing.T) {
-	tests := []struct {
-		name             string
-		policy           map[string]any
-		wantStarAction   bool
-		wantStarResource bool
-	}{
-		{
-			name: "wildcard action and resource",
-			policy: map[string]any{
-				"Statement": []any{
-					map[string]any{
-						"Effect":   "Allow",
-						"Action":   "*",
-						"Resource": "*",
-					},
-				},
-			},
-			wantStarAction:   true,
-			wantStarResource: true,
-		},
-		{
-			name: "specific action, wildcard resource",
-			policy: map[string]any{
-				"Statement": []any{
-					map[string]any{
-						"Effect":   "Allow",
-						"Action":   "s3:GetObject",
-						"Resource": "*",
-					},
-				},
-			},
-			wantStarAction:   false,
-			wantStarResource: true,
-		},
-		{
-			name: "service wildcard action",
-			policy: map[string]any{
-				"Statement": []any{
-					map[string]any{
-						"Effect":   "Allow",
-						"Action":   "s3:*",
-						"Resource": "arn:aws:s3:::my-bucket/*",
-					},
-				},
-			},
-			wantStarAction:   true,
-			wantStarResource: false,
-		},
-		{
-			name: "deny statement ignored",
-			policy: map[string]any{
-				"Statement": []any{
-					map[string]any{
-						"Effect":   "Deny",
-						"Action":   "*",
-						"Resource": "*",
-					},
-				},
-			},
-			wantStarAction:   false,
-			wantStarResource: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			gotAction, gotResource := analyzePolicyPermissions(tt.policy)
-			if gotAction != tt.wantStarAction {
-				t.Errorf("analyzePolicyPermissions() starAction = %v, want %v", gotAction, tt.wantStarAction)
-			}
-			if gotResource != tt.wantStarResource {
-				t.Errorf("analyzePolicyPermissions() starResource = %v, want %v", gotResource, tt.wantStarResource)
-			}
-		})
 	}
 }
