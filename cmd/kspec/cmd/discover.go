@@ -50,34 +50,16 @@ func createDiscoverProviderCommand(def *registry.ProviderDefinition) *cobra.Comm
 	cmd := &cobra.Command{
 		Use:     def.Name,
 		Short:   fmt.Sprintf("Discover %s resources", def.Name),
-		Long:    def.Description,
+		Long:    buildDiscoverMultiAssetDescription(def),
 		Aliases: def.Aliases,
 	}
 
-	// If provider has multiple asset types, create subcommands for each
-	// If only one asset type, make it the default behavior
-	if len(def.AssetTypes) == 1 {
-		// Single asset type - run directly on provider command
-		at := def.AssetTypes[0]
-		cmd.Use = buildAssetUsage(def.Name, &at)
-		cmd.Args = buildArgsValidator(&at)
-		cmd.RunE = func(cmd *cobra.Command, args []string) error {
-			return runAssetDiscover(cmd, def, &at, args)
-		}
-		cmd.SilenceUsage = true
-		cmd.SilenceErrors = true
-
-		// Register flags
-		registerDiscoverFlags(cmd)
-		registry.RegisterFlags(cmd, def)
-	} else {
-		// Multiple asset types - create subcommands
-		cmd.Long = buildDiscoverMultiAssetDescription(def)
-		for i := range def.AssetTypes {
-			at := &def.AssetTypes[i]
-			assetCmd := createDiscoverAssetCommand(def, at)
-			cmd.AddCommand(assetCmd)
-		}
+	// Always create subcommands for asset types for consistent CLI structure
+	// e.g., "kspec discover azure subscription <id>" not "kspec discover azure <id>"
+	for i := range def.AssetTypes {
+		at := &def.AssetTypes[i]
+		assetCmd := createDiscoverAssetCommand(def, at)
+		cmd.AddCommand(assetCmd)
 	}
 
 	return cmd

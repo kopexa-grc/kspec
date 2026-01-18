@@ -87,6 +87,8 @@ type Connection struct {
 func (c *Connection) Resources() []core.ResourceSpec {
 	hc := c.client.HCloud()
 	return []core.ResourceSpec{
+		// Project (root)
+		resources.NewProject(hc),
 		// Compute
 		resources.NewServer(hc),
 		// Storage

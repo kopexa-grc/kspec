@@ -47,7 +47,7 @@ func init() {
 						ConfigKey:   "subscription_id",
 					},
 				},
-				ScannerKey: "azure",
+				ScannerKey: "azure-subscription",
 			},
 		},
 		ConfigMapping: map[string]string{
