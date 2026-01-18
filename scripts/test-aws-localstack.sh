@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# Copyright (c) Kopexa GmbH
+# SPDX-License-Identifier: Elastic-2.0
+
 # AWS LocalStack Test Suite for kspec
 # Tests AWS security policies against LocalStack
 #

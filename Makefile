@@ -3,7 +3,8 @@
 
 .PHONY: help build install clean test test-fast test-integration test-all \
         lint lint-fix fmt vet check run dev release snapshot hooks deps tidy schema \
-        test-aws-localstack test-aws-localstack-setup test-aws-localstack-cleanup
+        test-aws-localstack test-aws-localstack-setup test-aws-localstack-cleanup \
+        license license-check license-install
 
 # Build variables
 BINARY_NAME := kspec
@@ -205,7 +206,39 @@ version: ## Show version info
 	@echo "Commit:  $(COMMIT)"
 	@echo "Date:    $(DATE)"
 
-tools: lint-install hooks-install ## Install all development tools
+tools: lint-install hooks-install license-install ## Install all development tools
 	@echo "$(GREEN)All tools installed$(RESET)"
+
+##@ License Headers
+
+license: ## Add missing license headers to source files
+	@echo "$(BLUE)Adding license headers...$(RESET)"
+	@if command -v copywrite >/dev/null 2>&1; then \
+		copywrite headers; \
+		echo "$(GREEN)License headers added$(RESET)"; \
+	else \
+		echo "$(RED)copywrite not installed. Run: make license-install$(RESET)"; \
+		exit 1; \
+	fi
+
+license-check: ## Check for missing license headers (CI)
+	@echo "$(BLUE)Checking license headers...$(RESET)"
+	@if command -v copywrite >/dev/null 2>&1; then \
+		copywrite headers --plan; \
+		echo "$(GREEN)All files have correct license headers$(RESET)"; \
+	else \
+		echo "$(RED)copywrite not installed. Run: make license-install$(RESET)"; \
+		exit 1; \
+	fi
+
+license-install: ## Install copywrite tool
+	@echo "$(BLUE)Installing copywrite...$(RESET)"
+	@if command -v brew >/dev/null 2>&1; then \
+		brew tap hashicorp/tap 2>/dev/null || true; \
+		brew install hashicorp/tap/copywrite; \
+	else \
+		go install github.com/hashicorp/copywrite@latest; \
+	fi
+	@echo "$(GREEN)Installed copywrite$(RESET)"
 
 .DEFAULT_GOAL := help

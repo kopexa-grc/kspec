@@ -1,3 +1,6 @@
+// Copyright (c) Kopexa GmbH
+// SPDX-License-Identifier: Elastic-2.0
+
 // Package cmd provides the command-line interface for kspec security scanning.
 package cmd
 

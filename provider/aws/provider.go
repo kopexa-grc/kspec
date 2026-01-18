@@ -1,3 +1,6 @@
+// Copyright (c) Kopexa GmbH
+// SPDX-License-Identifier: Elastic-2.0
+
 // Package aws provides a kspec provider for AWS cloud resources.
 package aws
 

@@ -1,3 +1,6 @@
+// Copyright (c) Kopexa GmbH
+// SPDX-License-Identifier: Elastic-2.0
+
 // Package browser provides a hierarchical browser component for navigating
 // scan results and policy checks.
 package browser

@@ -1,3 +1,6 @@
+// Copyright (c) Kopexa GmbH
+// SPDX-License-Identifier: Elastic-2.0
+
 // Package core provides the fundamental types and interfaces for security policy
 // evaluation, including assets, policies, providers, and the evaluation engine.
 package core

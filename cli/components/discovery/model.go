@@ -1,3 +1,6 @@
+// Copyright (c) Kopexa GmbH
+// SPDX-License-Identifier: Elastic-2.0
+
 // Package discovery provides the discovery phase UI component showing
 // resource scanning progress.
 package discovery
