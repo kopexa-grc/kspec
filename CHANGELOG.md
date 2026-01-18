@@ -5,6 +5,52 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0](https://github.com/kopexa-grc/kspec/compare/v0.1.6...v0.2.0) (2026-01-18)
+
+
+### ⚠ BREAKING CHANGES
+
+* **provider:** Default policy directory
+
+### Features
+
+* concurrent scanning, provider refactoring, and expanded AWS security policies ([#50](https://github.com/kopexa-grc/kspec/issues/50)) ([8907e4a](https://github.com/kopexa-grc/kspec/commit/8907e4a39f36444b90646af2b1f73c77e11eab15))
+* **provider:** implement dynamic self-registration pattern ([7ad2807](https://github.com/kopexa-grc/kspec/commit/7ad2807ce592f770ed35c5bcd8d8be262163dde7)), closes [#47](https://github.com/kopexa-grc/kspec/issues/47)
+* **report:** add HTML export format ([#48](https://github.com/kopexa-grc/kspec/issues/48)) ([d1cea21](https://github.com/kopexa-grc/kspec/commit/d1cea21422a462d90c0db364b867acdd45fbcbf4))
+* **report:** add HTML export format with interactive features ([d1cea21](https://github.com/kopexa-grc/kspec/commit/d1cea21422a462d90c0db364b867acdd45fbcbf4))
+* **report:** add report export and non-interactive scan mode ([19aa52d](https://github.com/kopexa-grc/kspec/commit/19aa52d71ffe6825fb9e67c99ee7103075c71770))
+
+
+### Dependencies
+
+* **deps:** bump github.com/aws/aws-sdk-go-v2/config ([#30](https://github.com/kopexa-grc/kspec/issues/30)) ([af4856b](https://github.com/kopexa-grc/kspec/commit/af4856b9eb1fc428f605d1c7cb8c1a3567bee742))
+* **deps:** bump github.com/aws/aws-sdk-go-v2/service/acm ([#37](https://github.com/kopexa-grc/kspec/issues/37)) ([8c7a397](https://github.com/kopexa-grc/kspec/commit/8c7a3976fabf1959c20585eace85b2b8b313e78c))
+* **deps:** bump github.com/aws/aws-sdk-go-v2/service/apigateway ([#27](https://github.com/kopexa-grc/kspec/issues/27)) ([22f10e0](https://github.com/kopexa-grc/kspec/commit/22f10e0a85c8438d715ada08049872d5083c480a))
+* **deps:** bump github.com/aws/aws-sdk-go-v2/service/apigatewayv2 ([#22](https://github.com/kopexa-grc/kspec/issues/22)) ([a2694b5](https://github.com/kopexa-grc/kspec/commit/a2694b5310fa48abf5198c37d1ca6da8516e9c70))
+* **deps:** bump github.com/aws/aws-sdk-go-v2/service/cloudfront ([#38](https://github.com/kopexa-grc/kspec/issues/38)) ([8fd18af](https://github.com/kopexa-grc/kspec/commit/8fd18af5b4bba81f53c1df181554ab83ac0e3147))
+* **deps:** bump github.com/aws/aws-sdk-go-v2/service/cloudwatch ([#39](https://github.com/kopexa-grc/kspec/issues/39)) ([24b0fd8](https://github.com/kopexa-grc/kspec/commit/24b0fd86a2e20bc484bb875b1c942085dde3cc4c))
+* **deps:** bump github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs ([#19](https://github.com/kopexa-grc/kspec/issues/19)) ([7f89f5f](https://github.com/kopexa-grc/kspec/commit/7f89f5fb38b9eec918c412450a7152d39d5cb24a))
+* **deps:** bump github.com/aws/aws-sdk-go-v2/service/configservice ([#44](https://github.com/kopexa-grc/kspec/issues/44)) ([bba331c](https://github.com/kopexa-grc/kspec/commit/bba331ca74c09ef78ba8e1d0763baab90c2b2607))
+* **deps:** bump github.com/aws/aws-sdk-go-v2/service/dynamodb ([#45](https://github.com/kopexa-grc/kspec/issues/45)) ([40bdf9b](https://github.com/kopexa-grc/kspec/commit/40bdf9bb09ea3580e915e1560b692ef8ce5b007d))
+* **deps:** bump github.com/aws/aws-sdk-go-v2/service/ecr ([#23](https://github.com/kopexa-grc/kspec/issues/23)) ([9c38402](https://github.com/kopexa-grc/kspec/commit/9c384022924f1e59887075edd8320667b58423a6))
+* **deps:** bump github.com/aws/aws-sdk-go-v2/service/eks ([#34](https://github.com/kopexa-grc/kspec/issues/34)) ([be480fa](https://github.com/kopexa-grc/kspec/commit/be480fafda7a591474bd9db7851107ec184c37d3))
+* **deps:** bump github.com/aws/aws-sdk-go-v2/service/elasticache ([#20](https://github.com/kopexa-grc/kspec/issues/20)) ([449bd22](https://github.com/kopexa-grc/kspec/commit/449bd228dafb5643383c5eec63d3cff6f9b4ff5d))
+* **deps:** bump github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2 ([#41](https://github.com/kopexa-grc/kspec/issues/41)) ([3a30a91](https://github.com/kopexa-grc/kspec/commit/3a30a916d91fd082414cf390e1e5f0d1445177d3))
+* **deps:** bump github.com/aws/aws-sdk-go-v2/service/guardduty ([#33](https://github.com/kopexa-grc/kspec/issues/33)) ([8a1cb14](https://github.com/kopexa-grc/kspec/commit/8a1cb1412abc3e83bbea17d46892f0dfaef072ea))
+* **deps:** bump github.com/aws/aws-sdk-go-v2/service/iam ([#43](https://github.com/kopexa-grc/kspec/issues/43)) ([ad6bd26](https://github.com/kopexa-grc/kspec/commit/ad6bd263e65a9bc106feb50580714f9d17fef96f))
+* **deps:** bump github.com/aws/aws-sdk-go-v2/service/kms ([#42](https://github.com/kopexa-grc/kspec/issues/42)) ([c76998f](https://github.com/kopexa-grc/kspec/commit/c76998ffd53937601297036a78235b36719f0cb6))
+* **deps:** bump github.com/aws/aws-sdk-go-v2/service/lambda ([#21](https://github.com/kopexa-grc/kspec/issues/21)) ([ae004e6](https://github.com/kopexa-grc/kspec/commit/ae004e6a026803c436dca7dba35de20a20199aa1))
+* **deps:** bump github.com/aws/aws-sdk-go-v2/service/organizations ([#32](https://github.com/kopexa-grc/kspec/issues/32)) ([01b6e7b](https://github.com/kopexa-grc/kspec/commit/01b6e7b46b8cddc65c316d22ab19520558d1bd3c))
+* **deps:** bump github.com/aws/aws-sdk-go-v2/service/rds ([#40](https://github.com/kopexa-grc/kspec/issues/40)) ([5d4c56e](https://github.com/kopexa-grc/kspec/commit/5d4c56e46d2a911d5032553c3325454ae627f896))
+* **deps:** bump github.com/aws/aws-sdk-go-v2/service/s3 ([#26](https://github.com/kopexa-grc/kspec/issues/26)) ([ee03308](https://github.com/kopexa-grc/kspec/commit/ee033084d23ce4cf00e65dda9ff0132bc00ffc10))
+* **deps:** bump github.com/aws/aws-sdk-go-v2/service/securityhub ([#36](https://github.com/kopexa-grc/kspec/issues/36)) ([896822a](https://github.com/kopexa-grc/kspec/commit/896822a10724bfe542d747e685e5241d792e4802))
+* **deps:** bump github.com/aws/aws-sdk-go-v2/service/sqs ([#31](https://github.com/kopexa-grc/kspec/issues/31)) ([dbfac6d](https://github.com/kopexa-grc/kspec/commit/dbfac6d2550fd11cadce8380e1bcff0f8d5fd71b))
+* **deps:** bump github.com/aws/aws-sdk-go-v2/service/ssm ([#24](https://github.com/kopexa-grc/kspec/issues/24)) ([9c9a446](https://github.com/kopexa-grc/kspec/commit/9c9a446affbe527db995d320dcc73a95375b880d))
+* **deps:** bump github.com/aws/aws-sdk-go-v2/service/wafv2 ([#25](https://github.com/kopexa-grc/kspec/issues/25)) ([406f91b](https://github.com/kopexa-grc/kspec/commit/406f91bbfc5d0c17d4c96be6dd4124f92dbd82b6))
+* **deps:** bump github.com/hetznercloud/hcloud-go/v2 ([#28](https://github.com/kopexa-grc/kspec/issues/28)) ([35d2eb0](https://github.com/kopexa-grc/kspec/commit/35d2eb009eaeca538155dadf98be7f7105c53164))
+* **deps:** bump github.com/microsoftgraph/msgraph-sdk-go ([#14](https://github.com/kopexa-grc/kspec/issues/14)) ([088ba75](https://github.com/kopexa-grc/kspec/commit/088ba75a0be7d981132237791604019f0706edb8))
+* **deps:** bump github.com/miekg/dns from 1.1.69 to 1.1.70 ([#29](https://github.com/kopexa-grc/kspec/issues/29)) ([0e435f4](https://github.com/kopexa-grc/kspec/commit/0e435f436fc7b26fc7d1dc299e3168fabab79f37))
+
 ## [0.1.6](https://github.com/kopexa-grc/kspec/compare/v0.1.5...v0.1.6) (2026-01-08)
 
 
