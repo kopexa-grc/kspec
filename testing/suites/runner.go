@@ -5,6 +5,7 @@ package suites
 
 import (
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -108,7 +109,7 @@ func (r *Runner) runTestCase(t *testing.T, tc TestCase) {
 			// Create subtest for each check
 			checkName := checkID
 			if len(tc.Fixtures) > 1 {
-				checkName = strings.ReplaceAll(checkID, "/", "_") + "_fixture_" + string(rune('0'+fixtureIdx))
+				checkName = strings.ReplaceAll(checkID, "/", "_") + "_fixture_" + strconv.Itoa(fixtureIdx)
 			}
 
 			t.Run(checkName, func(t *testing.T) {
