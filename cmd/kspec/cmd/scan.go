@@ -18,6 +18,7 @@ import (
 	"github.com/kopexa-grc/kspec/cli/components/common"
 	"github.com/kopexa-grc/kspec/core"
 	"github.com/kopexa-grc/kspec/pkg/concurrency"
+	"github.com/kopexa-grc/kspec/policy"
 	_ "github.com/kopexa-grc/kspec/provider/all" // Import all providers to register them
 	"github.com/kopexa-grc/kspec/provider/registry"
 	"github.com/kopexa-grc/kspec/provider/scanner"
@@ -472,7 +473,7 @@ func countChecksRecursive(node *common.ResourceNode) (passed, failed, skipped in
 	return passed, failed, skipped
 }
 
-func loadAndFilterPolicies(cmd *cobra.Command, providerName string) ([]core.Policy, error) {
+func loadAndFilterPolicies(cmd *cobra.Command, providerName string) ([]policy.Policy, error) {
 	policyFile, _ := cmd.Flags().GetString("policy")    //nolint:errcheck // Flag is defined
 	policyDir, _ := cmd.Flags().GetString("policy-dir") //nolint:errcheck // Flag is defined
 
@@ -485,12 +486,12 @@ func loadAndFilterPolicies(cmd *cobra.Command, providerName string) ([]core.Poli
 		}
 	}
 
-	policies, err := scanner.LoadPolicies(policyFile, policyDir)
+	policies, err := policy.Load(policyFile, policyDir)
 	if err != nil {
 		return nil, err
 	}
 
-	policies = scanner.FilterPoliciesByProvider(policies, providerName, providerName)
+	policies = policy.FilterByProvider(policies, providerName, providerName)
 
 	if len(policies) == 0 {
 		return nil, fmt.Errorf("no policies found for provider %s", providerName)

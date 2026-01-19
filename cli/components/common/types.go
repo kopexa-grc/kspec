@@ -3,6 +3,8 @@
 
 package common
 
+import "github.com/kopexa-grc/kspec/policy"
+
 // AssetState represents the current state of an asset
 type AssetState string
 
@@ -38,15 +40,5 @@ const (
 	ViewModeDetail    ViewMode = "detail"
 )
 
-// CheckResult represents a single check result
-type CheckResult struct {
-	ID          string
-	Group       string
-	Name        string
-	Status      string
-	Details     string
-	Severity    string
-	Remediation string // Markdown remediation guidance
-	Docs        string // Markdown documentation
-	Audit       string // Markdown audit information
-}
+// CheckResult is an alias for policy.Result for backwards compatibility.
+type CheckResult = policy.Result

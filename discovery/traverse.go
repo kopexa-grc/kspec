@@ -10,6 +10,7 @@ import (
 
 	"github.com/kopexa-grc/kspec/cli/components/common"
 	"github.com/kopexa-grc/kspec/core"
+	"github.com/kopexa-grc/kspec/policy"
 )
 
 // workItem represents a unit of work to be processed.
@@ -22,7 +23,7 @@ type workItem struct {
 type traverseContext struct {
 	ctx      context.Context
 	d        *Discoverer
-	policies []core.Policy
+	policies []policy.Policy
 
 	// Work queue and synchronization
 	workQueue chan workItem
@@ -35,7 +36,7 @@ type traverseContext struct {
 
 // traverse performs a graph traversal starting from the given node.
 // If policies is not nil, policy evaluation is performed on each node.
-func (d *Discoverer) traverse(ctx context.Context, root *common.ResourceNode, policies []core.Policy) {
+func (d *Discoverer) traverse(ctx context.Context, root *common.ResourceNode, policies []policy.Policy) {
 	tc := &traverseContext{
 		ctx:       ctx,
 		d:         d,
@@ -216,7 +217,7 @@ func (tc *traverseContext) evaluateNode(node *common.ResourceNode) {
 		return
 	}
 
-	results := EvaluatePolicies(
+	results := policy.Evaluate(
 		node.Metadata,
 		node.ResourceType,
 		tc.policies,
@@ -228,11 +229,11 @@ func (tc *traverseContext) evaluateNode(node *common.ResourceNode) {
 	node.Checks = results
 	for _, r := range results {
 		switch r.Status {
-		case "passed":
+		case policy.StatusPassed:
 			node.ChecksPassed++
-		case "failed":
+		case policy.StatusFailed:
 			node.ChecksFailed++
-		case "skipped":
+		case policy.StatusSkipped:
 			node.ChecksSkipped++
 		}
 	}

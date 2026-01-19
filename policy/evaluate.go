@@ -1,24 +1,16 @@
 // Copyright (c) Kopexa GmbH
 // SPDX-License-Identifier: Elastic-2.0
 
-package discovery
+package policy
 
 import (
 	"fmt"
 	"strings"
 
-	"github.com/kopexa-grc/kspec/cli/components/common"
 	"github.com/kopexa-grc/kspec/core"
 )
 
-// Check status constants.
-const (
-	StatusPassed  = "passed"
-	StatusFailed  = "failed"
-	StatusSkipped = "skipped"
-)
-
-// evaluateGroupFilter performs a simple evaluation of group filters
+// evaluateGroupFilter performs a simple evaluation of group filters.
 // This handles common patterns like: asset.type == "github-org"
 func evaluateGroupFilter(filter string, asset core.Asset) bool {
 	filter = strings.TrimSpace(filter)
@@ -41,15 +33,15 @@ func evaluateGroupFilter(filter string, asset core.Asset) bool {
 	return true
 }
 
-// EvaluatePolicies runs policy checks for a given resource.
-func EvaluatePolicies(
+// Evaluate runs policy checks for a given resource.
+func Evaluate(
 	resource core.Resource,
 	resourceType string,
-	policies []core.Policy,
+	policies []Policy,
 	registry map[string]core.ResourceSpec,
 	asset core.Asset,
-) []common.CheckResult {
-	var results []common.CheckResult
+) []EvaluateResult {
+	var results []EvaluateResult
 
 	// Create evaluator
 	evaluator, err := core.NewEvaluator(registry)
@@ -58,9 +50,9 @@ func EvaluatePolicies(
 	}
 
 	// Build definitions index from all policies
-	definitions := make(map[string]core.Check)
-	for _, policy := range policies {
-		for _, q := range policy.Queries {
+	definitions := make(map[string]Check)
+	for _, pol := range policies {
+		for _, q := range pol.Queries {
 			if q.UID != "" {
 				definitions[q.UID] = q
 			}
@@ -71,8 +63,8 @@ func EvaluatePolicies(
 	}
 
 	// Process each policy
-	for _, policy := range policies {
-		for _, group := range policy.Groups {
+	for _, pol := range policies {
+		for _, group := range pol.Groups {
 			// Evaluate group filter
 			if group.Filter != "" {
 				if !evaluateGroupFilter(group.Filter, asset) {
@@ -86,7 +78,7 @@ func EvaluatePolicies(
 
 				// Resolve check definition if needed
 				if check.Query == "" {
-					var def core.Check
+					var def Check
 					var found bool
 
 					if check.UID != "" {
@@ -189,7 +181,7 @@ func EvaluatePolicies(
 					checkID = check.ID
 				}
 
-				results = append(results, common.CheckResult{
+				results = append(results, EvaluateResult{
 					ID:          checkID,
 					Group:       group.Title,
 					Name:        check.Title,

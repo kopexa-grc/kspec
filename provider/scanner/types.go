@@ -9,6 +9,7 @@ import (
 	"github.com/kopexa-grc/kspec/cli/components/common"
 	"github.com/kopexa-grc/kspec/core"
 	"github.com/kopexa-grc/kspec/pkg/concurrency"
+	"github.com/kopexa-grc/kspec/policy"
 )
 
 // ScanConfig holds the configuration for a scan
@@ -21,7 +22,7 @@ type ScanConfig struct {
 	Asset core.Asset
 
 	// Policies to evaluate
-	Policies []core.Policy
+	Policies []policy.Policy
 
 	// Concurrency configuration for parallel scanning
 	Concurrency concurrency.Config
@@ -90,8 +91,8 @@ type ScanResult struct {
 // ScanEventHandler is a callback for scan events
 type ScanEventHandler func(event ScanEvent)
 
-// CheckResult wraps common.CheckResult for the scanner package
-type CheckResult = common.CheckResult
+// CheckResult is an alias for policy.Result for backwards compatibility.
+type CheckResult = policy.Result
 
 // ResourceOrder defines the preferred order for resource types per provider
 var ResourceOrder = map[string][]string{

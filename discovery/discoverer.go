@@ -11,6 +11,7 @@ import (
 	"github.com/kopexa-grc/kspec/cli/components/common"
 	"github.com/kopexa-grc/kspec/core"
 	"github.com/kopexa-grc/kspec/pkg/concurrency"
+	"github.com/kopexa-grc/kspec/policy"
 	"github.com/kopexa-grc/kspec/provider"
 )
 
@@ -127,7 +128,7 @@ func (d *Discoverer) Discover(ctx context.Context, asset core.Asset) (*Result, e
 
 // Evaluate performs resource discovery with policy evaluation.
 // It traverses the resource graph and evaluates policies on each node.
-func (d *Discoverer) Evaluate(ctx context.Context, asset core.Asset, policies []core.Policy) (*EvaluateResult, error) {
+func (d *Discoverer) Evaluate(ctx context.Context, asset core.Asset, policies []policy.Policy) (*EvaluateResult, error) {
 	setup := d.setupTraversal(asset)
 
 	d.emit(Event{Type: EventEvaluateStarted, Node: setup.root, ResourceType: setup.root.ResourceType})

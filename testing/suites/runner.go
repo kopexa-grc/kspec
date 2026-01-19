@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/kopexa-grc/kspec/core"
+	"github.com/kopexa-grc/kspec/policy"
 	"github.com/kopexa-grc/kspec/provider/scanner"
 )
 
@@ -62,14 +62,14 @@ func (r *Runner) runTestCase(t *testing.T, tc TestCase) {
 		policyPath = filepath.Join(r.policiesDir, tc.PolicyFile)
 	}
 
-	policies, err := scanner.LoadPolicies(policyPath, "")
+	policies, err := policy.Load(policyPath, "")
 	if err != nil {
 		t.Fatalf("Failed to load policies from %s: %v", tc.PolicyFile, err)
 	}
 
 	// Filter to specific policy if requested
 	if tc.PolicyName != "" {
-		var filtered []core.Policy
+		var filtered []policy.Policy
 		for _, p := range policies {
 			if p.Metadata.Name == tc.PolicyName {
 				filtered = append(filtered, p)
