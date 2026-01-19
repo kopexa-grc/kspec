@@ -73,4 +73,3 @@ type AssetContextProvider interface {
 	// The parent resource data and base asset are provided to build the child asset.
 	BuildChildAsset(parentData Resource, baseAsset Asset) Asset
 }
-

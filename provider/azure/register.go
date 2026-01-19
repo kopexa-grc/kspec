@@ -65,7 +65,7 @@ func init() {
 			"client-secret":  "client_secret",
 			"resource-group": "resource_group",
 		},
-		Factory: NewProvider,
+		Factory:         NewProvider,
 		RateLimitConfig: rateLimitConfig,
 	})
 }

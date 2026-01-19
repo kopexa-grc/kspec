@@ -6,6 +6,8 @@ package common
 import (
 	"fmt"
 	"strings"
+
+	"github.com/kopexa-grc/kspec/policy"
 )
 
 // ResourceNode represents a node in the hierarchical resource tree
@@ -228,12 +230,12 @@ func (t *ResourceTree) AddCheckResult(nodeID string, check CheckResult) error {
 	node.Checks = append(node.Checks, check)
 
 	// Update check counts
-	switch check.Status {
-	case "passed":
+	switch check.Status { //nolint:exhaustive // Only counting specific statuses
+	case policy.StatusPassed:
 		node.ChecksPassed++
-	case "failed":
+	case policy.StatusFailed:
 		node.ChecksFailed++
-	case "skipped":
+	case policy.StatusSkipped:
 		node.ChecksSkipped++
 	}
 

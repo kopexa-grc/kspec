@@ -67,4 +67,3 @@ func (r Result) IsFailed() bool {
 func (r Result) IsSkipped() bool {
 	return r.Status == StatusSkipped
 }
-

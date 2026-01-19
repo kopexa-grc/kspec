@@ -104,4 +104,3 @@ func TestStatus_String(t *testing.T) {
 		})
 	}
 }
-

@@ -19,8 +19,8 @@ import (
 	"github.com/kopexa-grc/kspec/core"
 	"github.com/kopexa-grc/kspec/pkg/concurrency"
 	"github.com/kopexa-grc/kspec/policy"
-	_ "github.com/kopexa-grc/kspec/provider/all" // Import all providers to register them
 	"github.com/kopexa-grc/kspec/provider"
+	_ "github.com/kopexa-grc/kspec/provider/all" // Import all providers to register them
 	"github.com/kopexa-grc/kspec/provider/scanner"
 	"github.com/kopexa-grc/kspec/report"
 )
@@ -424,12 +424,12 @@ func runScanNoUI(ctx context.Context, cmd *cobra.Command, s *scanner.Scanner, pr
 
 func logResourceResults(logger *zerolog.Logger, node *common.ResourceNode) {
 	for _, check := range node.Checks {
-		switch check.Status {
-		case "pass", "passed":
+		switch check.Status { //nolint:exhaustive // Handling all known statuses with default fallback
+		case policy.StatusPassed:
 			logger.Info().Str("id", check.ID).Str("status", "PASS").Msg(check.Name)
-		case "fail", "failed":
+		case policy.StatusFailed:
 			logger.Warn().Str("id", check.ID).Str("status", "FAIL").Str("severity", check.Severity).Str("details", check.Details).Msg(check.Name)
-		case "skip", "skipped":
+		case policy.StatusSkipped:
 			logger.Info().Str("id", check.ID).Str("status", "SKIP").Msg(check.Name)
 		default:
 			logger.Info().Str("id", check.ID).Str("status", strings.ToUpper(check.Status.String())).Msg(check.Name)
@@ -500,8 +500,8 @@ func loadAndFilterPolicies(cmd *cobra.Command, providerName string) ([]policy.Po
 	return policies, nil
 }
 
-func exportResults(cmd *cobra.Command, tree *common.ResourceTree, provider, exportPath string) error {
-	rep := report.FromResourceTree(tree, provider)
+func exportResults(cmd *cobra.Command, tree *common.ResourceTree, providerName, exportPath string) error {
+	rep := report.FromResourceTree(tree, providerName)
 
 	format, _ := cmd.Flags().GetString("export-format") //nolint:errcheck // Flag is defined
 	if format == "" {

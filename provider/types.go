@@ -11,7 +11,7 @@ import (
 )
 
 // ProviderDefinition describes a provider and its configuration requirements.
-type ProviderDefinition struct {
+type ProviderDefinition struct { //nolint:revive // Name is intentional for clarity in external usage
 	// Name is the primary identifier for the provider (e.g., "aws", "azure").
 	Name string
 
@@ -125,7 +125,7 @@ type ArgDefinition struct {
 }
 
 // ProviderFactory is a function that creates a new provider instance.
-type ProviderFactory func() core.Provider
+type ProviderFactory func() core.Provider //nolint:revive // Name is intentional for clarity
 
 // GetConfigKey returns the config key for a flag.
 // If a ConfigMapping is defined and contains this flag, use that.

@@ -15,8 +15,8 @@ import (
 	"github.com/kopexa-grc/kspec/core"
 	"github.com/kopexa-grc/kspec/discovery"
 	"github.com/kopexa-grc/kspec/pkg/concurrency"
-	_ "github.com/kopexa-grc/kspec/provider/all" // Import all providers to register them
 	"github.com/kopexa-grc/kspec/provider"
+	_ "github.com/kopexa-grc/kspec/provider/all" // Import all providers to register them
 )
 
 // discoverCmd represents the discover command
