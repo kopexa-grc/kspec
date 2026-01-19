@@ -16,13 +16,17 @@ import (
 //   - High: 20% decay per finding
 //   - Medium: 10% decay per finding
 //   - Low: 5% decay per finding
+//   - Info: 0% decay (no impact) - informational only
 //
 // Formula: score = 100 * (1-decay)^count for each severity level.
+// Info findings are intentionally excluded from scoring as they are
+// purely informational and do not represent security issues.
 type DecayedCalculator struct {
 	CriticalDecay float64
 	HighDecay     float64
 	MediumDecay   float64
 	LowDecay      float64
+	InfoDecay     float64
 }
 
 // NewDecayedCalculator creates a new decayed calculator with default decay rates.
@@ -32,6 +36,7 @@ func NewDecayedCalculator() *DecayedCalculator {
 		HighDecay:     0.20,
 		MediumDecay:   0.10,
 		LowDecay:      0.05,
+		InfoDecay:     0.00, // Info findings don't affect score
 	}
 }
 
@@ -71,6 +76,7 @@ func (c *DecayedCalculator) Calculate(f Findings) Score {
 	value *= math.Pow(1-c.HighDecay, float64(f.High))
 	value *= math.Pow(1-c.MediumDecay, float64(f.Medium))
 	value *= math.Pow(1-c.LowDecay, float64(f.Low))
+	value *= math.Pow(1-c.InfoDecay, float64(f.Info)) // Info: 0% decay by default
 
 	score.Value = uint32(math.Round(value))
 	score.Explanation = fmt.Sprintf("Decayed from %d findings", f.Failed)

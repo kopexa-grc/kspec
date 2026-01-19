@@ -10,9 +10,12 @@ package scoring
 //   - High findings: max score 70, -5 per additional finding
 //   - Medium findings: max score 90, -3 per additional finding
 //   - Low findings: max score 99, -1 per additional finding
+//   - Info findings: no impact (score 100) - informational only
 //   - No findings: score 100
 //
 // The highest severity band with findings determines the score.
+// Info findings are intentionally excluded from scoring as they are
+// purely informational and do not represent security issues.
 type BandedCalculator struct{}
 
 // NewBandedCalculator creates a new banded calculator.
@@ -44,6 +47,9 @@ func (c *BandedCalculator) Calculate(f Findings) Score {
 	case f.Low > 0:
 		// Low: max 99, -1 per additional
 		score.Value = clampScore(max(90, 99-(f.Low-1)*1))
+	case f.Info > 0:
+		// Info: no impact - informational findings don't affect score
+		score.Value = 100
 	default:
 		score.Value = 100
 	}

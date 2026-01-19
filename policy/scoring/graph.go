@@ -23,6 +23,9 @@ type NodeScore struct {
 	SubtreeFindings Findings `json:"subtree_findings"`
 
 	// Criticality is the asset criticality level (if set).
+	// TODO: Asset criticality weighting is not yet implemented in scoring
+	// calculations. This field is a placeholder for future functionality
+	// where critical assets may receive higher weight in aggregate scores.
 	Criticality AssetCriticality `json:"criticality,omitempty"`
 }
 

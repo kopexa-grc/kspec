@@ -306,7 +306,16 @@ func runAssetScan(cmd *cobra.Command, def *provider.ProviderDefinition, at *prov
 }
 
 // getScoringSystem determines the scoring system to use.
-// Priority: CLI flag > first policy with scoring_system > default (banded).
+//
+// Priority order:
+//  1. CLI flag --scoring (explicit override)
+//  2. First policy with scoring_system defined (in load order)
+//  3. Default: banded
+//
+// Note: When multiple policies define different scoring_system values,
+// only the first one encountered is used. For consistent behavior across
+// an organization, either use a single scoring_system across all policies
+// or use the --scoring CLI flag to explicitly set the desired algorithm.
 func getScoringSystem(cmd *cobra.Command, policies []policy.Policy) scoring.System {
 	// Check CLI override first
 	cliOverride, _ := cmd.Flags().GetString("scoring") //nolint:errcheck // Flag is defined
@@ -314,7 +323,7 @@ func getScoringSystem(cmd *cobra.Command, policies []policy.Policy) scoring.Syst
 		return scoring.ParseSystem(cliOverride)
 	}
 
-	// Look for scoring_system in policies
+	// Look for scoring_system in policies (first match wins)
 	for _, p := range policies {
 		if p.ScoringSystem != "" {
 			return scoring.ParseSystem(p.ScoringSystem)
