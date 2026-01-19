@@ -4,6 +4,8 @@ metadata:
   name: kopexa-tls-security
   title: Kopexa TLS/SSL Security
   version: 1.4.1
+scoring_system: banded
+
 groups:
   - title: Secure TLS/SSL connection
     filter: asset.type == 'host'
@@ -35,12 +37,9 @@ queries:
   - uid: kopexa-tls-security-cert-domain-name-match
     title: Certificate's domain name must match
     resource: tls
-    # matches regex: *.example.com vs example.com
-    # Simplified check: subject.commonName == asset.name || dnsNames contains asset.name
-    # Note: wildcard logic is tricky in pure CEL without helper.
-    # For now, simplistic comparison.
+    severity: critical
     query: |
-      resource.certificates[0].subject.commonName == asset.name || 
+      resource.certificates[0].subject.commonName == asset.name ||
       resource.certificates[0].dnsNames.exists(n, n == asset.name)
     docs: Certificate domain name must match the hostname.
     remediation: Get a certificate that matches the domain.
@@ -49,6 +48,7 @@ queries:
   - uid: kopexa-tls-security-cert-is-valid
     title: Certificate is valid
     resource: tls
+    severity: critical
     query: |
       resource.certificates[0].expiresIn.days >= 0 &&
       resource.certificates[0].validityDays <= 398 &&
@@ -62,7 +62,7 @@ queries:
   - uid: kopexa-tls-security-cert-no-cert-expired
     title: Certificate is not near expiration or expired
     resource: tls
-    # > 30 days
+    severity: high
     query: resource.certificates[0].expiresIn.days > 30
     docs: Renew certificate before it expires (30 days buffer).
     remediation: Renew soon.
@@ -71,6 +71,7 @@ queries:
   - uid: kopexa-tls-security-cert-no-certs-expired
     title: None of the certificates (intermediate or root) have expired
     resource: tls
+    severity: critical
     query: resource.certificates.all(c, c.expiresIn.days >= 0)
     docs: All certificates in chain must be valid.
     remediation: Update full chain.
@@ -79,15 +80,7 @@ queries:
   - uid: kopexa-tls-security-cert-not-self-signed
     title: Do not use a self-signed certificate
     resource: tls
-    # A self-signed cert has Subject == Issuer.
-    # Simplified check: we generally trust `isCA` field from Go. 
-    # But for "Not self signed", we usually check if Subject == Issuer for the only cert, OR if it's not in trust store.
-    # But our `Dial` with InsecureSkipVerify might hide validation errors?
-    # Our `TLSResource` dials with `InsecureSkipVerify: true`.
-    # To check if it's trusted, we should probably check if we got a verification error, but we swallowed it.
-    # For now, let's skip "trusted" check implementation and focus on "self-signed" structure logic?
-    # Actually, MQL passes `last.isCA`.
-    # Let's replicate MQL for now.
+    severity: high
     query: resource.certificates[resource.certificates.size()-1].isCA
     docs: Do not use self-signed certificates.
     remediation: Get CA signed cert.
@@ -96,9 +89,8 @@ queries:
   - uid: kopexa-tls-security-cert-not-revoked
     title: Do not use revoked certificates
     resource: tls
-    # We don't check revocation yet in Go provider. Return true (pass) or skip?
-    # Passing true to assume innocent until proven guilty (since we don't have data).
-    query: "true" 
+    severity: critical
+    query: "true"
     docs: (Not implemented) Check for revocation.
     remediation: Replace revoked certs.
     audit: None
@@ -106,7 +98,7 @@ queries:
   - uid: kopexa-tls-security-cert-no-weak-signature
     title: Do not use weak certificate signatures
     resource: tls
-    # signingAlgorithm !~ /md2|md5|sha1/i
+    severity: high
     query: |
       resource.certificates.all(c, !c.signingAlgorithm.matches('(?i)md2|md5|sha1'))
     docs: Use strong signature algorithms (SHA256+).
@@ -116,7 +108,7 @@ queries:
   - uid: kopexa-tls-security-no-weak-tls-versions
     title: Avoid weak SSL and TLS versions
     resource: tls
-    # versions containsOnly ["tls1.2", "tls1.3"]
+    severity: critical
     query: |
       resource.versions.all(v, v == 'tls1.2' || v == 'tls1.3')
     docs: Disable TLS 1.0, 1.1, SSL.
@@ -126,7 +118,7 @@ queries:
   - uid: kopexa-tls-security-no-rc4-ciphers
     title: Avoid RC4 ciphers
     resource: tls
-    # none(/rc4/i)
+    severity: critical
     query: resource.ciphers.all(c, !c.matches('(?i)rc4'))
     docs: Disable RC4.
     remediation: Disable RC4 ciphers.
@@ -135,6 +127,7 @@ queries:
   - uid: kopexa-tls-security-no-null-cipher-suites
     title: Avoid NULL cipher suites
     resource: tls
+    severity: critical
     query: resource.ciphers.all(c, !c.matches('(?i)null'))
     docs: Disable NULL ciphers.
     remediation: Disable NULL suites.
@@ -143,6 +136,7 @@ queries:
   - uid: kopexa-tls-security-no-export-cipher-suites
     title: Avoid export ciphers suites
     resource: tls
+    severity: critical
     query: resource.ciphers.all(c, !c.matches('(?i)export'))
     docs: Disable EXPORT ciphers.
     remediation: Disable EXPORT suites.
@@ -151,6 +145,7 @@ queries:
   - uid: kopexa-tls-security-no-diffie-hellman-cipher-suites
     title: Avoid anonymous Diffie-Hellman suites
     resource: tls
+    severity: high
     query: resource.ciphers.all(c, !c.matches('(?i)dh_anon'))
     docs: Disable anonymous DH.
     remediation: Disable DH_ANON.
@@ -159,6 +154,7 @@ queries:
   - uid: kopexa-tls-security-no-weak-block-ciphers
     title: Avoid weak block ciphers
     resource: tls
+    severity: high
     query: resource.ciphers.all(c, !c.matches('(?i)des|rc2|idea'))
     docs: Disable weak block ciphers (DES, RC2, IDEA).
     remediation: Use AES.
@@ -167,6 +163,7 @@ queries:
   - uid: kopexa-tls-security-no-weak-block-cipher-modes
     title: Avoid weak block cipher modes
     resource: tls
+    severity: medium
     query: resource.ciphers.all(c, !c.matches('(?i)cbc'))
     docs: Avoid CBC mode.
     remediation: Use GCM/ChaCha20.
@@ -175,6 +172,7 @@ queries:
   - uid: kopexa-tls-security-no-rsa-key-exchange
     title: Avoid cipher suites with RSA key exchange
     resource: tls
+    severity: medium
     query: resource.ciphers.all(c, !c.matches('(?i)^tls_rsa'))
     docs: Avoid RSA key exchange (no PFS).
     remediation: Use ECDHE/DHE.
@@ -183,6 +181,7 @@ queries:
   - uid: kopexa-tls-security-no-old-cipher-suites
     title: Avoid old cipher suites
     resource: tls
+    severity: high
     query: resource.ciphers.all(c, !c.matches('(?i)^old'))
     docs: Avoid old suites.
     remediation: Update ciphers.
@@ -191,7 +190,7 @@ queries:
   - uid: kopexa-tls-security-ciphers-include-aead-ciphers
     title: Preferred ciphers must include AEAD ciphers
     resource: tls
-    # any(/chacha20_poly1305|gcm|ccm/i)
+    severity: medium
     query: resource.ciphers.exists(c, c.matches('(?i)chacha20_poly1305|gcm|ccm'))
     docs: Use AEAD ciphers.
     remediation: Enable AEAD.
@@ -200,8 +199,7 @@ queries:
   - uid: kopexa-tls-security-ciphers-include-pfs
     title: Preferred ciphers must include perfect forward secrecy (PFS)
     resource: tls
-    # any(/ecdhe_(rsa|ecdsa)|dhe_(rsa|dss)|cecpq/i)
-    # Note: Go's CipherSuiteName usually format is TLS_ECDHE_RSA_WITH...
+    severity: high
     query: resource.ciphers.exists(c, c.matches('(?i)ecdhe_(rsa|ecdsa)|dhe_(rsa|dss)|cecpq'))
     docs: Use PFS (ECDHE/DHE).
     remediation: Enable PFS.
@@ -210,11 +208,10 @@ queries:
   - uid: kopexa-tls-security-mitigate-beast
     title: Mitigate BEAST attacks on the server-side
     resource: tls
-    # If using TLS 1.2+ -> Pass. 
-    # resource.versions.all(v, v >= 'tls1.2') -- string compare works for 1.2 vs 1.1 lexically? yes. 
+    severity: high
     query: |
       resource.versions.all(v, v == 'tls1.2' || v == 'tls1.3') ||
-      resource.ciphers.all(c, c.matches('(?i)rc4')) || 
+      resource.ciphers.all(c, c.matches('(?i)rc4')) ||
       resource.ciphers.all(c, !c.matches('(?i)null|dh_anon|export|des|rc2|idea'))
     docs: Mitigate BEAST (use TLS 1.2+).
     remediation: Enforce TLS 1.2+.

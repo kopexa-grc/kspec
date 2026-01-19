@@ -93,6 +93,7 @@ func (e *HTMLExporter) ExportToWriter(report *Report, w io.Writer) error {
 		"lower":          strings.ToLower,
 		"severityClass":  severityClass,
 		"statusClass":    statusClass,
+		"gradeClass":     gradeClass,
 		"renderMarkdown": renderMarkdown,
 	}).Parse(htmlTemplate)
 	if err != nil {
@@ -133,6 +134,22 @@ func statusClass(status string) string {
 		return "status-skip"
 	default:
 		return "status-unknown"
+	}
+}
+
+// gradeClass returns a CSS class for a grade.
+func gradeClass(grade string) string {
+	switch strings.ToUpper(grade) {
+	case "A":
+		return "grade-a"
+	case "B":
+		return "grade-b"
+	case "C":
+		return "grade-c"
+	case "D":
+		return "grade-d"
+	default:
+		return "grade-f"
 	}
 }
 
@@ -286,6 +303,217 @@ const htmlTemplate = `<!DOCTYPE html>
         .summary-value.pass { color: var(--color-pass); }
         .summary-value.fail { color: var(--color-fail); }
         .summary-value.skip { color: var(--color-skip); }
+
+        .summary-value.grade-a { color: var(--color-pass); }
+        .summary-value.grade-b { color: #58a6ff; }
+        .summary-value.grade-c { color: var(--color-medium); }
+        .summary-value.grade-d { color: var(--color-high); }
+        .summary-value.grade-f { color: var(--color-fail); }
+
+        .score-card {
+            background: linear-gradient(135deg, var(--color-bg-secondary) 0%, var(--color-bg-tertiary) 100%);
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+            padding: 1.25rem;
+            grid-column: span 2;
+        }
+
+        .score-card .score-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .score-card .score-main {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .score-card .score-value {
+            font-size: 3rem;
+            font-weight: 700;
+        }
+
+        .score-card .score-max {
+            font-size: 1.5rem;
+            color: var(--color-text-muted);
+        }
+
+        .score-card .score-details {
+            display: flex;
+            gap: 1.5rem;
+            font-size: 0.875rem;
+        }
+
+        .score-card .score-detail {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .score-card .score-label {
+            color: var(--color-text-muted);
+        }
+
+        .score-gauge {
+            width: 100%;
+            height: 12px;
+            background: linear-gradient(to right,
+                var(--color-fail) 0%,
+                var(--color-fail) 40%,
+                var(--color-high) 40%,
+                var(--color-high) 60%,
+                var(--color-medium) 60%,
+                var(--color-medium) 70%,
+                #58a6ff 70%,
+                #58a6ff 90%,
+                var(--color-pass) 90%,
+                var(--color-pass) 100%
+            );
+            border-radius: 6px;
+            margin: 1rem 0 0.5rem 0;
+            position: relative;
+        }
+
+        .score-gauge-marker {
+            position: absolute;
+            top: -4px;
+            width: 4px;
+            height: 20px;
+            background: white;
+            border-radius: 2px;
+            box-shadow: 0 0 4px rgba(0,0,0,0.5);
+            transform: translateX(-50%);
+        }
+
+        .score-legend {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.7rem;
+            color: var(--color-text-muted);
+            margin-bottom: 1rem;
+        }
+
+        .score-legend-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .score-legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .score-legend-dot.critical { background-color: var(--color-fail); }
+        .score-legend-dot.high { background-color: var(--color-high); }
+        .score-legend-dot.medium { background-color: var(--color-medium); }
+        .score-legend-dot.low { background-color: #58a6ff; }
+        .score-legend-dot.none { background-color: var(--color-pass); }
+
+        .findings-badges {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-top: 0.75rem;
+        }
+
+        .findings-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .findings-badge.critical {
+            background-color: rgba(255, 123, 114, 0.15);
+            color: var(--color-critical);
+        }
+
+        .findings-badge.high {
+            background-color: rgba(255, 166, 87, 0.15);
+            color: var(--color-high);
+        }
+
+        .findings-badge.medium {
+            background-color: rgba(210, 153, 34, 0.15);
+            color: var(--color-medium);
+        }
+
+        .findings-badge.low {
+            background-color: rgba(88, 166, 255, 0.15);
+            color: var(--color-low);
+        }
+
+        .findings-badge.info {
+            background-color: rgba(139, 148, 158, 0.15);
+            color: var(--color-info);
+        }
+
+        .scoring-explanation {
+            background-color: var(--color-bg-secondary);
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .scoring-explanation h3 {
+            color: var(--color-text-heading);
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .scoring-explanation p {
+            color: var(--color-text-muted);
+            font-size: 0.875rem;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .scoring-explanation p:last-child {
+            margin-bottom: 0;
+        }
+
+        .scoring-explanation .scoring-method {
+            background-color: var(--color-bg-tertiary);
+            border-radius: 4px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .scoring-explanation .scoring-method h4 {
+            color: var(--color-text-heading);
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .scoring-explanation .scoring-method ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .scoring-explanation .scoring-method li {
+            color: var(--color-text);
+            font-size: 0.8125rem;
+            padding: 0.25rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .scoring-explanation .scoring-method li::before {
+            content: "•";
+            color: var(--color-text-muted);
+        }
 
         .progress-bar {
             display: flex;
@@ -865,6 +1093,69 @@ const htmlTemplate = `<!DOCTYPE html>
         </header>
 
         <div class="summary-grid">
+            <div class="score-card">
+                <div class="score-header">
+                    <div>
+                        <h3>Security Score</h3>
+                        <div class="score-main">
+                            <span class="score-value {{gradeClass .Report.Metadata.Grade}}">{{.Report.Metadata.Score}}</span>
+                            <span class="score-max">/100</span>
+                        </div>
+                    </div>
+                    <div class="score-details" style="flex-direction: column; align-items: flex-end; gap: 0.25rem;">
+                        <div class="score-detail">
+                            <span class="score-label">Grade:</span>
+                            <span class="{{gradeClass .Report.Metadata.Grade}}" style="font-weight: 600; font-size: 1.25rem;">{{.Report.Metadata.Grade}}</span>
+                        </div>
+                        <div class="score-detail">
+                            <span class="score-label">Risk Level:</span>
+                            <span>{{.Report.Metadata.RiskLevel}}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="score-gauge">
+                    <div class="score-gauge-marker" style="left: {{.Report.Metadata.Score}}%;"></div>
+                </div>
+                <div class="score-legend">
+                    <div class="score-legend-item">
+                        <span class="score-legend-dot critical"></span>
+                        <span>0-39</span>
+                        <span>Critical</span>
+                    </div>
+                    <div class="score-legend-item">
+                        <span class="score-legend-dot high"></span>
+                        <span>40-59</span>
+                        <span>High</span>
+                    </div>
+                    <div class="score-legend-item">
+                        <span class="score-legend-dot medium"></span>
+                        <span>60-69</span>
+                        <span>Medium</span>
+                    </div>
+                    <div class="score-legend-item">
+                        <span class="score-legend-dot low"></span>
+                        <span>70-89</span>
+                        <span>Low</span>
+                    </div>
+                    <div class="score-legend-item">
+                        <span class="score-legend-dot none"></span>
+                        <span>90-100</span>
+                        <span>None</span>
+                    </div>
+                </div>
+                {{if or .Report.Metadata.CriticalFindings .Report.Metadata.HighFindings .Report.Metadata.MediumFindings .Report.Metadata.LowFindings}}
+                <div class="findings-badges">
+                    {{if .Report.Metadata.CriticalFindings}}<span class="findings-badge critical">{{.Report.Metadata.CriticalFindings}} Critical</span>{{end}}
+                    {{if .Report.Metadata.HighFindings}}<span class="findings-badge high">{{.Report.Metadata.HighFindings}} High</span>{{end}}
+                    {{if .Report.Metadata.MediumFindings}}<span class="findings-badge medium">{{.Report.Metadata.MediumFindings}} Medium</span>{{end}}
+                    {{if .Report.Metadata.LowFindings}}<span class="findings-badge low">{{.Report.Metadata.LowFindings}} Low</span>{{end}}
+                    {{if .Report.Metadata.InfoFindings}}<span class="findings-badge info">{{.Report.Metadata.InfoFindings}} Info</span>{{end}}
+                </div>
+                {{end}}
+                <div style="font-size: 0.75rem; color: var(--color-text-muted); margin-top: 0.5rem;">
+                    Scoring System: {{.Report.Metadata.ScoringSystem}}
+                </div>
+            </div>
             <div class="summary-card">
                 <h3>Total Checks</h3>
                 <div class="summary-value">{{.Summary.TotalChecks}}</div>
@@ -1063,6 +1354,95 @@ const htmlTemplate = `<!DOCTYPE html>
             </div>
         </div>
         {{end}}
+
+        <div class="scoring-explanation">
+            <h3>About the Security Score</h3>
+            <p>
+                The security score (0-100) measures your compliance posture based on check results.
+                A higher score indicates better security compliance. The score is calculated using
+                the <strong>{{.Report.Metadata.ScoringSystem}}</strong> scoring method.
+            </p>
+            {{if eq .Report.Metadata.ScoringSystem "banded"}}
+            <div class="scoring-method">
+                <h4>Banded Scoring</h4>
+                <p style="color: var(--color-text-muted); font-size: 0.8125rem; margin-bottom: 0.75rem;">
+                    Banded scoring uses severity "bands" that cap the maximum achievable score. The highest severity
+                    finding determines which band applies, and additional findings of that severity reduce the score further.
+                    Lower severity findings are ignored once a higher severity is present.
+                </p>
+                <p style="color: var(--color-text-muted); font-size: 0.8125rem; margin-bottom: 0.5rem;"><strong>Bands:</strong></p>
+                <ul>
+                    <li><span class="severity-badge severity-critical">Critical</span> → Max score 40, then −8 per additional (e.g., 2 critical = 32)</li>
+                    <li><span class="severity-badge severity-high">High</span> → Max score 70, then −5 per additional (e.g., 2 high = 65)</li>
+                    <li><span class="severity-badge severity-medium">Medium</span> → Max score 90, then −3 per additional (e.g., 3 medium = 84)</li>
+                    <li><span class="severity-badge severity-low">Low</span> → Max score 99, then −1 per additional</li>
+                    <li>No findings → Score 100</li>
+                </ul>
+                <p style="color: var(--color-text-muted); font-size: 0.75rem; margin-top: 0.75rem; font-style: italic;">
+                    Example: 1 critical + 5 high + 10 medium = Score 40 (critical band dominates)
+                </p>
+            </div>
+            {{else if eq .Report.Metadata.ScoringSystem "average"}}
+            <div class="scoring-method">
+                <h4>Weighted Average Scoring</h4>
+                <p style="color: var(--color-text-muted); font-size: 0.8125rem; margin-bottom: 0.75rem;">
+                    The score represents the ratio of "passed weight" to "total weight". Failed checks are weighted
+                    by severity—a critical finding counts 10× more than a passed check. This means many passed checks
+                    can offset a few failed ones, but severe findings have outsized impact.
+                </p>
+                <p style="color: var(--color-text-muted); font-size: 0.8125rem; margin-bottom: 0.5rem;"><strong>Weights:</strong></p>
+                <ul>
+                    <li><span class="severity-badge severity-critical">Critical</span> findings = weight 10</li>
+                    <li><span class="severity-badge severity-high">High</span> findings = weight 7</li>
+                    <li><span class="severity-badge severity-medium">Medium</span> findings = weight 4</li>
+                    <li><span class="severity-badge severity-low">Low</span> findings = weight 1</li>
+                    <li>Passed checks = weight 1 each</li>
+                </ul>
+                <p style="color: var(--color-text-muted); font-size: 0.75rem; margin-top: 0.75rem; font-style: italic;">
+                    Example: 9 passed + 1 critical = 9/(9+10) × 100 = 47
+                </p>
+            </div>
+            {{else if eq .Report.Metadata.ScoringSystem "decayed"}}
+            <div class="scoring-method">
+                <h4>Exponential Decay Scoring</h4>
+                <p style="color: var(--color-text-muted); font-size: 0.8125rem; margin-bottom: 0.75rem;">
+                    Starting from 100, each finding multiplies the score by a decay factor. The formula is:
+                    <code style="background: var(--color-bg); padding: 0.125rem 0.375rem; border-radius: 3px;">score = 100 × (1−decay)^count</code>.
+                    Multiple findings compound, so the score drops faster with more issues. All severities contribute.
+                </p>
+                <p style="color: var(--color-text-muted); font-size: 0.8125rem; margin-bottom: 0.5rem;"><strong>Decay rates:</strong></p>
+                <ul>
+                    <li><span class="severity-badge severity-critical">Critical</span> = 40% decay (×0.60 per finding)</li>
+                    <li><span class="severity-badge severity-high">High</span> = 20% decay (×0.80 per finding)</li>
+                    <li><span class="severity-badge severity-medium">Medium</span> = 10% decay (×0.90 per finding)</li>
+                    <li><span class="severity-badge severity-low">Low</span> = 5% decay (×0.95 per finding)</li>
+                </ul>
+                <p style="color: var(--color-text-muted); font-size: 0.75rem; margin-top: 0.75rem; font-style: italic;">
+                    Example: 1 critical + 1 high = 100 × 0.60 × 0.80 = 48
+                </p>
+            </div>
+            {{else if eq .Report.Metadata.ScoringSystem "highest_impact"}}
+            <div class="scoring-method">
+                <h4>Highest Impact Scoring</h4>
+                <p style="color: var(--color-text-muted); font-size: 0.8125rem; margin-bottom: 0.75rem;">
+                    A zero-tolerance approach where only the single highest severity finding matters. The number of
+                    findings is irrelevant—one critical finding has the same impact as ten. This is ideal for
+                    compliance scenarios where any critical issue is unacceptable.
+                </p>
+                <p style="color: var(--color-text-muted); font-size: 0.8125rem; margin-bottom: 0.5rem;"><strong>Fixed scores:</strong></p>
+                <ul>
+                    <li>Any <span class="severity-badge severity-critical">Critical</span> finding → Score 0</li>
+                    <li>Any <span class="severity-badge severity-high">High</span> finding (no critical) → Score 30</li>
+                    <li>Any <span class="severity-badge severity-medium">Medium</span> finding (no high/critical) → Score 60</li>
+                    <li>Any <span class="severity-badge severity-low">Low</span> finding (no medium+) → Score 80</li>
+                    <li>No findings → Score 100</li>
+                </ul>
+                <p style="color: var(--color-text-muted); font-size: 0.75rem; margin-top: 0.75rem; font-style: italic;">
+                    Example: 1 critical + 50 low = Score 0 (critical dominates everything)
+                </p>
+            </div>
+            {{end}}
+        </div>
 
         <footer>
             <div class="footer-brand">

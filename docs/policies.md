@@ -33,7 +33,7 @@ groups:
       - uid: storage-https-required
 
 # Scoring configuration
-scoring_system: highest impact
+scoring_system: highest_impact
 
 # Query definitions
 queries:
@@ -380,8 +380,8 @@ query: |
 Configure how overall scores are calculated:
 
 ```yaml
-# Use highest impact score from failed checks
-scoring_system: highest impact
+# Use highest_impact score from failed checks
+scoring_system: highest_impact
 
 # Alternative: average of all impacts
 scoring_system: average
@@ -417,7 +417,7 @@ groups:
       - uid: repo-branch-protection
       - uid: repo-dependabot
 
-scoring_system: highest impact
+scoring_system: highest_impact
 
 queries:
   - uid: org-2fa-required

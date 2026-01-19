@@ -4,6 +4,7 @@ metadata:
   name: kopexa-certificate-security
   title: Kopexa Certificate Security
   version: 1.0.0
+scoring_system: banded
 
 groups:
   - title: Certificate Validity

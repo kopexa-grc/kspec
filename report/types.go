@@ -45,6 +45,19 @@ type Metadata struct {
 	PassedChecks int       `json:"passed_checks"`
 	FailedChecks int       `json:"failed_checks"`
 	SkippedCheck int       `json:"skipped_checks"`
+
+	// Scoring information
+	Score         uint32 `json:"score"`
+	Grade         string `json:"grade"`
+	RiskLevel     string `json:"risk_level"`
+	ScoringSystem string `json:"scoring_system"`
+
+	// Findings by severity
+	CriticalFindings int `json:"critical_findings"`
+	HighFindings     int `json:"high_findings"`
+	MediumFindings   int `json:"medium_findings"`
+	LowFindings      int `json:"low_findings"`
+	InfoFindings     int `json:"info_findings"`
 }
 
 // Report contains the full report data.

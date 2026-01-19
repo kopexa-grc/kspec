@@ -158,7 +158,7 @@ props:
 
 | Value | Description |
 |-------|-------------|
-| `highest impact` | Use highest severity from failed checks |
+| `highest_impact` | Use highest severity from failed checks |
 | `average` | Average of all severity scores |
 
 ## Complete Example
