@@ -1,0 +1,15 @@
+# Level 2 - imports level 3
+apiVersion: kspec/v1
+kind: Policy
+metadata:
+  name: level2-checks
+
+imports:
+  - level3.yaml
+
+queries:
+  - uid: level2-check
+    title: Level 2 Check
+    resource: test_resource
+    severity: low
+    query: resource.level2 == true

@@ -8,6 +8,7 @@ type Policy struct {
 	APIVersion    string        `yaml:"apiVersion,omitempty" json:"apiVersion,omitempty" jsonschema:"description=API version for the policy format"`
 	Kind          string        `yaml:"kind,omitempty" json:"kind,omitempty" jsonschema:"enum=Policy,description=Must be 'Policy'"`
 	Metadata      Metadata      `yaml:"metadata,omitempty" json:"metadata,omitempty" jsonschema:"description=Policy metadata"`
+	Imports       []string      `yaml:"imports,omitempty" json:"imports,omitempty" jsonschema:"description=Import other policies by path, URL, or glob pattern"`
 	Groups        []Group       `yaml:"groups,omitempty" json:"groups,omitempty" jsonschema:"description=Groups of related checks"`
 	Queries       []Check       `yaml:"queries,omitempty" json:"queries,omitempty" jsonschema:"description=Check definitions that can be referenced by groups"`
 	Require       []Requirement `yaml:"require,omitempty" json:"require,omitempty" jsonschema:"description=Provider dependencies required by this policy"`

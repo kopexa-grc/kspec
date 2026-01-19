@@ -1,0 +1,14 @@
+# Policy B - imports Policy A (creates circular dependency)
+apiVersion: kspec/v1
+kind: Policy
+metadata:
+  name: policy-b
+
+imports:
+  - policy-a.yaml
+
+queries:
+  - uid: check-b
+    title: Check B
+    resource: test_resource
+    query: resource.b == true

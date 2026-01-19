@@ -23,9 +23,21 @@ const (
 	StatusSkipped = "skipped"
 )
 
-// LoadPolicies loads policies from a file or directory
+// LoadPolicies loads policies from a file or directory.
+// It also resolves any imports defined in the policies.
 func LoadPolicies(policyFile, policyDir string) ([]core.Policy, error) {
 	var policies []core.Policy
+
+	// Determine base path for import resolution
+	basePath := "."
+	if policyDir != "" {
+		basePath = policyDir
+	} else if policyFile != "" {
+		basePath = filepath.Dir(policyFile)
+	}
+
+	// Create import resolver
+	resolver := NewImportResolver(basePath)
 
 	loadPolicy := func(path string) error {
 		data, err := os.ReadFile(path)
@@ -36,6 +48,14 @@ func LoadPolicies(policyFile, policyDir string) ([]core.Policy, error) {
 		if err := yaml.Unmarshal(data, &p); err != nil {
 			return err
 		}
+
+		// Resolve imports if any
+		if len(p.Imports) > 0 {
+			if err := resolver.ResolveImports(&p, path); err != nil {
+				return fmt.Errorf("failed to resolve imports: %w", err)
+			}
+		}
+
 		policies = append(policies, p)
 		return nil
 	}

@@ -1,0 +1,12 @@
+# Level 3 - deepest level of nested imports
+apiVersion: kspec/v1
+kind: Policy
+metadata:
+  name: level3-checks
+
+queries:
+  - uid: level3-check
+    title: Level 3 Check
+    resource: test_resource
+    severity: info
+    query: resource.level3 == true
