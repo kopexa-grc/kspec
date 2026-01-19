@@ -16,7 +16,7 @@ import (
 	"github.com/kopexa-grc/kspec/discovery"
 	"github.com/kopexa-grc/kspec/pkg/concurrency"
 	_ "github.com/kopexa-grc/kspec/provider/all" // Import all providers to register them
-	"github.com/kopexa-grc/kspec/provider/registry"
+	"github.com/kopexa-grc/kspec/provider"
 )
 
 // discoverCmd represents the discover command
@@ -39,14 +39,14 @@ func init() {
 	rootCmd.AddCommand(discoverCmd)
 
 	// Dynamically create subcommands for each registered provider
-	for _, def := range registry.All() {
+	for _, def := range provider.All() {
 		providerCmd := createDiscoverProviderCommand(def)
 		discoverCmd.AddCommand(providerCmd)
 	}
 }
 
 // createDiscoverProviderCommand creates a cobra command for a specific provider.
-func createDiscoverProviderCommand(def *registry.ProviderDefinition) *cobra.Command {
+func createDiscoverProviderCommand(def *provider.ProviderDefinition) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     def.Name,
 		Short:   fmt.Sprintf("Discover %s resources", def.Name),
@@ -75,14 +75,14 @@ func createDiscoverProviderCommand(def *registry.ProviderDefinition) *cobra.Comm
 
 		// Register flags for direct execution
 		registerDiscoverFlags(cmd)
-		registry.RegisterFlags(cmd, def)
+		provider.RegisterFlags(cmd, def)
 	}
 
 	return cmd
 }
 
 // createDiscoverAssetCommand creates a cobra command for a specific asset type.
-func createDiscoverAssetCommand(def *registry.ProviderDefinition, at *registry.AssetDefinition) *cobra.Command {
+func createDiscoverAssetCommand(def *provider.ProviderDefinition, at *provider.AssetDefinition) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     buildAssetUsage(at.Name, at),
 		Short:   at.Description,
@@ -98,13 +98,13 @@ func createDiscoverAssetCommand(def *registry.ProviderDefinition, at *registry.A
 
 	// Register flags
 	registerDiscoverFlags(cmd)
-	registry.RegisterFlags(cmd, def)
+	provider.RegisterFlags(cmd, def)
 
 	return cmd
 }
 
 // buildDiscoverMultiAssetDescription builds a detailed description for providers with multiple asset types.
-func buildDiscoverMultiAssetDescription(def *registry.ProviderDefinition) string {
+func buildDiscoverMultiAssetDescription(def *provider.ProviderDefinition) string {
 	var sb strings.Builder
 	sb.WriteString(def.Description)
 	sb.WriteString("\n\nAvailable asset types:\n")
@@ -135,7 +135,7 @@ func registerDiscoverFlags(cmd *cobra.Command) {
 }
 
 // runAssetDiscover executes the discovery for a specific provider and asset type.
-func runAssetDiscover(cmd *cobra.Command, def *registry.ProviderDefinition, at *registry.AssetDefinition, args []string) error {
+func runAssetDiscover(cmd *cobra.Command, def *provider.ProviderDefinition, at *provider.AssetDefinition, args []string) error {
 	ctx := context.Background()
 
 	// Build asset config from positional args
@@ -160,7 +160,7 @@ func runAssetDiscover(cmd *cobra.Command, def *registry.ProviderDefinition, at *
 	fullAssetType := def.GetScannerKey(at.Name)
 
 	// Build provider config from flags
-	providerConfig := registry.BuildConfig(cmd, def)
+	providerConfig := provider.BuildConfig(cmd, def)
 
 	// Merge asset config into provider config
 	for k, v := range assetConfig {

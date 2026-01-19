@@ -1,8 +1,7 @@
 // Copyright (c) Kopexa GmbH
 // SPDX-License-Identifier: Elastic-2.0
 
-// Package registry provides a dynamic provider registration system.
-package registry
+package provider
 
 import (
 	"strings"

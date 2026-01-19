@@ -11,8 +11,8 @@ import (
 	"os"
 
 	"github.com/kopexa-grc/kspec/core"
+	"github.com/kopexa-grc/kspec/pkg/ratelimit"
 	"github.com/kopexa-grc/kspec/provider/atlassian/resources"
-	"github.com/kopexa-grc/kspec/provider/registry"
 )
 
 // Provider implements the core.Provider interface for Atlassian Cloud.
@@ -60,19 +60,13 @@ func (p *Provider) Connect(ctx context.Context, config map[string]string) (core.
 		orgID = os.Getenv("ATLASSIAN_ORG_ID")
 	}
 
-	// Get rate limiter from provider definition
-	def, ok := registry.Get("atlassian")
-	if !ok {
-		return nil, fmt.Errorf("atlassian provider not registered")
-	}
-
 	// Create client with rate limiting
 	client, err := NewClient(ctx, ClientConfig{
 		Email:    email,
 		APIToken: apiToken,
 		Site:     site,
 		OrgID:    orgID,
-		Limiter:  def.NewRateLimiter(),
+		Limiter:  ratelimit.New("atlassian", *rateLimitConfig),
 	})
 	if err != nil {
 		return nil, err

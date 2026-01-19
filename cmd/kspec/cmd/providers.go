@@ -1,12 +1,12 @@
 // Copyright (c) Kopexa GmbH
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Elastic-2.0
 
-// Package all imports all providers to trigger their init() registration.
-// Import this package in your main application to register all providers.
-package all
+package cmd
 
+// Import all providers to trigger their init() registration.
+// This is done here in the CLI package to avoid circular imports
+// in the provider package.
 import (
-	// Import all providers to trigger their init() registration.
 	_ "github.com/kopexa-grc/kspec/provider/atlassian"
 	_ "github.com/kopexa-grc/kspec/provider/aws"
 	_ "github.com/kopexa-grc/kspec/provider/azure"

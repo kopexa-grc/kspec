@@ -6,15 +6,15 @@ package aws
 import (
 	"github.com/kopexa-grc/kspec/core"
 	"github.com/kopexa-grc/kspec/pkg/ratelimit"
-	"github.com/kopexa-grc/kspec/provider/registry"
+	"github.com/kopexa-grc/kspec/provider"
 )
 
 func init() {
-	registry.Register(&registry.ProviderDefinition{
+	provider.Register(&provider.ProviderDefinition{
 		Name:        "aws",
 		Aliases:     []string{"amazon", "ec2", "s3"},
 		Description: "Scan AWS accounts for security compliance (IAM, S3, EC2, RDS, Lambda, EKS, and 50+ services)",
-		Flags: []registry.FlagDefinition{
+		Flags: []provider.FlagDefinition{
 			{
 				Name:        "profile",
 				Description: "AWS profile name from ~/.aws/credentials",
@@ -29,7 +29,7 @@ func init() {
 			{
 				Name:        "regions",
 				Description: "Multiple AWS regions for multi-region scanning (comma-separated)",
-				Type:        registry.FlagTypeStringSlice,
+				Type:        provider.FlagTypeStringSlice,
 			},
 			{
 				Name:        "access-key-id",
@@ -62,7 +62,7 @@ func init() {
 				EnvVar:      "AWS_ENDPOINT_URL",
 			},
 		},
-		AssetTypes: []registry.AssetDefinition{
+		AssetTypes: []provider.AssetDefinition{
 			{
 				Name:        "account",
 				Description: "Scan entire AWS account",

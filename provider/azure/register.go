@@ -5,15 +5,24 @@ package azure
 
 import (
 	"github.com/kopexa-grc/kspec/pkg/ratelimit"
-	"github.com/kopexa-grc/kspec/provider/registry"
+	"github.com/kopexa-grc/kspec/provider"
 )
 
+// rateLimitConfig defines the rate limiting for Azure ARM API.
+// Azure ARM API rate limits vary by resource type (typically 200-1200 requests/5min).
+// We use conservative limits: 10/s with burst of 20 for safety.
+// Azure SDK has built-in retry, but proactive rate limiting helps avoid throttling.
+var rateLimitConfig = &ratelimit.Config{
+	RequestsPerSecond: 10,
+	Burst:             20,
+}
+
 func init() {
-	registry.Register(&registry.ProviderDefinition{
+	provider.Register(&provider.ProviderDefinition{
 		Name:        "azure",
 		Aliases:     []string{"az", "microsoft-azure"},
 		Description: "Scan Azure subscriptions for security compliance (Resource Manager, Storage, Network, Compute, and more)",
-		Flags: []registry.FlagDefinition{
+		Flags: []provider.FlagDefinition{
 			{
 				Name:        "client-id",
 				Description: "Azure Client ID (Service Principal)",
@@ -34,12 +43,12 @@ func init() {
 				Description: "Azure Resource Group (optional filter)",
 			},
 		},
-		AssetTypes: []registry.AssetDefinition{
+		AssetTypes: []provider.AssetDefinition{
 			{
 				Name:        "subscription",
 				Aliases:     []string{"sub"},
 				Description: "Scan an Azure subscription",
-				Args: []registry.ArgDefinition{
+				Args: []provider.ArgDefinition{
 					{
 						Name:        "subscription-id",
 						Description: "Azure subscription ID",
@@ -57,12 +66,6 @@ func init() {
 			"resource-group": "resource_group",
 		},
 		Factory: NewProvider,
-		// Azure ARM API rate limits vary by resource type (typically 200-1200 requests/5min).
-		// We use conservative limits: 10/s with burst of 20 for safety.
-		// Azure SDK has built-in retry, but proactive rate limiting helps avoid throttling.
-		RateLimitConfig: &ratelimit.Config{
-			RequestsPerSecond: 10,
-			Burst:             20,
-		},
+		RateLimitConfig: rateLimitConfig,
 	})
 }

@@ -4,13 +4,13 @@
 package discovery
 
 import (
-	"github.com/kopexa-grc/kspec/provider/registry"
+	"github.com/kopexa-grc/kspec/provider"
 )
 
 // GetParentType returns the parent resource type for a given child type and provider.
 // Returns empty string if no parent is defined.
 func GetParentType(providerName, childType string) string {
-	def, ok := registry.Get(providerName)
+	def, ok := provider.Get(providerName)
 	if !ok {
 		return ""
 	}
@@ -20,7 +20,7 @@ func GetParentType(providerName, childType string) string {
 // GetResourceGroup returns the visual group for a resource type.
 // Returns "other" if no group is defined.
 func GetResourceGroup(providerName, resourceType string) string {
-	def, ok := registry.Get(providerName)
+	def, ok := provider.Get(providerName)
 	if !ok {
 		return "other"
 	}
@@ -30,7 +30,7 @@ func GetResourceGroup(providerName, resourceType string) string {
 // GetRootType returns the root resource type for a provider.
 // Returns empty string if the provider is not found or has no root type defined.
 func GetRootType(providerName string) string {
-	def, ok := registry.Get(providerName)
+	def, ok := provider.Get(providerName)
 	if !ok {
 		return ""
 	}

@@ -1,7 +1,8 @@
 // Copyright (c) Kopexa GmbH
 // SPDX-License-Identifier: Elastic-2.0
 
-package core
+// Package cel provides CEL expression evaluation for policy checks.
+package cel
 
 import (
 	"context"
@@ -13,12 +14,14 @@ import (
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
 	"github.com/google/cel-go/ext"
+
+	"github.com/kopexa-grc/kspec/core"
 )
 
 // Evaluator evaluates CEL expressions against resources for security checks.
 type Evaluator struct {
 	Env      *cel.Env
-	Registry map[string]ResourceSpec // Access to providers
+	Registry map[string]core.ResourceSpec // Access to providers
 
 	// Expression cache for compiled programs
 	cache   map[string]cel.Program
@@ -26,7 +29,7 @@ type Evaluator struct {
 }
 
 // NewEvaluator creates a new evaluator with the given resource registry.
-func NewEvaluator(registry map[string]ResourceSpec) (*Evaluator, error) {
+func NewEvaluator(registry map[string]core.ResourceSpec) (*Evaluator, error) {
 	// We register a custom 'dns' function.
 	// It takes a string (domain) and returns a map (resource).
 
@@ -54,7 +57,7 @@ func NewEvaluator(registry map[string]ResourceSpec) (*Evaluator, error) {
 
 					// Fetch!
 					ctx := context.TODO() // We don't have ctx here.
-					res, err := dnsProvider.Fetch(ctx, Asset{FQDN: domainStr})
+					res, err := dnsProvider.Fetch(ctx, core.Asset{FQDN: domainStr})
 					if err != nil {
 						return types.NewErr("dns fetch failed: %s", err.Error())
 					}
@@ -124,7 +127,7 @@ func NewEvaluator(registry map[string]ResourceSpec) (*Evaluator, error) {
 }
 
 // Evaluate runs a CEL expression against a resource and returns the boolean result.
-func (e *Evaluator) Evaluate(expression string, resource Resource, config map[string]string, props map[string]interface{}, asset Asset) (bool, error) {
+func (e *Evaluator) Evaluate(expression string, resource core.Resource, config map[string]string, props map[string]interface{}, asset core.Asset) (bool, error) {
 	prg, err := e.getOrCompileProgram(expression)
 	if err != nil {
 		return false, err

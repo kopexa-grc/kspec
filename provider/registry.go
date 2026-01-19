@@ -1,7 +1,7 @@
 // Copyright (c) Kopexa GmbH
 // SPDX-License-Identifier: BUSL-1.1
 
-package registry
+package provider
 
 import (
 	"fmt"
@@ -10,9 +10,9 @@ import (
 )
 
 var (
-	mu        sync.RWMutex
-	providers = make(map[string]*ProviderDefinition)
-	aliases   = make(map[string]string) // alias -> primary name
+	mu                 sync.RWMutex
+	registeredProvider = make(map[string]*ProviderDefinition)
+	aliases            = make(map[string]string) // alias -> primary name
 )
 
 // Register adds a provider definition to the global registry.
@@ -33,11 +33,11 @@ func Register(def *ProviderDefinition) {
 		panic(fmt.Sprintf("provider %q must have a non-nil factory", def.Name))
 	}
 
-	if _, exists := providers[def.Name]; exists {
+	if _, exists := registeredProvider[def.Name]; exists {
 		panic(fmt.Sprintf("provider %q already registered", def.Name))
 	}
 
-	providers[def.Name] = def
+	registeredProvider[def.Name] = def
 
 	// Register aliases
 	for _, alias := range def.Aliases {
@@ -54,13 +54,13 @@ func Get(name string) (*ProviderDefinition, bool) {
 	defer mu.RUnlock()
 
 	// Check if it's a direct provider name
-	if def, ok := providers[name]; ok {
+	if def, ok := registeredProvider[name]; ok {
 		return def, true
 	}
 
 	// Check if it's an alias
 	if primaryName, ok := aliases[name]; ok {
-		return providers[primaryName], true
+		return registeredProvider[primaryName], true
 	}
 
 	return nil, false
@@ -71,8 +71,8 @@ func All() []*ProviderDefinition {
 	mu.RLock()
 	defer mu.RUnlock()
 
-	result := make([]*ProviderDefinition, 0, len(providers))
-	for _, def := range providers {
+	result := make([]*ProviderDefinition, 0, len(registeredProvider))
+	for _, def := range registeredProvider {
 		result = append(result, def)
 	}
 
@@ -89,8 +89,8 @@ func Names() []string {
 	mu.RLock()
 	defer mu.RUnlock()
 
-	result := make([]string, 0, len(providers))
-	for name := range providers {
+	result := make([]string, 0, len(registeredProvider))
+	for name := range registeredProvider {
 		result = append(result, name)
 	}
 
@@ -122,7 +122,7 @@ func AllFlags() []FlagDefinition {
 	seen := make(map[string]bool)
 	var result []FlagDefinition
 
-	for _, def := range providers {
+	for _, def := range registeredProvider {
 		for _, flag := range def.Flags {
 			if !seen[flag.Name] {
 				seen[flag.Name] = true

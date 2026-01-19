@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/kopexa-grc/kspec/core"
+	"github.com/kopexa-grc/kspec/policy/cel"
 )
 
 // evaluateGroupFilter performs a simple evaluation of group filters.
@@ -44,7 +45,7 @@ func Evaluate(
 	var results []Result
 
 	// Create evaluator
-	evaluator, err := core.NewEvaluator(registry)
+	evaluator, err := cel.NewEvaluator(registry)
 	if err != nil {
 		return results
 	}

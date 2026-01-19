@@ -10,8 +10,8 @@ import (
 	"os"
 
 	"github.com/kopexa-grc/kspec/core"
+	"github.com/kopexa-grc/kspec/pkg/ratelimit"
 	"github.com/kopexa-grc/kspec/provider/factorial/resources"
-	"github.com/kopexa-grc/kspec/provider/registry"
 )
 
 // Provider implements the core.Provider interface for Factorial HR.
@@ -53,19 +53,13 @@ func (p *Provider) Connect(ctx context.Context, config map[string]string) (core.
 		apiVersion = os.Getenv("FACTORIAL_API_VERSION")
 	}
 
-	// Get rate limiter from provider definition
-	def, ok := registry.Get("factorial")
-	if !ok {
-		return nil, fmt.Errorf("factorial provider not registered")
-	}
-
 	// Create client with rate limiting
 	client := NewClient(ClientConfig{
 		APIKey:      apiKey,
 		AccessToken: accessToken,
 		BaseURL:     baseURL,
 		APIVersion:  apiVersion,
-		Limiter:     def.NewRateLimiter(),
+		Limiter:     ratelimit.New("factorial", *rateLimitConfig),
 	})
 
 	// Verify connection by fetching company info or employees

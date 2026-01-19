@@ -13,8 +13,8 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 
 	"github.com/kopexa-grc/kspec/core"
+	"github.com/kopexa-grc/kspec/pkg/ratelimit"
 	"github.com/kopexa-grc/kspec/provider/azure/resources"
-	"github.com/kopexa-grc/kspec/provider/registry"
 )
 
 // Provider implements the core.Provider interface for Azure cloud resources.
@@ -80,17 +80,11 @@ func (p *Provider) Connect(ctx context.Context, config map[string]string) (core.
 		}
 	}
 
-	// Get rate limiter from provider definition
-	def, ok := registry.Get("azure")
-	if !ok {
-		return nil, fmt.Errorf("azure provider not registered")
-	}
-
 	// Create client with rate limiting
 	client := NewClient(ClientConfig{
 		Credential:     azureCred,
 		SubscriptionID: subscriptionID,
-		Limiter:        def.NewRateLimiter(),
+		Limiter:        ratelimit.New("azure", *rateLimitConfig),
 	})
 
 	return &Connection{
