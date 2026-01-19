@@ -38,25 +38,26 @@ func TestEvaluatePolicies_BasicCheck(t *testing.T) {
 		name         string
 		resource     core.Resource
 		resourceType string
-		wantStatus   string
+		wantStatus   policy.Status
+		wantNoResult bool
 	}{
 		{
 			name:         "Passing check",
 			resource:     core.Resource{"enabled": true, "name": "test"},
 			resourceType: "test_resource",
-			wantStatus:   StatusPassed,
+			wantStatus:   policy.StatusPassed,
 		},
 		{
 			name:         "Failing check",
 			resource:     core.Resource{"enabled": false, "name": "test"},
 			resourceType: "test_resource",
-			wantStatus:   StatusFailed,
+			wantStatus:   policy.StatusFailed,
 		},
 		{
 			name:         "Non-matching resource type",
 			resource:     core.Resource{"enabled": true},
 			resourceType: "other_resource",
-			wantStatus:   "", // No results expected
+			wantNoResult: true,
 		},
 	}
 
@@ -64,7 +65,7 @@ func TestEvaluatePolicies_BasicCheck(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			results := EvaluatePolicies(tt.resource, tt.resourceType, policies, nil, core.Asset{})
 
-			if tt.wantStatus == "" {
+			if tt.wantNoResult {
 				if len(results) != 0 {
 					t.Errorf("EvaluatePolicies() returned %d results, want 0", len(results))
 				}

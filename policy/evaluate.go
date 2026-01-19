@@ -148,7 +148,8 @@ func Evaluate(
 					asset,
 				)
 
-				var status, details string
+				var status Status
+				var details string
 
 				switch {
 				case err != nil:

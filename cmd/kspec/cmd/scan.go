@@ -432,7 +432,7 @@ func logResourceResults(logger *zerolog.Logger, node *common.ResourceNode) {
 		case "skip", "skipped":
 			logger.Info().Str("id", check.ID).Str("status", "SKIP").Msg(check.Name)
 		default:
-			logger.Info().Str("id", check.ID).Str("status", strings.ToUpper(check.Status)).Msg(check.Name)
+			logger.Info().Str("id", check.ID).Str("status", strings.ToUpper(check.Status.String())).Msg(check.Name)
 		}
 	}
 	for _, child := range node.Children {
