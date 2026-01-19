@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1](https://github.com/kopexa-grc/kspec/compare/v0.2.0...v0.2.1) (2026-01-19)
+
+
+### Features
+
+* add discovery command and graph-based resource traversal ([#51](https://github.com/kopexa-grc/kspec/issues/51)) ([c25768a](https://github.com/kopexa-grc/kspec/commit/c25768a592f451a61edca17f1091f55ece4b5663))
+
+
+### Documentation
+
+* **readme:** update commands to use asset type subcommands ([b20d9e2](https://github.com/kopexa-grc/kspec/commit/b20d9e2602a32d5024472e1624b834a63d7b91be))
+
+
+### Dependencies
+
+* **deps:** bump github.com/aws/aws-sdk-go-v2/service/autoscaling ([#56](https://github.com/kopexa-grc/kspec/issues/56)) ([2afba51](https://github.com/kopexa-grc/kspec/commit/2afba5176bb91889276ccf48e0f5dd064c8713e2))
+* **deps:** bump github.com/aws/aws-sdk-go-v2/service/cloudtrail ([#58](https://github.com/kopexa-grc/kspec/issues/58)) ([5787049](https://github.com/kopexa-grc/kspec/commit/5787049b98b0a75a43c5224e1257769184b699c6))
+* **deps:** bump github.com/aws/aws-sdk-go-v2/service/ec2 ([#59](https://github.com/kopexa-grc/kspec/issues/59)) ([517a3ca](https://github.com/kopexa-grc/kspec/commit/517a3cade01baa649c217bb22184083e57b3ba02))
+* **deps:** bump github.com/aws/aws-sdk-go-v2/service/ecs ([#60](https://github.com/kopexa-grc/kspec/issues/60)) ([97e3bf1](https://github.com/kopexa-grc/kspec/commit/97e3bf1ff7eee1dad7a7c66c8beeaeee841dd497))
+* **deps:** bump github.com/aws/aws-sdk-go-v2/service/secretsmanager ([#55](https://github.com/kopexa-grc/kspec/issues/55)) ([f539f5c](https://github.com/kopexa-grc/kspec/commit/f539f5c3d163171d2d61d860f1ce0e84daac1f84))
+* **deps:** bump github.com/aws/aws-sdk-go-v2/service/sns ([#61](https://github.com/kopexa-grc/kspec/issues/61)) ([5b305be](https://github.com/kopexa-grc/kspec/commit/5b305be058c55bcdb5ff68566e8bc7d7d696797f))
+* **deps:** bump github.com/Azure/azure-sdk-for-go/sdk/azcore ([#54](https://github.com/kopexa-grc/kspec/issues/54)) ([c72851d](https://github.com/kopexa-grc/kspec/commit/c72851d745bcba09025ed75ddc2b6f1c681f04d8))
+* **deps:** bump github.com/hetznercloud/hcloud-go/v2 ([#57](https://github.com/kopexa-grc/kspec/issues/57)) ([a4d07b0](https://github.com/kopexa-grc/kspec/commit/a4d07b01c6602a6441358b98b7d4ab2e97cb8926))
+
 ## [0.2.0](https://github.com/kopexa-grc/kspec/compare/v0.1.6...v0.2.0) (2026-01-18)
 
 
