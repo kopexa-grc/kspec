@@ -105,17 +105,3 @@ func TestStatus_String(t *testing.T) {
 	}
 }
 
-func TestEvaluateResult_Alias(t *testing.T) {
-	// Verify EvaluateResult is an alias for Result
-	var r Result
-	var er EvaluateResult
-
-	// This should compile if they're the same type
-	r = Result{ID: "test", Status: StatusPassed}
-	er = r
-	r = er
-
-	if r.ID != "test" || er.ID != "test" {
-		t.Error("EvaluateResult should be an alias for Result")
-	}
-}

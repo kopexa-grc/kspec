@@ -91,9 +91,6 @@ type ScanResult struct {
 // ScanEventHandler is a callback for scan events
 type ScanEventHandler func(event ScanEvent)
 
-// CheckResult is an alias for policy.Result for backwards compatibility.
-type CheckResult = policy.Result
-
 // ResourceOrder defines the preferred order for resource types per provider
 var ResourceOrder = map[string][]string{
 	"github": {"github_organization", "github_team", "github_repo"},

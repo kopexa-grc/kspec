@@ -68,6 +68,3 @@ func (r Result) IsSkipped() bool {
 	return r.Status == StatusSkipped
 }
 
-// EvaluateResult is an alias for Result for backwards compatibility.
-// Deprecated: Use Result instead.
-type EvaluateResult = Result

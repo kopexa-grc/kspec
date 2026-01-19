@@ -40,8 +40,8 @@ func Evaluate(
 	policies []Policy,
 	registry map[string]core.ResourceSpec,
 	asset core.Asset,
-) []EvaluateResult {
-	var results []EvaluateResult
+) []Result {
+	var results []Result
 
 	// Create evaluator
 	evaluator, err := core.NewEvaluator(registry)
@@ -182,7 +182,7 @@ func Evaluate(
 					checkID = check.ID
 				}
 
-				results = append(results, EvaluateResult{
+				results = append(results, Result{
 					ID:          checkID,
 					Group:       group.Title,
 					Name:        check.Title,

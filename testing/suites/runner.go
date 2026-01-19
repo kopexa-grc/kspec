@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	"github.com/kopexa-grc/kspec/policy"
-	"github.com/kopexa-grc/kspec/provider/scanner"
 )
 
 // Runner executes policy integration test suites.
@@ -88,7 +87,7 @@ func (r *Runner) runTestCase(t *testing.T, tc TestCase) {
 
 	// Test each fixture
 	for fixtureIdx, fixture := range tc.Fixtures {
-		results := scanner.EvaluatePolicies(
+		results := policy.Evaluate(
 			fixture,
 			tc.ResourceType,
 			policies,
@@ -97,7 +96,7 @@ func (r *Runner) runTestCase(t *testing.T, tc TestCase) {
 		)
 
 		// Build a map of results by check ID for easier lookup
-		resultsByID := make(map[string]scanner.CheckResult)
+		resultsByID := make(map[string]policy.Result)
 		for _, result := range results {
 			resultsByID[result.ID] = result
 		}
@@ -122,7 +121,7 @@ func (r *Runner) runTestCase(t *testing.T, tc TestCase) {
 					return
 				}
 
-				actualPass := result.Status == scanner.StatusPassed
+				actualPass := result.Status == policy.StatusPassed
 
 				if actualPass != expected.Pass {
 					if expected.Pass {
