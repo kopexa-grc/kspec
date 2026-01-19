@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.2](https://github.com/kopexa-grc/kspec/compare/v0.2.1...v0.2.2) (2026-01-19)
+
+
+### Features
+
+* **scoring:** add graph-based scoring system with policy-driven configuration ([#65](https://github.com/kopexa-grc/kspec/issues/65)) ([c8bb6f6](https://github.com/kopexa-grc/kspec/commit/c8bb6f638ca0251ef284fd9d1310ae7493a21b80))
+
+
+### Code Refactoring
+
+* consolidate provider registry and move CEL evaluator ([#63](https://github.com/kopexa-grc/kspec/issues/63)) ([4173ab1](https://github.com/kopexa-grc/kspec/commit/4173ab198fbdbf21ef92f1b7fdf32d6fb089bdad))
+
 ## [0.2.1](https://github.com/kopexa-grc/kspec/compare/v0.2.0...v0.2.1) (2026-01-19)
 
 
