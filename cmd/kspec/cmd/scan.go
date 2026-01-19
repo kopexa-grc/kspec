@@ -424,7 +424,7 @@ func runScanNoUI(ctx context.Context, cmd *cobra.Command, s *scanner.Scanner, pr
 
 func logResourceResults(logger *zerolog.Logger, node *common.ResourceNode) {
 	for _, check := range node.Checks {
-		switch check.Status { //nolint:exhaustive // Handling all known statuses with default fallback
+		switch check.Status {
 		case policy.StatusPassed:
 			logger.Info().Str("id", check.ID).Str("status", "PASS").Msg(check.Name)
 		case policy.StatusFailed:

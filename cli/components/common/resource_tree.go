@@ -230,7 +230,7 @@ func (t *ResourceTree) AddCheckResult(nodeID string, check CheckResult) error {
 	node.Checks = append(node.Checks, check)
 
 	// Update check counts
-	switch check.Status { //nolint:exhaustive // Only counting specific statuses
+	switch check.Status {
 	case policy.StatusPassed:
 		node.ChecksPassed++
 	case policy.StatusFailed:
