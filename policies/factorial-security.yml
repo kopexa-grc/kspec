@@ -49,7 +49,7 @@ groups:
       - uid: kopexa-factorial-locations-have-address
       - uid: kopexa-factorial-locations-have-timezone
 
-scoring_system: highest impact
+scoring_system: highest_impact
 
 queries:
   # Employee Management Checks

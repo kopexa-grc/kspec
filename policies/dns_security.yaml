@@ -4,6 +4,7 @@ metadata:
   name: kopexa-dns-security
   title: Kopexa DNS Security
   version: 1.0.0
+scoring_system: banded
 groups:
   - title: Networking
     filter: asset.type == 'host'
@@ -19,6 +20,7 @@ queries:
   - uid: kopexa-dns-security-no-cname-for-root-domain
     title: Ensure no CNAME is used for root domain
     resource: dns
+    severity: high
     query: resource.records.filter(r, r.type == 'CNAME').size() == 0
     docs: This check ensures that the root domain does not have a CNAME record.
     remediation: Replace the CNAME record at the root domain with an A or ALIAS record.
@@ -27,8 +29,9 @@ queries:
   - uid: kopexa-dns-security-no-ip-for-ns-mx-records
     title: Ensure NS and MX records are not pointing to IP addresses
     resource: dns
+    severity: medium
     query: |
-      resource.mx.size() > 0 && 
+      resource.mx.size() > 0 &&
       resource.mx.all(m, !m.name.matches(regex.ipv4) && !m.name.matches(regex.ipv6)) &&
       resource.params['NS']['rData'].size() > 0 &&
       resource.params['NS']['rData'].all(d, !d.matches(regex.ipv4) && !d.matches(regex.ipv6))
@@ -39,8 +42,9 @@ queries:
   - uid: kopexa-dns-security-no-legacy-ms-365-mx-records
     title: Ensure legacy MX records are not used with Microsoft 365
     resource: dns
+    severity: medium
     query: |
-      resource.mx.all(m, 
+      resource.mx.all(m,
         m.name != 'mail.outlook.com' &&
         m.name != 'mail.messaging.microsoft.com' &&
         m.name != 'mail.global.frontbridge.com' &&
@@ -53,9 +57,10 @@ queries:
   - uid: kopexa-dns-security-google-workspaces-mx-records
     title: Ensure the correct MX records are used with Google Workspaces
     resource: dns
+    severity: medium
     query: |
-      resource.mx.filter(m, m.name.contains('l.google.com')).all(m, 
-        m.name == 'aspmx.l.google.com' || 
+      resource.mx.filter(m, m.name.contains('l.google.com')).all(m,
+        m.name == 'aspmx.l.google.com' ||
         m.name == 'alt1.aspmx.l.google.com' ||
         m.name == 'alt2.aspmx.l.google.com' ||
         m.name == 'alt3.aspmx.l.google.com' ||
@@ -68,6 +73,7 @@ queries:
   - uid: kopexa-dns-security-dnssec-enabled
     title: Ensure DNSSEC is enabled
     resource: dns
+    severity: high
     query: resource.records.exists(r, r.type == 'DNSKEY')
     docs: This check ensures that DNSSEC is enabled.
     remediation: Enable DNSSEC at your registrar.
@@ -76,6 +82,7 @@ queries:
   - uid: kopexa-dns-security-no-wildcard
     title: Ensure no wildcard DNS records are configured
     resource: dns
+    severity: medium
     query: "!resource.records.exists(r, r.name.startsWith('*'))"
     docs: This check ensures that no wildcard DNS records are configured.
     remediation: Remove wildcard (*) A/CNAME records.

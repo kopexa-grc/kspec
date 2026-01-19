@@ -224,7 +224,7 @@ groups:
       - uid: aws-sagemaker-notebook-encryption
       - uid: aws-sagemaker-notebook-not-public
 
-scoring_system: highest impact
+scoring_system: highest_impact
 
 queries:
   # IAM Security Checks

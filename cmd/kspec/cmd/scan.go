@@ -19,6 +19,7 @@ import (
 	"github.com/kopexa-grc/kspec/core"
 	"github.com/kopexa-grc/kspec/pkg/concurrency"
 	"github.com/kopexa-grc/kspec/policy"
+	"github.com/kopexa-grc/kspec/policy/scoring"
 	"github.com/kopexa-grc/kspec/provider"
 	_ "github.com/kopexa-grc/kspec/provider/all" // Import all providers to register them
 	"github.com/kopexa-grc/kspec/provider/scanner"
@@ -207,6 +208,9 @@ func registerCommonFlags(cmd *cobra.Command) {
 	cmd.Flags().String("export-format", "", "Export format (auto-detected from filename)")
 	cmd.Flags().Bool("no-ui", false, "Disable interactive UI (for CI/CD)")
 
+	// Scoring flag (overrides policy setting)
+	cmd.Flags().String("scoring", "", "Override scoring system: banded, average, decayed, highest_impact")
+
 	// Concurrency flags
 	cmd.Flags().Int("max-workers", concurrency.DefaultMaxWorkers, "Maximum number of concurrent workers")
 	cmd.Flags().Bool("sequential", false, "Disable concurrency (run sequentially for debugging)")
@@ -289,17 +293,49 @@ func runAssetScan(cmd *cobra.Command, def *provider.ProviderDefinition, at *prov
 		return err
 	}
 
+	// Determine scoring system from policies (CLI flag overrides)
+	scoringSystem := getScoringSystem(cmd, policies)
+
 	// Check for no-ui mode
 	noUI, _ := cmd.Flags().GetBool("no-ui") //nolint:errcheck // Flag is defined
 	if noUI {
-		return runScanNoUI(ctx, cmd, s, def.Name)
+		return runScanNoUI(ctx, cmd, s, def.Name, scoringSystem)
 	}
 
-	return runScanWithUI(ctx, cmd, s, def.Name)
+	return runScanWithUI(ctx, cmd, s, def.Name, scoringSystem)
+}
+
+// getScoringSystem determines the scoring system to use.
+//
+// Priority order:
+//  1. CLI flag --scoring (explicit override)
+//  2. First policy with scoring_system defined (in load order)
+//  3. Default: banded
+//
+// Note: When multiple policies define different scoring_system values,
+// only the first one encountered is used. For consistent behavior across
+// an organization, either use a single scoring_system across all policies
+// or use the --scoring CLI flag to explicitly set the desired algorithm.
+func getScoringSystem(cmd *cobra.Command, policies []policy.Policy) scoring.System {
+	// Check CLI override first
+	cliOverride, _ := cmd.Flags().GetString("scoring") //nolint:errcheck // Flag is defined
+	if cliOverride != "" {
+		return scoring.ParseSystem(cliOverride)
+	}
+
+	// Look for scoring_system in policies (first match wins)
+	for _, p := range policies {
+		if p.ScoringSystem != "" {
+			return scoring.ParseSystem(p.ScoringSystem)
+		}
+	}
+
+	// Default to banded
+	return scoring.SystemBanded
 }
 
 // runScanWithUI runs the scan with the interactive TUI
-func runScanWithUI(ctx context.Context, cmd *cobra.Command, s *scanner.Scanner, providerName string) error {
+func runScanWithUI(ctx context.Context, cmd *cobra.Command, s *scanner.Scanner, providerName string, scoringSystem scoring.System) error {
 	// Initialize bubbletea UI
 	uiModel := cli.InitialModel()
 	p := tea.NewProgram(uiModel)
@@ -351,10 +387,30 @@ func runScanWithUI(ctx context.Context, cmd *cobra.Command, s *scanner.Scanner, 
 		if model, ok := finalModel.(cli.Model); ok {
 			tree := model.GetTree()
 			if tree != nil {
-				if err := exportResults(cmd, tree, providerName, exportPath); err != nil {
+				if err := exportResults(cmd, tree, providerName, exportPath, scoringSystem); err != nil {
 					return fmt.Errorf("export failed: %w", err)
 				}
 				fmt.Printf("Results exported to: %s\n", exportPath)
+			}
+		}
+	}
+
+	// Display final score
+	if model, ok := finalModel.(cli.Model); ok {
+		tree := model.GetTree()
+		if tree != nil {
+			scorer := scoring.NewGraphScorer(scoringSystem)
+			score := scorer.ScoreTree(tree)
+			findings := scorer.GetRootFindings(tree)
+
+			fmt.Printf("\n--- Score Summary ---\n")
+			fmt.Printf("Score: %d/100 (Grade: %s)\n", score.Value, score.Grade)
+			fmt.Printf("Risk Level: %s\n", score.RiskLevel)
+			if findings.Failed > 0 {
+				fmt.Printf("Findings: %d critical, %d high, %d medium, %d low\n",
+					findings.Critical, findings.High, findings.Medium, findings.Low)
+			} else {
+				fmt.Printf("Findings: None\n")
 			}
 		}
 	}
@@ -363,7 +419,7 @@ func runScanWithUI(ctx context.Context, cmd *cobra.Command, s *scanner.Scanner, 
 }
 
 // runScanNoUI runs the scan with logging output instead of the TUI
-func runScanNoUI(ctx context.Context, cmd *cobra.Command, s *scanner.Scanner, providerName string) error {
+func runScanNoUI(ctx context.Context, cmd *cobra.Command, s *scanner.Scanner, providerName string, scoringSystem scoring.System) error {
 	logger := zerolog.New(zerolog.ConsoleWriter{Out: os.Stdout}).
 		With().
 		Timestamp().
@@ -396,7 +452,7 @@ func runScanNoUI(ctx context.Context, cmd *cobra.Command, s *scanner.Scanner, pr
 		case scanner.EventScanComplete:
 			logger.Info().Msg("Scan complete")
 			if event.Tree.Root != nil {
-				logSummary(&logger, event.Tree)
+				logSummary(&logger, event.Tree, scoringSystem)
 			}
 		case scanner.EventError:
 			logger.Error().Msg("Scan error occurred")
@@ -413,7 +469,7 @@ func runScanNoUI(ctx context.Context, cmd *cobra.Command, s *scanner.Scanner, pr
 
 	exportPath, _ := cmd.Flags().GetString("export") //nolint:errcheck // Flag is defined
 	if exportPath != "" && finalTree != nil {
-		if err := exportResults(cmd, finalTree, providerName, exportPath); err != nil {
+		if err := exportResults(cmd, finalTree, providerName, exportPath, scoringSystem); err != nil {
 			return fmt.Errorf("export failed: %w", err)
 		}
 		logger.Info().Str("path", exportPath).Msg("Results exported")
@@ -440,13 +496,31 @@ func logResourceResults(logger *zerolog.Logger, node *common.ResourceNode) {
 	}
 }
 
-func logSummary(logger *zerolog.Logger, tree *common.ResourceTree) {
+func logSummary(logger *zerolog.Logger, tree *common.ResourceTree, scoringSystem scoring.System) {
 	if tree.Root == nil {
 		return
 	}
 	passed, failed, skipped := countChecksRecursive(tree.Root)
 	total := passed + failed + skipped
-	logger.Info().Int("total", total).Int("passed", passed).Int("failed", failed).Int("skipped", skipped).Msg("Scan summary")
+
+	// Calculate score using the graph scorer
+	scorer := scoring.NewGraphScorer(scoringSystem)
+	score := scorer.ScoreTree(tree)
+	findings := scorer.GetRootFindings(tree)
+
+	logger.Info().
+		Int("total", total).
+		Int("passed", passed).
+		Int("failed", failed).
+		Int("skipped", skipped).
+		Uint32("score", score.Value).
+		Str("grade", score.Grade).
+		Str("risk_level", score.RiskLevel).
+		Int("critical", findings.Critical).
+		Int("high", findings.High).
+		Int("medium", findings.Medium).
+		Int("low", findings.Low).
+		Msg("Scan summary")
 }
 
 // countChecksRecursive counts check results recursively through the tree.
@@ -500,8 +574,8 @@ func loadAndFilterPolicies(cmd *cobra.Command, providerName string) ([]policy.Po
 	return policies, nil
 }
 
-func exportResults(cmd *cobra.Command, tree *common.ResourceTree, providerName, exportPath string) error {
-	rep := report.FromResourceTree(tree, providerName)
+func exportResults(cmd *cobra.Command, tree *common.ResourceTree, providerName, exportPath string, scoringSystem scoring.System) error {
+	rep := report.FromResourceTreeWithScoring(tree, providerName, scoringSystem)
 
 	format, _ := cmd.Flags().GetString("export-format") //nolint:errcheck // Flag is defined
 	if format == "" {

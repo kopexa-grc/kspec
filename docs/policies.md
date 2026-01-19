@@ -33,7 +33,7 @@ groups:
       - uid: storage-https-required
 
 # Scoring configuration
-scoring_system: highest impact
+scoring_system: highest_impact
 
 # Query definitions
 queries:
@@ -377,15 +377,54 @@ query: |
 
 ## Scoring System
 
-Configure how overall scores are calculated:
+Configure how overall scores are calculated. Four scoring algorithms are available:
+
+### Banded (Default)
+
+Severity bands cap the maximum achievable score. The highest severity finding determines the ceiling:
 
 ```yaml
-# Use highest impact score from failed checks
-scoring_system: highest impact
+scoring_system: banded
+```
 
-# Alternative: average of all impacts
+- Critical finding → Max score 40, then −8 per additional
+- High finding → Max score 70, then −5 per additional
+- Medium finding → Max score 90, then −3 per additional
+- Low finding → Max score 99, then −1 per additional
+
+### Average
+
+Weighted average based on check outcomes. Good for balanced assessment:
+
+```yaml
 scoring_system: average
 ```
+
+Weights: Critical=10, High=7, Medium=4, Low=1, Info=0
+
+### Decayed
+
+Exponential decay - each finding multiplies the score down:
+
+```yaml
+scoring_system: decayed
+```
+
+Formula: `score = 100 × ∏(1-decay)^count`
+Decay rates: Critical=40%, High=20%, Medium=10%, Low=5%
+
+### Highest Impact
+
+Zero-tolerance approach - only the worst finding matters:
+
+```yaml
+scoring_system: highest_impact
+```
+
+- Any Critical → Score 0
+- Any High (no critical) → Score 30
+- Any Medium (no high+) → Score 60
+- Any Low (no medium+) → Score 80
 
 ## Complete Example
 
@@ -417,7 +456,7 @@ groups:
       - uid: repo-branch-protection
       - uid: repo-dependabot
 
-scoring_system: highest impact
+scoring_system: highest_impact
 
 queries:
   - uid: org-2fa-required

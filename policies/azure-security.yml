@@ -50,7 +50,7 @@ groups:
       - uid: kopexa-azure-security-ensure-register-with-ad-is-enabled-on-app-service
       - uid: kopexa-azure-security-ensure-web-app-is-using-the-latest-tls
 
-scoring_system: highest impact
+scoring_system: highest_impact
 
 queries:
   # Storage Security Checks

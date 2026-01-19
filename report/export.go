@@ -7,19 +7,29 @@ import (
 	"time"
 
 	"github.com/kopexa-grc/kspec/cli/components/common"
+	"github.com/kopexa-grc/kspec/policy/scoring"
 )
 
 // FromResourceTree converts a ResourceTree to a Report.
 func FromResourceTree(tree *common.ResourceTree, provider string) *Report {
+	return FromResourceTreeWithScoring(tree, provider, scoring.SystemBanded)
+}
+
+// FromResourceTreeWithScoring converts a ResourceTree to a Report with scoring.
+func FromResourceTreeWithScoring(tree *common.ResourceTree, provider string, scoringSystem scoring.System) *Report {
 	report := &Report{
 		Metadata: Metadata{
-			GeneratedAt: time.Now(),
-			Provider:    provider,
+			GeneratedAt:   time.Now(),
+			Provider:      provider,
+			ScoringSystem: scoringSystem.String(),
 		},
 		Rows: make([]Row, 0),
 	}
 
 	if tree == nil || tree.Root == nil {
+		report.Metadata.Score = 100
+		report.Metadata.Grade = "A"
+		report.Metadata.RiskLevel = "None"
 		return report
 	}
 
@@ -41,6 +51,20 @@ func FromResourceTree(tree *common.ResourceTree, provider string) *Report {
 			report.Metadata.SkippedCheck++
 		}
 	}
+
+	// Calculate score using the graph scorer
+	scorer := scoring.NewGraphScorer(scoringSystem)
+	score := scorer.ScoreTree(tree)
+	findings := scorer.GetRootFindings(tree)
+
+	report.Metadata.Score = score.Value
+	report.Metadata.Grade = score.Grade
+	report.Metadata.RiskLevel = score.RiskLevel
+	report.Metadata.CriticalFindings = findings.Critical
+	report.Metadata.HighFindings = findings.High
+	report.Metadata.MediumFindings = findings.Medium
+	report.Metadata.LowFindings = findings.Low
+	report.Metadata.InfoFindings = findings.Info
 
 	return report
 }
