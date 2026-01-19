@@ -362,7 +362,9 @@ const htmlTemplate = `<!DOCTYPE html>
             height: 12px;
             background: linear-gradient(to right,
                 var(--color-fail) 0%,
-                var(--color-fail) 40%,
+                var(--color-fail) 1%,
+                var(--color-high) 1%,
+                var(--color-high) 40%,
                 var(--color-medium) 40%,
                 var(--color-medium) 70%,
                 #58a6ff 70%,
@@ -1117,8 +1119,13 @@ const htmlTemplate = `<!DOCTYPE html>
                 <div class="score-legend">
                     <div class="score-legend-item">
                         <span class="score-legend-dot critical"></span>
-                        <span>0-39</span>
-                        <span>High Risk</span>
+                        <span>0</span>
+                        <span>Critical</span>
+                    </div>
+                    <div class="score-legend-item">
+                        <span class="score-legend-dot high"></span>
+                        <span>1-39</span>
+                        <span>High</span>
                     </div>
                     <div class="score-legend-item">
                         <span class="score-legend-dot medium"></span>

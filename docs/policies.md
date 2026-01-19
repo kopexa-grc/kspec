@@ -388,7 +388,7 @@ scoring_system: banded
 ```
 
 - Critical finding → Max score 40, then −8 per additional
-- High finding → Max score 70, then −6 per additional
+- High finding → Max score 70, then −5 per additional
 - Medium finding → Max score 90, then −3 per additional
 - Low finding → Max score 99, then −1 per additional
 
