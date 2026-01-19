@@ -363,9 +363,7 @@ const htmlTemplate = `<!DOCTYPE html>
             background: linear-gradient(to right,
                 var(--color-fail) 0%,
                 var(--color-fail) 40%,
-                var(--color-high) 40%,
-                var(--color-high) 60%,
-                var(--color-medium) 60%,
+                var(--color-medium) 40%,
                 var(--color-medium) 70%,
                 #58a6ff 70%,
                 #58a6ff 90%,
@@ -1120,16 +1118,11 @@ const htmlTemplate = `<!DOCTYPE html>
                     <div class="score-legend-item">
                         <span class="score-legend-dot critical"></span>
                         <span>0-39</span>
-                        <span>Critical</span>
-                    </div>
-                    <div class="score-legend-item">
-                        <span class="score-legend-dot high"></span>
-                        <span>40-59</span>
-                        <span>High</span>
+                        <span>High Risk</span>
                     </div>
                     <div class="score-legend-item">
                         <span class="score-legend-dot medium"></span>
-                        <span>60-69</span>
+                        <span>40-69</span>
                         <span>Medium</span>
                     </div>
                     <div class="score-legend-item">
@@ -1143,7 +1136,7 @@ const htmlTemplate = `<!DOCTYPE html>
                         <span>None</span>
                     </div>
                 </div>
-                {{if or .Report.Metadata.CriticalFindings .Report.Metadata.HighFindings .Report.Metadata.MediumFindings .Report.Metadata.LowFindings}}
+                {{if or .Report.Metadata.CriticalFindings .Report.Metadata.HighFindings .Report.Metadata.MediumFindings .Report.Metadata.LowFindings .Report.Metadata.InfoFindings}}
                 <div class="findings-badges">
                     {{if .Report.Metadata.CriticalFindings}}<span class="findings-badge critical">{{.Report.Metadata.CriticalFindings}} Critical</span>{{end}}
                     {{if .Report.Metadata.HighFindings}}<span class="findings-badge high">{{.Report.Metadata.HighFindings}} High</span>{{end}}

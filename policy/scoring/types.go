@@ -227,7 +227,7 @@ func (f *Findings) IsEmpty() bool {
 
 // FailedCount returns the total number of failed checks.
 func (f *Findings) FailedCount() int {
-	return f.Critical + f.High + f.Medium + f.Low + f.Info
+	return f.Failed
 }
 
 // Evaluated returns the number of checks that were actually evaluated.

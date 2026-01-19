@@ -53,7 +53,7 @@ func (c *AverageCalculator) Calculate(f Findings) Score {
 	totalWeight += float64(f.High) * SeverityHigh.Weight()
 	totalWeight += float64(f.Medium) * SeverityMedium.Weight()
 	totalWeight += float64(f.Low) * SeverityLow.Weight()
-	totalWeight += float64(f.Info) * 1 // Info gets weight 1
+	totalWeight += float64(f.Info) * SeverityInfo.Weight()
 
 	if totalWeight == 0 {
 		score.Value = 100
