@@ -518,7 +518,7 @@ func (m Model) renderCheckDetailPanel(check *common.CheckResult, width, height i
 		statusStyle = lipgloss.NewStyle().Foreground(common.ColorMuted)
 	default:
 		statusIcon = "?"
-		statusText = check.Status
+		statusText = check.Status.String()
 		statusStyle = lipgloss.NewStyle()
 	}
 
@@ -789,7 +789,7 @@ func (m *Model) buildChecksTable() {
 		case StatusSkipped:
 			statusDisplay = SymbolSkipped + " " + StatusSkipped
 		default:
-			statusDisplay = check.Status
+			statusDisplay = check.Status.String()
 		}
 
 		rows[i] = table.Row{

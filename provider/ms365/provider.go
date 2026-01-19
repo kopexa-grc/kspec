@@ -14,8 +14,8 @@ import (
 	msgraphsdk "github.com/microsoftgraph/msgraph-sdk-go"
 
 	"github.com/kopexa-grc/kspec/core"
+	"github.com/kopexa-grc/kspec/pkg/ratelimit"
 	"github.com/kopexa-grc/kspec/provider/ms365/resources"
-	"github.com/kopexa-grc/kspec/provider/registry"
 )
 
 // Provider implements the core.Provider interface for Microsoft 365.
@@ -66,16 +66,10 @@ func (p *Provider) Connect(ctx context.Context, config map[string]string) (core.
 		return nil, fmt.Errorf("failed to create Graph client: %w", err)
 	}
 
-	// Get rate limiter from provider definition
-	def, ok := registry.Get("ms365")
-	if !ok {
-		return nil, fmt.Errorf("ms365 provider not registered")
-	}
-
 	// Create client with rate limiting
 	client := NewClient(ClientConfig{
 		Graph:   graphClient,
-		Limiter: def.NewRateLimiter(),
+		Limiter: ratelimit.New("ms365", *rateLimitConfig),
 	})
 
 	return &Connection{

@@ -9,8 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/kopexa-grc/kspec/core"
-	"github.com/kopexa-grc/kspec/provider/scanner"
+	"github.com/kopexa-grc/kspec/policy"
 )
 
 // Runner executes policy integration test suites.
@@ -62,14 +61,14 @@ func (r *Runner) runTestCase(t *testing.T, tc TestCase) {
 		policyPath = filepath.Join(r.policiesDir, tc.PolicyFile)
 	}
 
-	policies, err := scanner.LoadPolicies(policyPath, "")
+	policies, err := policy.Load(policyPath, "")
 	if err != nil {
 		t.Fatalf("Failed to load policies from %s: %v", tc.PolicyFile, err)
 	}
 
 	// Filter to specific policy if requested
 	if tc.PolicyName != "" {
-		var filtered []core.Policy
+		var filtered []policy.Policy
 		for _, p := range policies {
 			if p.Metadata.Name == tc.PolicyName {
 				filtered = append(filtered, p)
@@ -88,7 +87,7 @@ func (r *Runner) runTestCase(t *testing.T, tc TestCase) {
 
 	// Test each fixture
 	for fixtureIdx, fixture := range tc.Fixtures {
-		results := scanner.EvaluatePolicies(
+		results := policy.Evaluate(
 			fixture,
 			tc.ResourceType,
 			policies,
@@ -97,7 +96,7 @@ func (r *Runner) runTestCase(t *testing.T, tc TestCase) {
 		)
 
 		// Build a map of results by check ID for easier lookup
-		resultsByID := make(map[string]scanner.CheckResult)
+		resultsByID := make(map[string]policy.Result)
 		for _, result := range results {
 			resultsByID[result.ID] = result
 		}
@@ -122,7 +121,7 @@ func (r *Runner) runTestCase(t *testing.T, tc TestCase) {
 					return
 				}
 
-				actualPass := result.Status == scanner.StatusPassed
+				actualPass := result.Status == policy.StatusPassed
 
 				if actualPass != expected.Pass {
 					if expected.Pass {

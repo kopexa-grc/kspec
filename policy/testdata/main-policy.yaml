@@ -1,0 +1,26 @@
+# Main policy that imports base checks
+apiVersion: kspec/v1
+kind: Policy
+metadata:
+  name: main-policy
+  version: "1.0.0"
+
+imports:
+  - base-checks.yaml
+
+require:
+  - provider: test
+
+groups:
+  - title: Security Checks
+    checks:
+      - uid: base-check-1
+      - uid: base-check-2
+      - uid: local-check
+
+queries:
+  - uid: local-check
+    title: Local Check
+    resource: test_resource
+    severity: low
+    query: resource.local == true

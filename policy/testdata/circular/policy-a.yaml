@@ -1,0 +1,14 @@
+# Policy A - imports Policy B (which imports Policy A back)
+apiVersion: kspec/v1
+kind: Policy
+metadata:
+  name: policy-a
+
+imports:
+  - policy-b.yaml
+
+queries:
+  - uid: check-a
+    title: Check A
+    resource: test_resource
+    query: resource.a == true

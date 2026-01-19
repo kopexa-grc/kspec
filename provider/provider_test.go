@@ -1,7 +1,7 @@
 // Copyright (c) Kopexa GmbH
 // SPDX-License-Identifier: BUSL-1.1
 
-package registry
+package provider
 
 import (
 	"context"
@@ -27,7 +27,7 @@ func mockFactory() core.Provider {
 func resetRegistry() {
 	mu.Lock()
 	defer mu.Unlock()
-	providers = make(map[string]*ProviderDefinition)
+	registeredProvider = make(map[string]*ProviderDefinition)
 	aliases = make(map[string]string)
 }
 

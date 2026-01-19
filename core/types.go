@@ -73,11 +73,3 @@ type AssetContextProvider interface {
 	// The parent resource data and base asset are provided to build the child asset.
 	BuildChildAsset(parentData Resource, baseAsset Asset) Asset
 }
-
-// CheckResult represents the outcome of a policy check.
-type CheckResult struct {
-	TenantID   string                 `json:"tenant_id"`
-	ResourceID string                 `json:"resource_id"`
-	Passed     bool                   `json:"passed"`
-	Metadata   map[string]interface{} `json:"metadata,omitempty"`
-}

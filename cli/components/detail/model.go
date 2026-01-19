@@ -36,7 +36,7 @@ func New(asset common.Asset, checks []common.CheckResult) Model {
 
 	rows := make([]table.Row, len(checks))
 	for i, check := range checks {
-		statusStyled := common.StatusStyle(check.Status).Render(check.Status)
+		statusStyled := common.StatusStyle(check.Status.String()).Render(check.Status.String())
 
 		rows[i] = table.Row{
 			check.Group,

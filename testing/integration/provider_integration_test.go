@@ -1,14 +1,19 @@
 // Copyright (c) Kopexa GmbH
 // SPDX-License-Identifier: Elastic-2.0
 
-package provider
+package integration_test
 
 import (
 	"testing"
+
+	"github.com/kopexa-grc/kspec/provider"
+
+	// Import all providers to trigger registration for tests.
+	_ "github.com/kopexa-grc/kspec/provider/all"
 )
 
 func TestGetProviders(t *testing.T) {
-	providers := GetProviders()
+	providers := provider.GetProviders()
 
 	if len(providers) == 0 {
 		t.Error("GetProviders() returned empty list")
@@ -104,7 +109,7 @@ func TestGetProviderByName(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			p, err := GetProviderByName(tt.input)
+			p, err := provider.GetProviderByName(tt.input)
 
 			if tt.wantErr {
 				if err == nil {
@@ -153,14 +158,14 @@ func TestGetProviderByName_Uniqueness(t *testing.T) {
 			}
 
 			// Get first provider
-			p1, err := GetProviderByName(tt.aliases[0])
+			p1, err := provider.GetProviderByName(tt.aliases[0])
 			if err != nil {
 				t.Fatalf("GetProviderByName(%q) error: %v", tt.aliases[0], err)
 			}
 
 			// All aliases should return provider with same name
 			for _, alias := range tt.aliases[1:] {
-				p2, err := GetProviderByName(alias)
+				p2, err := provider.GetProviderByName(alias)
 				if err != nil {
 					t.Fatalf("GetProviderByName(%q) error: %v", alias, err)
 				}
@@ -175,7 +180,7 @@ func TestGetProviderByName_Uniqueness(t *testing.T) {
 }
 
 func TestGetProviders_Count(t *testing.T) {
-	providers := GetProviders()
+	providers := provider.GetProviders()
 
 	// We expect at least 10 providers (os, network, github, azure, ms365, cloudflare, atlassian, sbom, hetzner, factorial)
 	minExpected := 10
@@ -185,7 +190,7 @@ func TestGetProviders_Count(t *testing.T) {
 }
 
 func TestGetProviders_NoDuplicates(t *testing.T) {
-	providers := GetProviders()
+	providers := provider.GetProviders()
 
 	seen := make(map[string]bool)
 	for _, p := range providers {

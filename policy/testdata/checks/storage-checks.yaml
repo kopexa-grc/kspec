@@ -1,0 +1,12 @@
+# Storage-related checks
+apiVersion: kspec/v1
+kind: Policy
+metadata:
+  name: storage-checks
+
+queries:
+  - uid: storage-encryption
+    title: Storage encryption enabled
+    resource: test_storage
+    severity: critical
+    query: resource.encrypted == true

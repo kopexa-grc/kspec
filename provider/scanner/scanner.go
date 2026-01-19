@@ -1,6 +1,7 @@
 // Copyright (c) Kopexa GmbH
 // SPDX-License-Identifier: BUSL-1.1
 
+// Package scanner provides resource discovery and policy evaluation coordination.
 package scanner
 
 import (

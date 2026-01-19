@@ -69,7 +69,7 @@ func collectRows(node *common.ResourceNode, path string, report *Report) {
 			CheckID:          check.ID,
 			CheckGroup:       check.Group,
 			CheckName:        check.Name,
-			CheckStatus:      check.Status,
+			CheckStatus:      check.Status.String(),
 			CheckSeverity:    check.Severity,
 			CheckDetails:     check.Details,
 			CheckRemediation: check.Remediation,

@@ -1,0 +1,18 @@
+# Network-related checks
+apiVersion: kspec/v1
+kind: Policy
+metadata:
+  name: network-checks
+
+queries:
+  - uid: network-firewall
+    title: Firewall enabled
+    resource: test_network
+    severity: high
+    query: resource.firewall_enabled == true
+
+  - uid: network-encryption
+    title: Network encryption enabled
+    resource: test_network
+    severity: high
+    query: resource.tls_enabled == true

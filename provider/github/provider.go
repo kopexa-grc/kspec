@@ -10,8 +10,8 @@ import (
 	"fmt"
 
 	"github.com/kopexa-grc/kspec/core"
+	"github.com/kopexa-grc/kspec/pkg/ratelimit"
 	"github.com/kopexa-grc/kspec/provider/github/resources"
-	"github.com/kopexa-grc/kspec/provider/registry"
 )
 
 // Provider implements the core.Provider interface for GitHub.
@@ -35,16 +35,10 @@ func (p *Provider) Connect(ctx context.Context, config map[string]string) (core.
 		return nil, err
 	}
 
-	// Get rate limiter from provider definition
-	def, ok := registry.Get("github")
-	if !ok {
-		return nil, fmt.Errorf("github provider not registered")
-	}
-
 	// Create client with rate limiting
 	client := NewClient(ctx, ClientConfig{
 		Token:   token,
-		Limiter: def.NewRateLimiter(),
+		Limiter: ratelimit.New("github", *rateLimitConfig),
 	})
 
 	return &Connection{client: client}, nil

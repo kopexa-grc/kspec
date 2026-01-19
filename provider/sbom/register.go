@@ -5,15 +5,15 @@ package sbom
 
 import (
 	"github.com/kopexa-grc/kspec/core"
-	"github.com/kopexa-grc/kspec/provider/registry"
+	"github.com/kopexa-grc/kspec/provider"
 )
 
 func init() {
-	registry.Register(&registry.ProviderDefinition{
+	provider.Register(&provider.ProviderDefinition{
 		Name:        "sbom",
 		Aliases:     []string{"bom", "cyclonedx", "spdx"},
 		Description: "Scan Software Bill of Materials (SBOM) files for compliance (CycloneDX, SPDX)",
-		Flags: []registry.FlagDefinition{
+		Flags: []provider.FlagDefinition{
 			{
 				Name:        "sbom-path",
 				Description: "Path to SBOM file or directory",
@@ -26,11 +26,11 @@ func init() {
 		// "sbom-directory") is used to select the appropriate scan behavior. When adding new
 		// asset types, either reuse "sbom_path" for the same generic path semantics or introduce
 		// a distinct ConfigKey if different configuration is required.
-		AssetTypes: []registry.AssetDefinition{
+		AssetTypes: []provider.AssetDefinition{
 			{
 				Name:        "file",
 				Description: "Scan a single SBOM file",
-				Args: []registry.ArgDefinition{
+				Args: []provider.ArgDefinition{
 					{
 						Name:        "path",
 						Description: "Path to SBOM file",
@@ -44,7 +44,7 @@ func init() {
 				Name:        "dir",
 				Aliases:     []string{"directory"},
 				Description: "Scan a directory of SBOM files",
-				Args: []registry.ArgDefinition{
+				Args: []provider.ArgDefinition{
 					{
 						Name:        "path",
 						Description: "Path to directory containing SBOM files",

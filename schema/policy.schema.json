@@ -157,6 +157,13 @@
           "$ref": "#/$defs/Metadata",
           "description": "Policy metadata"
         },
+        "imports": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Import other policies by path"
+        },
         "groups": {
           "items": {
             "$ref": "#/$defs/Group"

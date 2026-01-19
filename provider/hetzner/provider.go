@@ -9,8 +9,8 @@ import (
 	"os"
 
 	"github.com/kopexa-grc/kspec/core"
+	"github.com/kopexa-grc/kspec/pkg/ratelimit"
 	"github.com/kopexa-grc/kspec/provider/hetzner/resources"
-	"github.com/kopexa-grc/kspec/provider/registry"
 )
 
 // Provider implements the core.Provider interface for Hetzner Cloud.
@@ -50,16 +50,10 @@ func (p *Provider) Connect(ctx context.Context, config map[string]string) (core.
 		projectName = "default"
 	}
 
-	// Get rate limiter from provider definition
-	def, ok := registry.Get("hetzner")
-	if !ok {
-		return nil, fmt.Errorf("hetzner provider not registered")
-	}
-
 	// Create client with rate limiting
 	client := NewClient(ctx, ClientConfig{
 		Token:   apiToken,
-		Limiter: def.NewRateLimiter(),
+		Limiter: ratelimit.New("hetzner", *rateLimitConfig),
 	})
 
 	// Verify connection by fetching locations

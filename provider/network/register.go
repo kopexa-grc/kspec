@@ -6,21 +6,21 @@ package network
 import (
 	"github.com/kopexa-grc/kspec/core"
 	"github.com/kopexa-grc/kspec/pkg/ratelimit"
-	"github.com/kopexa-grc/kspec/provider/registry"
+	"github.com/kopexa-grc/kspec/provider"
 )
 
 func init() {
-	registry.Register(&registry.ProviderDefinition{
+	provider.Register(&provider.ProviderDefinition{
 		Name:            "network",
 		Aliases:         []string{"host", "dns"},
 		Description:     "Scan network hosts for security compliance (DNS, TLS, HTTP headers)",
-		Flags:           []registry.FlagDefinition{},
+		Flags:           []provider.FlagDefinition{},
 		RateLimitConfig: &ratelimit.Config{RequestsPerSecond: 20, Burst: 40},
-		AssetTypes: []registry.AssetDefinition{
+		AssetTypes: []provider.AssetDefinition{
 			{
 				Name:        "host",
 				Description: "Scan a network host",
-				Args: []registry.ArgDefinition{
+				Args: []provider.ArgDefinition{
 					{
 						Name:        "target",
 						Description: "Host to scan (domain or IP)",

@@ -1,0 +1,21 @@
+# Base checks that can be imported by other policies
+apiVersion: kspec/v1
+kind: Policy
+metadata:
+  name: base-security-checks
+  version: "1.0.0"
+
+queries:
+  - uid: base-check-1
+    title: Base Check One
+    resource: test_resource
+    severity: high
+    query: resource.enabled == true
+    remediation: Enable the resource
+
+  - uid: base-check-2
+    title: Base Check Two
+    resource: test_resource
+    severity: medium
+    query: resource.secure == true
+    remediation: Secure the resource

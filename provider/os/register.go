@@ -5,16 +5,16 @@ package os
 
 import (
 	"github.com/kopexa-grc/kspec/core"
-	"github.com/kopexa-grc/kspec/provider/registry"
+	"github.com/kopexa-grc/kspec/provider"
 )
 
 func init() {
-	registry.Register(&registry.ProviderDefinition{
+	provider.Register(&provider.ProviderDefinition{
 		Name:        "os",
 		Aliases:     []string{"local", "localhost"},
 		Description: "Scan local operating system for security compliance",
-		Flags:       []registry.FlagDefinition{},
-		AssetTypes: []registry.AssetDefinition{
+		Flags:       []provider.FlagDefinition{},
+		AssetTypes: []provider.AssetDefinition{
 			{
 				Name:        "local",
 				Description: "Scan local system",

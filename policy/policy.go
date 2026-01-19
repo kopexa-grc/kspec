@@ -1,13 +1,15 @@
 // Copyright (c) Kopexa GmbH
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Elastic-2.0
 
-package core
+// Package policy provides types and utilities for defining and loading security policies.
+package policy
 
 // Policy represents a collection of checks and groups.
 type Policy struct {
 	APIVersion    string        `yaml:"apiVersion,omitempty" json:"apiVersion,omitempty" jsonschema:"description=API version for the policy format"`
 	Kind          string        `yaml:"kind,omitempty" json:"kind,omitempty" jsonschema:"enum=Policy,description=Must be 'Policy'"`
 	Metadata      Metadata      `yaml:"metadata,omitempty" json:"metadata,omitempty" jsonschema:"description=Policy metadata"`
+	Imports       []string      `yaml:"imports,omitempty" json:"imports,omitempty" jsonschema:"description=Import other policies by path, URL, or glob pattern"`
 	Groups        []Group       `yaml:"groups,omitempty" json:"groups,omitempty" jsonschema:"description=Groups of related checks"`
 	Queries       []Check       `yaml:"queries,omitempty" json:"queries,omitempty" jsonschema:"description=Check definitions that can be referenced by groups"`
 	Require       []Requirement `yaml:"require,omitempty" json:"require,omitempty" jsonschema:"description=Provider dependencies required by this policy"`
@@ -44,14 +46,11 @@ type Group struct {
 
 // Check represents a security check to evaluate against resources.
 type Check struct {
-	UID   string `yaml:"uid,omitempty" json:"uid,omitempty" jsonschema:"description=Unique identifier for this check"`
-	ID    string `yaml:"id,omitempty" json:"id,omitempty" jsonschema:"description=Alternative identifier"`
-	Title string `yaml:"title,omitempty" json:"title,omitempty" jsonschema:"description=Human-readable check title"`
-	// Resource type to query against. e.g. "package", "service"
-	// In CEL, we need to know WHICH resource to fetch.
-	Resource string `yaml:"resource,omitempty" json:"resource,omitempty" jsonschema:"description=Resource type to query (e.g. tls | dns | github_repo)"`
-	// Config for the resource fetch, e.g. name=foo
-	Config map[string]string `yaml:"config,omitempty" json:"config,omitempty" jsonschema:"description=Resource-specific configuration"`
+	UID      string            `yaml:"uid,omitempty" json:"uid,omitempty" jsonschema:"description=Unique identifier for this check"`
+	ID       string            `yaml:"id,omitempty" json:"id,omitempty" jsonschema:"description=Alternative identifier"`
+	Title    string            `yaml:"title,omitempty" json:"title,omitempty" jsonschema:"description=Human-readable check title"`
+	Resource string            `yaml:"resource,omitempty" json:"resource,omitempty" jsonschema:"description=Resource type to query (e.g. tls | dns | github_repo)"`
+	Config   map[string]string `yaml:"config,omitempty" json:"config,omitempty" jsonschema:"description=Resource-specific configuration"`
 
 	Query       string `yaml:"query,omitempty" json:"query,omitempty" jsonschema:"description=CEL expression that must evaluate to true for the check to pass"`
 	Remediation string `yaml:"remediation,omitempty" json:"remediation,omitempty" jsonschema:"description=Remediation guidance when check fails"`
@@ -68,3 +67,12 @@ type Prop struct {
 	Title string `yaml:"title,omitempty" json:"title,omitempty" jsonschema:"description=Property title"`
 	MQL   any    `yaml:"mql,omitempty" json:"mql,omitempty" jsonschema:"description=MQL expression for property extraction"`
 }
+
+// Severity constants.
+const (
+	SeverityCritical = "critical"
+	SeverityHigh     = "high"
+	SeverityMedium   = "medium"
+	SeverityLow      = "low"
+	SeverityInfo     = "info"
+)

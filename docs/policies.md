@@ -73,6 +73,106 @@ require:
   - provider: github
 ```
 
+## Policy Imports
+
+Policies can import checks from other policy files, allowing you to build modular, reusable policy libraries. Imported queries are available for reference in your groups.
+
+### Import Syntax
+
+```yaml
+imports:
+  - ./base-checks.yaml           # Relative local file
+  - /path/to/checks.yaml         # Absolute local file
+  - ./checks/*.yaml              # Glob pattern
+  - https://example.com/policy.yaml  # Remote URL
+```
+
+### Import Types
+
+| Type | Pattern | Example |
+|------|---------|---------|
+| Local file | Relative or absolute path | `./checks.yaml`, `/policies/base.yaml` |
+| Glob | Wildcard patterns | `./checks/*.yaml`, `./lib/**/*.yaml` |
+| URL | HTTP/HTTPS URLs | `https://raw.githubusercontent.com/org/repo/main/policy.yaml` |
+
+### Example: Extending a Base Policy
+
+**base-checks.yaml** - Reusable check definitions:
+```yaml
+apiVersion: kspec/v1
+kind: Policy
+metadata:
+  name: base-security-checks
+queries:
+  - uid: https-required
+    title: HTTPS must be enabled
+    resource: azure_storage_account
+    severity: critical
+    query: resource.properties.supportsHttpsTrafficOnly == true
+
+  - uid: encryption-enabled
+    title: Encryption must be enabled
+    resource: azure_storage_account
+    severity: critical
+    query: resource.properties.encryption.services.blob.enabled == true
+```
+
+**my-policy.yaml** - Policy that imports and uses base checks:
+```yaml
+apiVersion: kspec/v1
+kind: Policy
+metadata:
+  name: my-storage-policy
+  version: 1.0.0
+
+imports:
+  - ./base-checks.yaml
+
+require:
+  - provider: azure
+
+groups:
+  - title: Storage Security
+    checks:
+      - uid: https-required      # From import
+      - uid: encryption-enabled  # From import
+      - uid: custom-check        # Local check
+
+queries:
+  - uid: custom-check
+    title: Custom storage check
+    resource: azure_storage_account
+    severity: medium
+    query: has(resource.tags.environment)
+```
+
+### Import Resolution
+
+1. **Relative paths** are resolved relative to the importing policy file
+2. **Glob patterns** match files in the specified directory
+3. **URLs** are fetched via HTTP/HTTPS with a 30-second timeout
+4. **Circular imports** are automatically detected and prevented
+5. **Import order**: Imported queries are prepended to local queries (local queries take precedence for duplicate UIDs)
+
+### Nested Imports
+
+Imported policies can themselves have imports, which are resolved recursively:
+
+```
+main-policy.yaml
+  └── imports: security-checks.yaml
+        └── imports: common-checks.yaml
+```
+
+All queries from the entire import chain become available in the main policy.
+
+### Best Practices for Imports
+
+1. **Organize by domain**: Group related checks into separate files
+2. **Use relative paths**: Keep policies portable within a repository
+3. **Version remote imports**: Pin to specific commits or tags for stability
+4. **Document dependencies**: Note required imports in policy documentation
+
 ## Groups
 
 Groups organize checks into logical sections:

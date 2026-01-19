@@ -5,15 +5,15 @@ package cloudflare
 
 import (
 	"github.com/kopexa-grc/kspec/core"
-	"github.com/kopexa-grc/kspec/provider/registry"
+	"github.com/kopexa-grc/kspec/provider"
 )
 
 func init() {
-	registry.Register(&registry.ProviderDefinition{
+	provider.Register(&provider.ProviderDefinition{
 		Name:        "cloudflare",
 		Aliases:     []string{"cf"},
 		Description: "Scan Cloudflare accounts and zones for security compliance (DNS, WAF, SSL/TLS, Access)",
-		Flags: []registry.FlagDefinition{
+		Flags: []provider.FlagDefinition{
 			{
 				Name:        "api-token",
 				Description: "Cloudflare API Token",
@@ -35,11 +35,11 @@ func init() {
 				EnvVar:      "CLOUDFLARE_ACCOUNT_ID",
 			},
 		},
-		AssetTypes: []registry.AssetDefinition{
+		AssetTypes: []provider.AssetDefinition{
 			{
 				Name:        "account",
 				Description: "Scan a Cloudflare account",
-				Args: []registry.ArgDefinition{
+				Args: []provider.ArgDefinition{
 					{
 						Name:        "account-id",
 						Description: "Account ID (optional, scans all if omitted)",
@@ -53,7 +53,7 @@ func init() {
 			{
 				Name:        "zone",
 				Description: "Scan a specific Cloudflare zone",
-				Args: []registry.ArgDefinition{
+				Args: []provider.ArgDefinition{
 					{
 						Name:        "zone-id",
 						Description: "Zone ID",

@@ -1,67 +1,69 @@
 // Copyright (c) Kopexa GmbH
 // SPDX-License-Identifier: Elastic-2.0
 
-package core
+package cel
 
 import (
 	"sync"
 	"testing"
+
+	"github.com/kopexa-grc/kspec/core"
 )
 
 func TestEvaluator_Evaluate(t *testing.T) {
 	tests := []struct {
 		name     string
 		policy   string
-		resource Resource
+		resource core.Resource
 		want     bool
 		wantErr  bool
 	}{
 		{
 			name:     "Simple boolean true",
 			policy:   "true",
-			resource: Resource{},
+			resource: core.Resource{},
 			want:     true,
 			wantErr:  false,
 		},
 		{
 			name:     "Simple boolean false",
 			policy:   "false",
-			resource: Resource{},
+			resource: core.Resource{},
 			want:     false,
 			wantErr:  false,
 		},
 		{
 			name:     "Check resource field equality",
 			policy:   "resource.name == 'test-repo'",
-			resource: Resource{"name": "test-repo"},
+			resource: core.Resource{"name": "test-repo"},
 			want:     true,
 			wantErr:  false,
 		},
 		{
 			name:     "Check resource field inequality",
 			policy:   "resource.private == false",
-			resource: Resource{"private": true},
+			resource: core.Resource{"private": true},
 			want:     false,
 			wantErr:  false,
 		},
 		{
 			name:     "Macro has() check",
 			policy:   "has(resource.tags)",
-			resource: Resource{"tags": []string{"production"}},
+			resource: core.Resource{"tags": []string{"production"}},
 			want:     true,
 			wantErr:  false,
 		},
 		{
 			name:     "Macro has() check missing",
 			policy:   "has(resource.tags)",
-			resource: Resource{"name": "no-tags"},
+			resource: core.Resource{"name": "no-tags"},
 			want:     false,
 			wantErr:  false,
 		},
 		{
 			name:   "Collection all() check",
 			policy: "resource.collaborators.all(c, c.role != 'admin')",
-			resource: Resource{
+			resource: core.Resource{
 				"collaborators": []map[string]interface{}{
 					{"user": "alice", "role": "write"},
 					{"user": "bob", "role": "read"},
@@ -73,7 +75,7 @@ func TestEvaluator_Evaluate(t *testing.T) {
 		{
 			name:   "Collection all() check fail",
 			policy: "resource.collaborators.all(c, c.role != 'admin')",
-			resource: Resource{
+			resource: core.Resource{
 				"collaborators": []map[string]interface{}{
 					{"user": "alice", "role": "admin"},
 				},
@@ -90,7 +92,7 @@ func TestEvaluator_Evaluate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			pass, err := evaluator.Evaluate(tt.policy, tt.resource, nil, nil, Asset{})
+			pass, err := evaluator.Evaluate(tt.policy, tt.resource, nil, nil, core.Asset{})
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Evaluator.Evaluate() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -111,16 +113,16 @@ func TestEvaluator_ComplexQueries(t *testing.T) {
 	tests := []struct {
 		name     string
 		policy   string
-		resource Resource
+		resource core.Resource
 		config   map[string]string
-		asset    Asset
+		asset    core.Asset
 		want     bool
 		wantErr  bool
 	}{
 		{
 			name:   "Exists check on list",
 			policy: "resource.rules.exists(r, r.action == 'allow')",
-			resource: Resource{
+			resource: core.Resource{
 				"rules": []map[string]interface{}{
 					{"action": "deny", "port": 22},
 					{"action": "allow", "port": 443},
@@ -132,7 +134,7 @@ func TestEvaluator_ComplexQueries(t *testing.T) {
 		{
 			name:   "Exists check on list - not found",
 			policy: "resource.rules.exists(r, r.action == 'block')",
-			resource: Resource{
+			resource: core.Resource{
 				"rules": []map[string]interface{}{
 					{"action": "deny", "port": 22},
 					{"action": "allow", "port": 443},
@@ -144,84 +146,84 @@ func TestEvaluator_ComplexQueries(t *testing.T) {
 		{
 			name:     "Numeric comparison",
 			policy:   "resource.count > 10",
-			resource: Resource{"count": 15},
+			resource: core.Resource{"count": 15},
 			want:     true,
 			wantErr:  false,
 		},
 		{
 			name:     "Numeric comparison - equal edge case",
 			policy:   "resource.count >= 10",
-			resource: Resource{"count": 10},
+			resource: core.Resource{"count": 10},
 			want:     true,
 			wantErr:  false,
 		},
 		{
 			name:     "String contains",
 			policy:   "resource.description.contains('security')",
-			resource: Resource{"description": "This is a security policy"},
+			resource: core.Resource{"description": "This is a security policy"},
 			want:     true,
 			wantErr:  false,
 		},
 		{
 			name:     "String startsWith",
 			policy:   "resource.name.startsWith('prod-')",
-			resource: Resource{"name": "prod-server-1"},
+			resource: core.Resource{"name": "prod-server-1"},
 			want:     true,
 			wantErr:  false,
 		},
 		{
 			name:     "String endsWith",
 			policy:   "resource.domain.endsWith('.com')",
-			resource: Resource{"domain": "example.com"},
+			resource: core.Resource{"domain": "example.com"},
 			want:     true,
 			wantErr:  false,
 		},
 		{
 			name:     "Logical AND",
 			policy:   "resource.enabled == true && resource.verified == true",
-			resource: Resource{"enabled": true, "verified": true},
+			resource: core.Resource{"enabled": true, "verified": true},
 			want:     true,
 			wantErr:  false,
 		},
 		{
 			name:     "Logical AND - partial false",
 			policy:   "resource.enabled == true && resource.verified == true",
-			resource: Resource{"enabled": true, "verified": false},
+			resource: core.Resource{"enabled": true, "verified": false},
 			want:     false,
 			wantErr:  false,
 		},
 		{
 			name:     "Logical OR",
 			policy:   "resource.admin == true || resource.superuser == true",
-			resource: Resource{"admin": false, "superuser": true},
+			resource: core.Resource{"admin": false, "superuser": true},
 			want:     true,
 			wantErr:  false,
 		},
 		{
 			name:     "Negation",
 			policy:   "!resource.public",
-			resource: Resource{"public": false},
+			resource: core.Resource{"public": false},
 			want:     true,
 			wantErr:  false,
 		},
 		{
 			name:     "Ternary/conditional",
 			policy:   "resource.type == 'admin' ? resource.mfa_enabled : true",
-			resource: Resource{"type": "admin", "mfa_enabled": true},
+			resource: core.Resource{"type": "admin", "mfa_enabled": true},
 			want:     true,
 			wantErr:  false,
 		},
 		{
 			name:     "Ternary - non-admin",
 			policy:   "resource.type == 'admin' ? resource.mfa_enabled : true",
-			resource: Resource{"type": "user", "mfa_enabled": false},
+			resource: core.Resource{"type": "user", "mfa_enabled": false},
 			want:     true,
 			wantErr:  false,
 		},
 		{
 			name:   "Size check on list",
 			policy: "size(resource.members) > 0",
-			resource: Resource{
+			resource: core.Resource{
 				"members": []string{"alice", "bob"},
 			},
 			want:    true,
@@ -230,7 +232,7 @@ func TestEvaluator_ComplexQueries(t *testing.T) {
 		{
 			name:   "Size check on empty list",
 			policy: "size(resource.members) == 0",
-			resource: Resource{
+			resource: core.Resource{
 				"members": []string{},
 			},
 			want:    true,
@@ -239,21 +241,21 @@ func TestEvaluator_ComplexQueries(t *testing.T) {
 		{
 			name:     "In operator with list",
 			policy:   "resource.status in ['active', 'pending']",
-			resource: Resource{"status": "active"},
+			resource: core.Resource{"status": "active"},
 			want:     true,
 			wantErr:  false,
 		},
 		{
 			name:     "In operator - not in list",
 			policy:   "resource.status in ['active', 'pending']",
-			resource: Resource{"status": "disabled"},
+			resource: core.Resource{"status": "disabled"},
 			want:     false,
 			wantErr:  false,
 		},
 		{
 			name:     "Config variable access",
 			policy:   "config.threshold == '100'",
-			resource: Resource{},
+			resource: core.Resource{},
 			config:   map[string]string{"threshold": "100"},
 			want:     true,
 			wantErr:  false,
@@ -261,16 +263,16 @@ func TestEvaluator_ComplexQueries(t *testing.T) {
 		{
 			name:     "Asset type check",
 			policy:   "asset.type == 'github-org'",
-			resource: Resource{},
-			asset:    Asset{Type: "github-org"},
+			resource: core.Resource{},
+			asset:    core.Asset{Type: "github-org"},
 			want:     true,
 			wantErr:  false,
 		},
 		{
 			name:     "Combined resource and asset check",
 			policy:   "resource.private == false || asset.type == 'internal'",
-			resource: Resource{"private": true},
-			asset:    Asset{Type: "internal"},
+			resource: core.Resource{"private": true},
+			asset:    core.Asset{Type: "internal"},
 			want:     true,
 			wantErr:  false,
 		},
@@ -320,7 +322,7 @@ func TestEvaluator_InvalidExpressions(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := evaluator.Evaluate(tt.expression, Resource{}, nil, nil, Asset{})
+			_, err := evaluator.Evaluate(tt.expression, core.Resource{}, nil, nil, core.Asset{})
 			if err == nil {
 				t.Errorf("Evaluate(%q) expected error, got nil", tt.expression)
 			}
@@ -337,21 +339,21 @@ func TestEvaluator_ReverseIP(t *testing.T) {
 	tests := []struct {
 		name     string
 		policy   string
-		resource Resource
+		resource core.Resource
 		want     bool
 		wantErr  bool
 	}{
 		{
 			name:     "Reverse valid IPv4",
 			policy:   "reverseIP('192.168.1.1') == '1.1.168.192.in-addr.arpa'",
-			resource: Resource{},
+			resource: core.Resource{},
 			want:     true,
 			wantErr:  false,
 		},
 		{
 			name:     "Reverse another IPv4",
 			policy:   "reverseIP('10.0.0.1') == '1.0.0.10.in-addr.arpa'",
-			resource: Resource{},
+			resource: core.Resource{},
 			want:     true,
 			wantErr:  false,
 		},
@@ -359,7 +361,7 @@ func TestEvaluator_ReverseIP(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			pass, err := evaluator.Evaluate(tt.policy, tt.resource, nil, nil, Asset{})
+			pass, err := evaluator.Evaluate(tt.policy, tt.resource, nil, nil, core.Asset{})
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Evaluate() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -383,19 +385,19 @@ func TestEvaluator_CacheStats(t *testing.T) {
 	}
 
 	// Evaluate an expression
-	_, _ = evaluator.Evaluate("true", Resource{}, nil, nil, Asset{})
+	_, _ = evaluator.Evaluate("true", core.Resource{}, nil, nil, core.Asset{})
 	if stats := evaluator.CacheStats(); stats != 1 {
 		t.Errorf("Cache size after 1 eval = %d, want 1", stats)
 	}
 
 	// Same expression should hit cache
-	_, _ = evaluator.Evaluate("true", Resource{}, nil, nil, Asset{})
+	_, _ = evaluator.Evaluate("true", core.Resource{}, nil, nil, core.Asset{})
 	if stats := evaluator.CacheStats(); stats != 1 {
 		t.Errorf("Cache size after cache hit = %d, want 1", stats)
 	}
 
 	// Different expression should add to cache
-	_, _ = evaluator.Evaluate("false", Resource{}, nil, nil, Asset{})
+	_, _ = evaluator.Evaluate("false", core.Resource{}, nil, nil, core.Asset{})
 	if stats := evaluator.CacheStats(); stats != 2 {
 		t.Errorf("Cache size after 2 unique evals = %d, want 2", stats)
 	}
@@ -421,9 +423,9 @@ func TestEvaluator_ConcurrentAccess(t *testing.T) {
 		go func(idx int) {
 			defer wg.Done()
 			expr := expressions[idx%len(expressions)]
-			_, _ = evaluator.Evaluate(expr, Resource{
+			_, _ = evaluator.Evaluate(expr, core.Resource{
 				"a": true, "b": true, "c": true, "d": true,
-			}, nil, nil, Asset{})
+			}, nil, nil, core.Asset{})
 		}(i)
 	}
 
@@ -449,7 +451,7 @@ func TestNewEvaluator(t *testing.T) {
 	}
 
 	// Test creating evaluator with empty registry
-	eval, err = NewEvaluator(map[string]ResourceSpec{})
+	eval, err = NewEvaluator(map[string]core.ResourceSpec{})
 	if err != nil {
 		t.Fatalf("NewEvaluator(empty) error = %v", err)
 	}
@@ -500,7 +502,7 @@ func FuzzEvaluate(f *testing.F) {
 	f.Fuzz(func(t *testing.T, expression string) {
 		// The evaluator should never panic, regardless of input
 		// Errors are expected for invalid expressions
-		resource := Resource{
+		resource := core.Resource{
 			"name":    "test",
 			"count":   10,
 			"enabled": true,
@@ -514,7 +516,7 @@ func FuzzEvaluate(f *testing.F) {
 		}
 
 		// This should not panic
-		_, _ = evaluator.Evaluate(expression, resource, nil, nil, Asset{})
+		_, _ = evaluator.Evaluate(expression, resource, nil, nil, core.Asset{})
 	})
 }
 
@@ -556,7 +558,7 @@ func FuzzReverseIP(f *testing.F) {
 		expr := "reverseIP('" + escapeString(ip) + "') == 'test'"
 
 		// This should not panic
-		_, _ = evaluator.Evaluate(expr, Resource{}, nil, nil, Asset{})
+		_, _ = evaluator.Evaluate(expr, core.Resource{}, nil, nil, core.Asset{})
 	})
 }
 
@@ -592,31 +594,31 @@ func TestEvaluator_EdgeCases(t *testing.T) {
 	tests := []struct {
 		name       string
 		expression string
-		resource   Resource
+		resource   core.Resource
 		wantErr    bool
 	}{
 		{
 			name:       "Empty expression",
 			expression: "",
-			resource:   Resource{},
+			resource:   core.Resource{},
 			wantErr:    true,
 		},
 		{
 			name:       "Whitespace only",
 			expression: "   ",
-			resource:   Resource{},
+			resource:   core.Resource{},
 			wantErr:    true,
 		},
 		{
 			name:       "Very long expression",
 			expression: "resource.name == '" + string(make([]byte, 10000)) + "'",
-			resource:   Resource{"name": "test"},
+			resource:   core.Resource{"name": "test"},
 			wantErr:    false,
 		},
 		{
 			name:       "Deeply nested access",
 			expression: "resource.a.b.c.d.e.f.g == true",
-			resource: Resource{
+			resource: core.Resource{
 				"a": map[string]interface{}{
 					"b": map[string]interface{}{
 						"c": map[string]interface{}{
@@ -636,44 +638,44 @@ func TestEvaluator_EdgeCases(t *testing.T) {
 		{
 			name:       "Null value comparison",
 			expression: "resource.value == null",
-			resource:   Resource{"value": nil},
+			resource:   core.Resource{"value": nil},
 			wantErr:    false,
 		},
 		{
 			name:       "Empty string comparison",
 			expression: "resource.name == ''",
-			resource:   Resource{"name": ""},
+			resource:   core.Resource{"name": ""},
 			wantErr:    false,
 		},
 		{
 			name:       "Unicode in expression",
 			expression: "resource.name == '日本語'",
-			resource:   Resource{"name": "日本語"},
+			resource:   core.Resource{"name": "日本語"},
 			wantErr:    false,
 		},
 		{
 			name:       "Special characters in string",
 			expression: "resource.name == 'test\\nwith\\nnewlines'",
-			resource:   Resource{"name": "test\nwith\nnewlines"},
+			resource:   core.Resource{"name": "test\nwith\nnewlines"},
 			wantErr:    false,
 		},
 		{
 			name:       "Number as string field",
 			expression: "resource.id == '123'",
-			resource:   Resource{"id": "123"},
+			resource:   core.Resource{"id": "123"},
 			wantErr:    false,
 		},
 		{
 			name:       "Boolean string comparison",
 			expression: "resource.flag == 'true'",
-			resource:   Resource{"flag": "true"},
+			resource:   core.Resource{"flag": "true"},
 			wantErr:    false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := evaluator.Evaluate(tt.expression, tt.resource, nil, nil, Asset{})
+			_, err := evaluator.Evaluate(tt.expression, tt.resource, nil, nil, core.Asset{})
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Evaluate(%q) error = %v, wantErr %v", tt.expression, err, tt.wantErr)
 			}
@@ -744,7 +746,7 @@ func TestEvaluator_ReverseIPEdgeCases(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Wrap in a comparison to get boolean result
 			expr := tt.policy + " == 'test'"
-			_, err := evaluator.Evaluate(expr, Resource{}, nil, nil, Asset{})
+			_, err := evaluator.Evaluate(expr, core.Resource{}, nil, nil, core.Asset{})
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Evaluate(%q) error = %v, wantErr %v", tt.policy, err, tt.wantErr)
 			}
@@ -761,13 +763,13 @@ func TestEvaluator_NestedMapAccess(t *testing.T) {
 	tests := []struct {
 		name     string
 		policy   string
-		resource Resource
+		resource core.Resource
 		want     bool
 	}{
 		{
 			name:   "Nested map access",
 			policy: "resource.settings.security.enabled == true",
-			resource: Resource{
+			resource: core.Resource{
 				"settings": map[string]interface{}{
 					"security": map[string]interface{}{
 						"enabled": true,
@@ -779,7 +781,7 @@ func TestEvaluator_NestedMapAccess(t *testing.T) {
 		{
 			name:   "Has on nested map",
 			policy: "has(resource.config.api_key)",
-			resource: Resource{
+			resource: core.Resource{
 				"config": map[string]interface{}{
 					"api_key": "secret",
 				},
@@ -789,7 +791,7 @@ func TestEvaluator_NestedMapAccess(t *testing.T) {
 		{
 			name:   "Has on nested map - missing",
 			policy: "has(resource.config.api_key)",
-			resource: Resource{
+			resource: core.Resource{
 				"config": map[string]interface{}{
 					"api_url": "https://example.com",
 				},
@@ -800,7 +802,7 @@ func TestEvaluator_NestedMapAccess(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			pass, err := evaluator.Evaluate(tt.policy, tt.resource, nil, nil, Asset{})
+			pass, err := evaluator.Evaluate(tt.policy, tt.resource, nil, nil, core.Asset{})
 			if err != nil {
 				t.Errorf("Evaluate() error = %v", err)
 				return

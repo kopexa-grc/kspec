@@ -6,15 +6,23 @@ package atlassian
 import (
 	"github.com/kopexa-grc/kspec/core"
 	"github.com/kopexa-grc/kspec/pkg/ratelimit"
-	"github.com/kopexa-grc/kspec/provider/registry"
+	"github.com/kopexa-grc/kspec/provider"
 )
 
+// rateLimitConfig defines the rate limiting for Atlassian API.
+// Atlassian API: Rate limits vary by product but are generally generous.
+// We use 10/s with burst of 20 for safe operation across all APIs.
+var rateLimitConfig = &ratelimit.Config{
+	RequestsPerSecond: 10,
+	Burst:             20,
+}
+
 func init() {
-	registry.Register(&registry.ProviderDefinition{
+	provider.Register(&provider.ProviderDefinition{
 		Name:        "atlassian",
 		Aliases:     []string{"jira", "confluence"},
 		Description: "Scan Atlassian sites and organizations for security compliance (Jira, Confluence, Admin settings)",
-		Flags: []registry.FlagDefinition{
+		Flags: []provider.FlagDefinition{
 			{
 				Name:        "site",
 				Description: "Atlassian site (e.g., yoursite.atlassian.net)",
@@ -36,11 +44,11 @@ func init() {
 				EnvVar:      "ATLASSIAN_ORG_ID",
 			},
 		},
-		AssetTypes: []registry.AssetDefinition{
+		AssetTypes: []provider.AssetDefinition{
 			{
 				Name:        "site",
 				Description: "Scan an Atlassian site",
-				Args: []registry.ArgDefinition{
+				Args: []provider.ArgDefinition{
 					{
 						Name:        "site-name",
 						Description: "Site name (e.g., yoursite.atlassian.net)",
@@ -53,7 +61,7 @@ func init() {
 			{
 				Name:        "org",
 				Description: "Scan an Atlassian organization",
-				Args: []registry.ArgDefinition{
+				Args: []provider.ArgDefinition{
 					{
 						Name:        "org-id",
 						Description: "Organization ID",
@@ -71,11 +79,6 @@ func init() {
 		Factory: func() core.Provider {
 			return NewProvider()
 		},
-		// Atlassian API: Rate limits vary by product but are generally generous
-		// We use 10/s with burst of 20 for safe operation across all APIs
-		RateLimitConfig: &ratelimit.Config{
-			RequestsPerSecond: 10,
-			Burst:             20,
-		},
+		RateLimitConfig: rateLimitConfig,
 	})
 }

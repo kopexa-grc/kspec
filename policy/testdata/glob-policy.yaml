@@ -1,0 +1,19 @@
+# Policy that imports multiple files via glob pattern
+apiVersion: kspec/v1
+kind: Policy
+metadata:
+  name: glob-import-policy
+  version: "1.0.0"
+
+imports:
+  - checks/*.yaml
+
+require:
+  - provider: test
+
+groups:
+  - title: All Checks
+    checks:
+      - uid: storage-encryption
+      - uid: network-firewall
+      - uid: network-encryption

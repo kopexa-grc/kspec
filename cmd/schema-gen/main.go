@@ -13,7 +13,7 @@ import (
 
 	"github.com/invopop/jsonschema"
 
-	"github.com/kopexa-grc/kspec/core"
+	"github.com/kopexa-grc/kspec/policy"
 )
 
 func main() {
@@ -33,7 +33,7 @@ func run() error {
 	}
 
 	// Generate schema from Policy struct
-	schema := r.Reflect(&core.Policy{})
+	schema := r.Reflect(&policy.Policy{})
 
 	// Set schema metadata
 	schema.ID = "https://kopexa.io/schemas/policy.schema.json"

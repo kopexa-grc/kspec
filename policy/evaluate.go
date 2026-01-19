@@ -1,91 +1,17 @@
 // Copyright (c) Kopexa GmbH
 // SPDX-License-Identifier: Elastic-2.0
 
-// Package scanner provides policy evaluation capabilities for security scanning.
-package scanner
+package policy
 
 import (
 	"fmt"
-	"log"
-	"os"
-	"path/filepath"
 	"strings"
 
-	"gopkg.in/yaml.v3"
-
 	"github.com/kopexa-grc/kspec/core"
+	"github.com/kopexa-grc/kspec/policy/cel"
 )
 
-// Check status constants.
-const (
-	StatusPassed  = "passed"
-	StatusFailed  = "failed"
-	StatusSkipped = "skipped"
-)
-
-// LoadPolicies loads policies from a file or directory
-func LoadPolicies(policyFile, policyDir string) ([]core.Policy, error) {
-	var policies []core.Policy
-
-	loadPolicy := func(path string) error {
-		data, err := os.ReadFile(path)
-		if err != nil {
-			return err
-		}
-		var p core.Policy
-		if err := yaml.Unmarshal(data, &p); err != nil {
-			return err
-		}
-		policies = append(policies, p)
-		return nil
-	}
-
-	if policyDir != "" {
-		files, err := os.ReadDir(policyDir)
-		if err != nil {
-			return nil, fmt.Errorf("failed to read policy directory: %w", err)
-		}
-		for _, file := range files {
-			if strings.HasSuffix(file.Name(), ".yaml") || strings.HasSuffix(file.Name(), ".yml") {
-				path := filepath.Join(policyDir, file.Name())
-				if err := loadPolicy(path); err != nil {
-					log.Printf("Warning: failed to load policy %s: %v", file.Name(), err)
-				}
-			}
-		}
-	} else if policyFile != "" {
-		if err := loadPolicy(policyFile); err != nil {
-			return nil, fmt.Errorf("failed to read policy file: %w", err)
-		}
-	}
-
-	return policies, nil
-}
-
-// FilterPoliciesByProvider filters policies to only include those matching the provider
-func FilterPoliciesByProvider(policies []core.Policy, providerName, providerAlias string) []core.Policy {
-	var filtered []core.Policy
-
-	for _, policy := range policies {
-		if len(policy.Require) == 0 {
-			// No requirements - policy applies to all providers
-			filtered = append(filtered, policy)
-			continue
-		}
-
-		// Check if any requirement matches the current provider
-		for _, req := range policy.Require {
-			if req.Provider == providerName || req.Provider == providerAlias {
-				filtered = append(filtered, policy)
-				break
-			}
-		}
-	}
-
-	return filtered
-}
-
-// evaluateGroupFilter performs a simple evaluation of group filters
+// evaluateGroupFilter performs a simple evaluation of group filters.
 // This handles common patterns like: asset.type == "github-org"
 func evaluateGroupFilter(filter string, asset core.Asset) bool {
 	filter = strings.TrimSpace(filter)
@@ -108,26 +34,26 @@ func evaluateGroupFilter(filter string, asset core.Asset) bool {
 	return true
 }
 
-// EvaluatePolicies runs policy checks for a given resource
-func EvaluatePolicies(
+// Evaluate runs policy checks for a given resource.
+func Evaluate(
 	resource core.Resource,
 	resourceType string,
-	policies []core.Policy,
+	policies []Policy,
 	registry map[string]core.ResourceSpec,
 	asset core.Asset,
-) []CheckResult {
-	var results []CheckResult
+) []Result {
+	var results []Result
 
 	// Create evaluator
-	evaluator, err := core.NewEvaluator(registry)
+	evaluator, err := cel.NewEvaluator(registry)
 	if err != nil {
 		return results
 	}
 
 	// Build definitions index from all policies
-	definitions := make(map[string]core.Check)
-	for _, policy := range policies {
-		for _, q := range policy.Queries {
+	definitions := make(map[string]Check)
+	for _, pol := range policies {
+		for _, q := range pol.Queries {
 			if q.UID != "" {
 				definitions[q.UID] = q
 			}
@@ -138,8 +64,8 @@ func EvaluatePolicies(
 	}
 
 	// Process each policy
-	for _, policy := range policies {
-		for _, group := range policy.Groups {
+	for _, pol := range policies {
+		for _, group := range pol.Groups {
 			// Evaluate group filter
 			if group.Filter != "" {
 				if !evaluateGroupFilter(group.Filter, asset) {
@@ -153,7 +79,7 @@ func EvaluatePolicies(
 
 				// Resolve check definition if needed
 				if check.Query == "" {
-					var def core.Check
+					var def Check
 					var found bool
 
 					if check.UID != "" {
@@ -223,7 +149,8 @@ func EvaluatePolicies(
 					asset,
 				)
 
-				var status, details string
+				var status Status
+				var details string
 
 				switch {
 				case err != nil:
@@ -256,7 +183,7 @@ func EvaluatePolicies(
 					checkID = check.ID
 				}
 
-				results = append(results, CheckResult{
+				results = append(results, Result{
 					ID:          checkID,
 					Group:       group.Title,
 					Name:        check.Title,

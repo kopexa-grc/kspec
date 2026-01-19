@@ -1,0 +1,26 @@
+# Level 1 - imports level 2, which imports level 3
+apiVersion: kspec/v1
+kind: Policy
+metadata:
+  name: level1-policy
+  version: "1.0.0"
+
+imports:
+  - level2.yaml
+
+require:
+  - provider: test
+
+groups:
+  - title: Nested Import Checks
+    checks:
+      - uid: level3-check
+      - uid: level2-check
+      - uid: level1-check
+
+queries:
+  - uid: level1-check
+    title: Level 1 Check
+    resource: test_resource
+    severity: medium
+    query: resource.level1 == true

@@ -6,15 +6,23 @@ package factorial
 import (
 	"github.com/kopexa-grc/kspec/core"
 	"github.com/kopexa-grc/kspec/pkg/ratelimit"
-	"github.com/kopexa-grc/kspec/provider/registry"
+	"github.com/kopexa-grc/kspec/provider"
 )
 
+// rateLimitConfig defines the rate limiting for Factorial HR API.
+// Factorial HR API: Conservative rate limiting for HR API.
+// We use 5/s with burst of 10 to be respectful of the API.
+var rateLimitConfig = &ratelimit.Config{
+	RequestsPerSecond: 5,
+	Burst:             10,
+}
+
 func init() {
-	registry.Register(&registry.ProviderDefinition{
+	provider.Register(&provider.ProviderDefinition{
 		Name:        "factorial",
 		Aliases:     []string{"factorial-hr", "hris"},
 		Description: "Scan Factorial HR for compliance (Employee data, Policies, Documents)",
-		Flags: []registry.FlagDefinition{
+		Flags: []provider.FlagDefinition{
 			{
 				Name:        "factorial-api-key",
 				Description: "Factorial HR API Key",
@@ -26,7 +34,7 @@ func init() {
 				EnvVar:      "FACTORIAL_ACCESS_TOKEN",
 			},
 		},
-		AssetTypes: []registry.AssetDefinition{
+		AssetTypes: []provider.AssetDefinition{
 			{
 				Name:        "company",
 				Description: "Scan Factorial HR company data",
@@ -42,11 +50,6 @@ func init() {
 		Factory: func() core.Provider {
 			return NewProvider()
 		},
-		// Factorial HR API: Conservative rate limiting for HR API
-		// We use 5/s with burst of 10 to be respectful of the API
-		RateLimitConfig: &ratelimit.Config{
-			RequestsPerSecond: 5,
-			Burst:             10,
-		},
+		RateLimitConfig: rateLimitConfig,
 	})
 }

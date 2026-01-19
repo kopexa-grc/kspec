@@ -6,15 +6,23 @@ package github
 import (
 	"github.com/kopexa-grc/kspec/core"
 	"github.com/kopexa-grc/kspec/pkg/ratelimit"
-	"github.com/kopexa-grc/kspec/provider/registry"
+	"github.com/kopexa-grc/kspec/provider"
 )
 
+// rateLimitConfig defines the rate limiting for GitHub API.
+// GitHub API: 5000 requests/hour for authenticated users = ~1.4/s
+// We use 5/s with burst of 10 for safety margin.
+var rateLimitConfig = &ratelimit.Config{
+	RequestsPerSecond: 5,
+	Burst:             10,
+}
+
 func init() {
-	registry.Register(&registry.ProviderDefinition{
+	provider.Register(&provider.ProviderDefinition{
 		Name:        "github",
 		Aliases:     []string{"gh"},
 		Description: "Scan GitHub organizations and repositories for security compliance",
-		Flags: []registry.FlagDefinition{
+		Flags: []provider.FlagDefinition{
 			{
 				Name:        "token",
 				Description: "GitHub personal access token",
@@ -31,11 +39,11 @@ func init() {
 				Default:     "GITHUB_TOKEN",
 			},
 		},
-		AssetTypes: []registry.AssetDefinition{
+		AssetTypes: []provider.AssetDefinition{
 			{
 				Name:        "org",
 				Description: "Scan a GitHub organization",
-				Args: []registry.ArgDefinition{
+				Args: []provider.ArgDefinition{
 					{
 						Name:        "owner",
 						Description: "Organization name",
@@ -48,7 +56,7 @@ func init() {
 			{
 				Name:        "repo",
 				Description: "Scan a GitHub repository",
-				Args: []registry.ArgDefinition{
+				Args: []provider.ArgDefinition{
 					{
 						Name:        "repository",
 						Description: "Repository in format owner/repo",
@@ -66,11 +74,6 @@ func init() {
 		Factory: func() core.Provider {
 			return NewProvider()
 		},
-		// GitHub API: 5000 requests/hour for authenticated users = ~1.4/s
-		// We use 5/s with burst of 10 for safety margin
-		RateLimitConfig: &ratelimit.Config{
-			RequestsPerSecond: 5,
-			Burst:             10,
-		},
+		RateLimitConfig: rateLimitConfig,
 	})
 }

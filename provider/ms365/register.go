@@ -6,15 +6,25 @@ package ms365
 import (
 	"github.com/kopexa-grc/kspec/core"
 	"github.com/kopexa-grc/kspec/pkg/ratelimit"
-	"github.com/kopexa-grc/kspec/provider/registry"
+	"github.com/kopexa-grc/kspec/provider"
 )
 
+// rateLimitConfig defines the rate limiting for Microsoft Graph API.
+// Microsoft Graph API: throttling limits vary by endpoint.
+// Most endpoints: 10,000 requests per 10 minutes.
+// We use 10/s with burst of 20 for safety margin.
+// Graph SDK has built-in throttling handling, but rate limiting adds safety.
+var rateLimitConfig = &ratelimit.Config{
+	RequestsPerSecond: 10,
+	Burst:             20,
+}
+
 func init() {
-	registry.Register(&registry.ProviderDefinition{
+	provider.Register(&provider.ProviderDefinition{
 		Name:        "ms365",
 		Aliases:     []string{"m365", "microsoft365", "office365"},
 		Description: "Scan Microsoft 365 tenants for security compliance (Exchange, SharePoint, Teams, Azure AD)",
-		Flags: []registry.FlagDefinition{
+		Flags: []provider.FlagDefinition{
 			{
 				Name:        "client-id",
 				Description: "Microsoft 365 Client ID (Application)",
@@ -31,11 +41,11 @@ func init() {
 				EnvVar:      "MS365_CLIENT_SECRET",
 			},
 		},
-		AssetTypes: []registry.AssetDefinition{
+		AssetTypes: []provider.AssetDefinition{
 			{
 				Name:        "tenant",
 				Description: "Scan a Microsoft 365 tenant",
-				Args: []registry.ArgDefinition{
+				Args: []provider.ArgDefinition{
 					{
 						Name:        "tenant-id",
 						Description: "Tenant ID",
@@ -55,13 +65,6 @@ func init() {
 		Factory: func() core.Provider {
 			return NewProvider()
 		},
-		// Microsoft Graph API: throttling limits vary by endpoint
-		// Most endpoints: 10,000 requests per 10 minutes
-		// We use 10/s with burst of 20 for safety margin
-		// Graph SDK has built-in throttling handling, but rate limiting adds safety
-		RateLimitConfig: &ratelimit.Config{
-			RequestsPerSecond: 10,
-			Burst:             20,
-		},
+		RateLimitConfig: rateLimitConfig,
 	})
 }

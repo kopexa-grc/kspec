@@ -18,8 +18,9 @@ import (
 	"github.com/kopexa-grc/kspec/cli/components/common"
 	"github.com/kopexa-grc/kspec/core"
 	"github.com/kopexa-grc/kspec/pkg/concurrency"
+	"github.com/kopexa-grc/kspec/policy"
+	"github.com/kopexa-grc/kspec/provider"
 	_ "github.com/kopexa-grc/kspec/provider/all" // Import all providers to register them
-	"github.com/kopexa-grc/kspec/provider/registry"
 	"github.com/kopexa-grc/kspec/provider/scanner"
 	"github.com/kopexa-grc/kspec/report"
 )
@@ -37,14 +38,14 @@ func init() {
 	rootCmd.AddCommand(scanCmd)
 
 	// Dynamically create subcommands for each registered provider
-	for _, def := range registry.All() {
+	for _, def := range provider.All() {
 		providerCmd := createProviderCommand(def)
 		scanCmd.AddCommand(providerCmd)
 	}
 }
 
 // createProviderCommand creates a cobra command for a specific provider.
-func createProviderCommand(def *registry.ProviderDefinition) *cobra.Command {
+func createProviderCommand(def *provider.ProviderDefinition) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     def.Name,
 		Short:   def.Description,
@@ -73,14 +74,14 @@ func createProviderCommand(def *registry.ProviderDefinition) *cobra.Command {
 
 		// Register flags for direct execution
 		registerCommonFlags(cmd)
-		registry.RegisterFlags(cmd, def)
+		provider.RegisterFlags(cmd, def)
 	}
 
 	return cmd
 }
 
 // createAssetCommand creates a cobra command for a specific asset type.
-func createAssetCommand(def *registry.ProviderDefinition, at *registry.AssetDefinition) *cobra.Command {
+func createAssetCommand(def *provider.ProviderDefinition, at *provider.AssetDefinition) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     buildAssetUsage(at.Name, at),
 		Short:   at.Description,
@@ -97,13 +98,13 @@ func createAssetCommand(def *registry.ProviderDefinition, at *registry.AssetDefi
 
 	// Register flags
 	registerCommonFlags(cmd)
-	registry.RegisterFlags(cmd, def)
+	provider.RegisterFlags(cmd, def)
 
 	return cmd
 }
 
 // buildAssetUsage builds the usage string for an asset type.
-func buildAssetUsage(name string, at *registry.AssetDefinition) string {
+func buildAssetUsage(name string, at *provider.AssetDefinition) string {
 	usage := name
 	for _, arg := range at.Args {
 		if arg.Required {
@@ -116,12 +117,12 @@ func buildAssetUsage(name string, at *registry.AssetDefinition) string {
 }
 
 // buildAssetExample builds example usage for an asset type.
-func buildAssetExample(providerName string, at *registry.AssetDefinition, flags []registry.FlagDefinition) string {
+func buildAssetExample(providerName string, at *provider.AssetDefinition, flags []provider.FlagDefinition) string {
 	return buildAssetExampleWithSubcmd(providerName, at.Name, at, flags)
 }
 
 // buildAssetExampleWithSubcmd builds example usage, optionally including asset type as subcommand.
-func buildAssetExampleWithSubcmd(providerName, assetCmd string, at *registry.AssetDefinition, flags []registry.FlagDefinition) string {
+func buildAssetExampleWithSubcmd(providerName, assetCmd string, at *provider.AssetDefinition, flags []provider.FlagDefinition) string {
 	var examples []string
 
 	// Basic example
@@ -152,7 +153,7 @@ func buildAssetExampleWithSubcmd(providerName, assetCmd string, at *registry.Ass
 }
 
 // buildMultiAssetLongDescription builds a detailed description for providers with multiple asset types.
-func buildMultiAssetLongDescription(def *registry.ProviderDefinition) string {
+func buildMultiAssetLongDescription(def *provider.ProviderDefinition) string {
 	var sb strings.Builder
 	sb.WriteString(def.Description)
 	sb.WriteString("\n\nAvailable asset types:\n")
@@ -171,7 +172,7 @@ func buildMultiAssetLongDescription(def *registry.ProviderDefinition) string {
 }
 
 // buildArgsValidator builds an argument validator for an asset type.
-func buildArgsValidator(at *registry.AssetDefinition) cobra.PositionalArgs {
+func buildArgsValidator(at *provider.AssetDefinition) cobra.PositionalArgs {
 	// Count required args
 	requiredCount := 0
 	for _, arg := range at.Args {
@@ -212,7 +213,7 @@ func registerCommonFlags(cmd *cobra.Command) {
 }
 
 // runAssetScan executes the scan for a specific provider and asset type.
-func runAssetScan(cmd *cobra.Command, def *registry.ProviderDefinition, at *registry.AssetDefinition, args []string) error {
+func runAssetScan(cmd *cobra.Command, def *provider.ProviderDefinition, at *provider.AssetDefinition, args []string) error {
 	ctx := context.Background()
 
 	// Build asset config from positional args
@@ -238,7 +239,7 @@ func runAssetScan(cmd *cobra.Command, def *registry.ProviderDefinition, at *regi
 	fullAssetType := def.GetScannerKey(at.Name)
 
 	// Build provider config from flags
-	providerConfig := registry.BuildConfig(cmd, def)
+	providerConfig := provider.BuildConfig(cmd, def)
 
 	// Merge asset config into provider config.
 	// Asset-level configuration takes precedence over provider-level
@@ -424,14 +425,14 @@ func runScanNoUI(ctx context.Context, cmd *cobra.Command, s *scanner.Scanner, pr
 func logResourceResults(logger *zerolog.Logger, node *common.ResourceNode) {
 	for _, check := range node.Checks {
 		switch check.Status {
-		case "pass", "passed":
+		case policy.StatusPassed:
 			logger.Info().Str("id", check.ID).Str("status", "PASS").Msg(check.Name)
-		case "fail", "failed":
+		case policy.StatusFailed:
 			logger.Warn().Str("id", check.ID).Str("status", "FAIL").Str("severity", check.Severity).Str("details", check.Details).Msg(check.Name)
-		case "skip", "skipped":
+		case policy.StatusSkipped:
 			logger.Info().Str("id", check.ID).Str("status", "SKIP").Msg(check.Name)
 		default:
-			logger.Info().Str("id", check.ID).Str("status", strings.ToUpper(check.Status)).Msg(check.Name)
+			logger.Info().Str("id", check.ID).Str("status", strings.ToUpper(check.Status.String())).Msg(check.Name)
 		}
 	}
 	for _, child := range node.Children {
@@ -472,7 +473,7 @@ func countChecksRecursive(node *common.ResourceNode) (passed, failed, skipped in
 	return passed, failed, skipped
 }
 
-func loadAndFilterPolicies(cmd *cobra.Command, providerName string) ([]core.Policy, error) {
+func loadAndFilterPolicies(cmd *cobra.Command, providerName string) ([]policy.Policy, error) {
 	policyFile, _ := cmd.Flags().GetString("policy")    //nolint:errcheck // Flag is defined
 	policyDir, _ := cmd.Flags().GetString("policy-dir") //nolint:errcheck // Flag is defined
 
@@ -485,12 +486,12 @@ func loadAndFilterPolicies(cmd *cobra.Command, providerName string) ([]core.Poli
 		}
 	}
 
-	policies, err := scanner.LoadPolicies(policyFile, policyDir)
+	policies, err := policy.Load(policyFile, policyDir)
 	if err != nil {
 		return nil, err
 	}
 
-	policies = scanner.FilterPoliciesByProvider(policies, providerName, providerName)
+	policies = policy.FilterByProvider(policies, providerName, providerName)
 
 	if len(policies) == 0 {
 		return nil, fmt.Errorf("no policies found for provider %s", providerName)
@@ -499,8 +500,8 @@ func loadAndFilterPolicies(cmd *cobra.Command, providerName string) ([]core.Poli
 	return policies, nil
 }
 
-func exportResults(cmd *cobra.Command, tree *common.ResourceTree, provider, exportPath string) error {
-	rep := report.FromResourceTree(tree, provider)
+func exportResults(cmd *cobra.Command, tree *common.ResourceTree, providerName, exportPath string) error {
+	rep := report.FromResourceTree(tree, providerName)
 
 	format, _ := cmd.Flags().GetString("export-format") //nolint:errcheck // Flag is defined
 	if format == "" {
