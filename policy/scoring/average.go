@@ -49,11 +49,12 @@ func (c *AverageCalculator) Calculate(f Findings) Score {
 	totalWeight := float64(f.Passed)
 
 	// Failed checks weighted by severity
+	// Info findings are excluded (weight 0) as they are purely informational
 	totalWeight += float64(f.Critical) * SeverityCritical.Weight()
 	totalWeight += float64(f.High) * SeverityHigh.Weight()
 	totalWeight += float64(f.Medium) * SeverityMedium.Weight()
 	totalWeight += float64(f.Low) * SeverityLow.Weight()
-	totalWeight += float64(f.Info) * SeverityInfo.Weight()
+	// Note: Info findings have weight 0, so they don't affect the calculation
 
 	if totalWeight == 0 {
 		score.Value = 100

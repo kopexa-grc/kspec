@@ -72,11 +72,14 @@ func (c *DecayedCalculator) Calculate(f Findings) Score {
 	value := 100.0
 
 	// Apply decay in order of severity (most severe first)
+	// Note: Info findings have 0% decay by default and are skipped
 	value *= math.Pow(1-c.CriticalDecay, float64(f.Critical))
 	value *= math.Pow(1-c.HighDecay, float64(f.High))
 	value *= math.Pow(1-c.MediumDecay, float64(f.Medium))
 	value *= math.Pow(1-c.LowDecay, float64(f.Low))
-	value *= math.Pow(1-c.InfoDecay, float64(f.Info)) // Info: 0% decay by default
+	if c.InfoDecay > 0 {
+		value *= math.Pow(1-c.InfoDecay, float64(f.Info))
+	}
 
 	score.Value = uint32(math.Round(value))
 	score.Explanation = fmt.Sprintf("Decayed from %d findings", f.Failed)
