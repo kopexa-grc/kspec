@@ -42,7 +42,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/eks v1.77.0
 	github.com/aws/aws-sdk-go-v2/service/elasticache v1.51.9
 	github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2 v1.54.6
-	github.com/aws/aws-sdk-go-v2/service/guardduty v1.72.1
+	github.com/aws/aws-sdk-go-v2/service/guardduty v1.73.0
 	github.com/aws/aws-sdk-go-v2/service/iam v1.53.2
 	github.com/aws/aws-sdk-go-v2/service/kms v1.49.5
 	github.com/aws/aws-sdk-go-v2/service/lambda v1.87.1
