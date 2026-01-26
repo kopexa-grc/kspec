@@ -63,7 +63,7 @@ require (
 	github.com/ctreminiom/go-atlassian v1.6.1
 	github.com/google/cel-go v0.26.1
 	github.com/google/go-github/v62 v62.0.0
-	github.com/hetznercloud/hcloud-go/v2 v2.35.0
+	github.com/hetznercloud/hcloud-go/v2 v2.36.0
 	github.com/invopop/jsonschema v0.13.0
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/microsoftgraph/msgraph-sdk-go v1.94.0
