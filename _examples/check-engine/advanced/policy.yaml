@@ -1,0 +1,58 @@
+apiVersion: kspec/v1
+kind: Policy
+metadata:
+  name: advanced-scan-example
+  version: "1.0.0"
+
+scoring_system: banded
+
+require:
+  - provider: network
+
+groups:
+  - title: TLS Security
+    checks:
+      - uid: tls-modern-version
+      - uid: tls-no-legacy
+      - uid: tls-cert-trusted
+      - uid: tls-cert-not-expiring
+
+  - title: HTTP Security Headers
+    checks:
+      - uid: http-hsts
+
+queries:
+  - uid: tls-modern-version
+    title: TLS 1.2 or higher is supported
+    resource: tls
+    severity: high
+    query: resource.versions.exists(v, v == "tls1.2") || resource.versions.exists(v, v == "tls1.3")
+    remediation: Enable TLS 1.2 or 1.3 on your server.
+
+  - uid: tls-no-legacy
+    title: Legacy TLS versions (1.0, 1.1) are disabled
+    resource: tls
+    severity: medium
+    query: "!resource.versions.exists(v, v == \"tls1.0\") && !resource.versions.exists(v, v == \"tls1.1\")"
+    remediation: Disable TLS 1.0 and TLS 1.1 in your server configuration.
+
+  - uid: tls-cert-trusted
+    title: Certificate chain is trusted
+    resource: tls
+    severity: critical
+    query: resource.certificates.size() > 0 && resource.certificates[0].isVerified == true
+
+  - uid: tls-cert-not-expiring
+    title: Certificate expires in more than 30 days
+    resource: tls
+    severity: medium
+    query: resource.certificates.size() > 0 && resource.certificates[0].expiresIn.days > 30
+
+  - uid: http-hsts
+    title: HTTP Strict-Transport-Security header is present
+    resource: http
+    severity: medium
+    query: has(resource.headers) && "Strict-Transport-Security" in resource.headers
+    remediation: |
+      Add the `Strict-Transport-Security` response header to enforce HTTPS.
+      Example: `Strict-Transport-Security: max-age=31536000; includeSubDomains`

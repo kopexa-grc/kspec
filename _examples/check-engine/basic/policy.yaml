@@ -1,0 +1,34 @@
+apiVersion: kspec/v1
+kind: Policy
+metadata:
+  name: basic-scan-example
+  version: "1.0.0"
+
+require:
+  - provider: network
+
+groups:
+  - title: TLS Security
+    checks:
+      - uid: tls-modern-version
+      - uid: tls-cert-not-expiring
+      - uid: tls-cert-trusted
+
+queries:
+  - uid: tls-modern-version
+    title: TLS 1.2 or higher is supported
+    resource: tls
+    severity: high
+    query: resource.versions.exists(v, v == "tls1.2") || resource.versions.exists(v, v == "tls1.3")
+
+  - uid: tls-cert-not-expiring
+    title: Certificate expires in more than 30 days
+    resource: tls
+    severity: medium
+    query: resource.certificates.size() > 0 && resource.certificates[0].expiresIn.days > 30
+
+  - uid: tls-cert-trusted
+    title: Certificate chain is trusted
+    resource: tls
+    severity: critical
+    query: resource.certificates.size() > 0 && resource.certificates[0].isVerified == true

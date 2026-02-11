@@ -1,0 +1,57 @@
+# Example GitLab CI pipeline for kspec security scanning.
+#
+# Prerequisites:
+#   - Place your policy files in ./policies/ (or adjust the -d flag)
+#   - Set required CI/CD variables (e.g., GITHUB_TOKEN for GitHub provider)
+
+stages:
+  - scan
+
+kspec-scan:
+  stage: scan
+  image: golang:1.24
+  script:
+    - go install github.com/kopexa-grc/kspec/cmd/kspec@latest
+
+    # Run network scan (no credentials needed)
+    - |
+      kspec scan network example.com \
+        -d ./policies \
+        --no-ui \
+        -o report.json
+
+    # Print score summary
+    - |
+      if command -v jq &> /dev/null; then
+        echo "Security Score: $(jq '.metadata.score' report.json)/100"
+        echo "Grade: $(jq -r '.metadata.grade' report.json)"
+      fi
+  artifacts:
+    when: always
+    paths:
+      - report.json
+      - report.csv
+    expire_in: 30 days
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+
+# Optional: GitHub provider scan
+# kspec-github-scan:
+#   stage: scan
+#   image: golang:1.24
+#   variables:
+#     GITHUB_TOKEN: $KSPEC_GITHUB_TOKEN
+#   script:
+#     - go install github.com/kopexa-grc/kspec/cmd/kspec@latest
+#     - |
+#       kspec scan github org my-org \
+#         -d ./policies \
+#         --no-ui \
+#         -o github-report.json
+#   artifacts:
+#     when: always
+#     paths:
+#       - github-report.json
+#     expire_in: 30 days

@@ -1,0 +1,44 @@
+apiVersion: kspec/v1
+kind: Policy
+metadata:
+  name: minimal-github-policy
+  version: "1.0.0"
+  title: Minimal GitHub Organization Security Policy
+
+require:
+  - provider: github
+
+groups:
+  - title: Organization Security
+    checks:
+      - uid: github-org-2fa
+      - uid: github-org-verified
+      - uid: github-repo-no-admin-bypass
+
+queries:
+  - uid: github-org-2fa
+    title: Organization requires two-factor authentication
+    resource: github_organization
+    severity: critical
+    query: resource.twoFactorRequirementEnabled == true
+    remediation: |
+      Enable two-factor authentication requirement for all organization members.
+      Go to Organization Settings > Authentication security > Require two-factor authentication.
+
+  - uid: github-org-verified
+    title: Organization has a verified domain
+    resource: github_organization
+    severity: medium
+    query: resource.isVerified == true
+    remediation: |
+      Verify your organization's domain to prevent impersonation.
+      Go to Organization Settings > Verified & approved domains.
+
+  - uid: github-repo-no-admin-bypass
+    title: Repository branch protection is not bypassed by admins
+    resource: github_repo
+    severity: high
+    query: resource.defaultBranchProtection.enforceAdmins == true
+    remediation: |
+      Enable "Include administrators" in branch protection rules to ensure
+      admins follow the same rules as other contributors.

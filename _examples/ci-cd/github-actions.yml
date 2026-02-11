@@ -1,0 +1,69 @@
+# Example GitHub Actions workflow for kspec security scanning.
+#
+# This workflow runs on every push and pull request, scanning your
+# infrastructure with kspec and uploading the report as an artifact.
+#
+# Prerequisites:
+#   - Place your policy files in ./policies/ (or adjust the -d flag)
+#   - Set required secrets (e.g., GITHUB_TOKEN for GitHub provider)
+
+name: kspec Security Scan
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Run daily at 06:00 UTC
+    - cron: "0 6 * * *"
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+
+      - name: Install kspec
+        run: go install github.com/kopexa-grc/kspec/cmd/kspec@latest
+
+      - name: Run network scan
+        run: |
+          kspec scan network example.com \
+            -d ./policies \
+            --no-ui \
+            -o report.json
+
+      # Optional: Run with GitHub provider
+      # - name: Run GitHub scan
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.KSPEC_GITHUB_TOKEN }}
+      #   run: |
+      #     kspec scan github org my-org \
+      #       -d ./policies \
+      #       --no-ui \
+      #       -o github-report.json
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kspec-report
+          path: "*.json"
+
+      - name: Check scan result
+        run: |
+          # kspec exits with code 0 on success.
+          # Fail the pipeline if the report contains critical findings.
+          if command -v jq &> /dev/null && [ -f report.json ]; then
+            score=$(jq '.metadata.score' report.json)
+            echo "Security Score: $score/100"
+            if [ "$score" -lt 40 ]; then
+              echo "::error::Security score is below threshold (40): $score"
+              exit 1
+            fi
+          fi

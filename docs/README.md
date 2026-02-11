@@ -8,6 +8,11 @@ Welcome to the kspec documentation. kspec is an enterprise-grade policy-as-code 
 - **[Installation](installation.md)** - Detailed installation instructions
 - **[Writing Policies](policies.md)** - Learn to write security policies
 
+## Integration
+
+- **[Integration Guide](integration.md)** - Using kspec as a Discovery Tool or Check Engine (CLI & Go API)
+- **[Examples](../_examples/)** - Working code examples for discovery, scanning, and CI/CD
+
 ## Provider Guides
 
 kspec supports multiple providers for scanning different platforms:

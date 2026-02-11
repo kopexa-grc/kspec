@@ -1,0 +1,44 @@
+apiVersion: kspec/v1
+kind: Policy
+metadata:
+  name: minimal-tls-policy
+  version: "1.0.0"
+  title: Minimal TLS Security Policy
+
+require:
+  - provider: network
+
+groups:
+  - title: TLS Configuration
+    checks:
+      - uid: tls-version-check
+      - uid: tls-cert-validity
+      - uid: tls-cert-verified
+
+queries:
+  - uid: tls-version-check
+    title: TLS 1.2 or higher is supported
+    resource: tls
+    severity: high
+    query: resource.versions.exists(v, v == "tls1.2") || resource.versions.exists(v, v == "tls1.3")
+    remediation: |
+      Configure your server to support TLS 1.2 or TLS 1.3.
+      Disable older protocols (TLS 1.0, TLS 1.1, SSLv3).
+
+  - uid: tls-cert-validity
+    title: Certificate is not expiring within 30 days
+    resource: tls
+    severity: medium
+    query: resource.certificates.size() > 0 && resource.certificates[0].expiresIn.days > 30
+    remediation: |
+      Renew the TLS certificate before it expires.
+      Consider using automated certificate management (e.g., Let's Encrypt).
+
+  - uid: tls-cert-verified
+    title: Certificate chain is verified
+    resource: tls
+    severity: critical
+    query: resource.certificates.size() > 0 && resource.certificates[0].isVerified == true
+    remediation: |
+      Ensure the certificate is issued by a trusted Certificate Authority.
+      Verify the full certificate chain is correctly configured.
