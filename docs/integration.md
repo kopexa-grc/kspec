@@ -467,6 +467,78 @@ Each worker runs the full pipeline (discover → sync → scan → update) for o
 
 See [`_examples/worker/`](../_examples/worker/) for a complete working example.
 
+### 4.5 Disabling Queries Per Asset
+
+Some assets may have accepted risks — for example, a staging server with an expiring certificate that does not need the `tls-cert-not-expiring` check. kspec supports disabling specific policy checks per asset **at the application level**, without modifying policies or kspec internals.
+
+**Pattern: external map of fingerprint → disabled UIDs**
+
+Maintain a mapping from asset fingerprints to the query UIDs that should be skipped:
+
+```go
+// In production, load from a database or API.
+var disabledQueries = map[string][]string{
+    AssetFingerprint("network", "host", "example.com"):    {"tls-cert-not-expiring"},
+    AssetFingerprint("network", "host", "cloudflare.com"): {"tls-modern-version", "tls-cert-not-expiring"},
+}
+```
+
+**Approach: copy and strip**
+
+Before passing policies to the scanner, deep-copy them and remove any checks whose UID appears in the disabled set:
+
+```go
+func filterDisabledQueries(policies []policy.Policy, disabled []string) []policy.Policy {
+    set := make(map[string]struct{}, len(disabled))
+    for _, uid := range disabled {
+        set[uid] = struct{}{}
+    }
+
+    out := make([]policy.Policy, len(policies))
+    copy(out, policies)
+
+    for i, p := range out {
+        // Filter groups — remove matching checks, drop empty groups.
+        var groups []policy.Group
+        for _, g := range p.Groups {
+            var checks []policy.Check
+            for _, c := range g.Checks {
+                if _, skip := set[c.UID]; !skip {
+                    checks = append(checks, c)
+                }
+            }
+            if len(checks) > 0 {
+                g.Checks = checks
+                groups = append(groups, g)
+            }
+        }
+        out[i].Groups = groups
+
+        // Filter top-level queries the same way.
+        var queries []policy.Check
+        for _, q := range p.Queries {
+            if _, skip := set[q.UID]; !skip {
+                queries = append(queries, q)
+            }
+        }
+        out[i].Queries = queries
+    }
+
+    return out
+}
+```
+
+The original policy slice is never mutated, so it can be reused across integrations.
+
+**Production notes:**
+
+- **Storage** — Store disabled query mappings in a database table (e.g., `asset_disabled_queries`) keyed by asset fingerprint and query UID
+- **Admin API** — Expose endpoints for security teams to disable/re-enable queries per asset
+- **Audit log** — Record who disabled a query, when, and the justification for compliance traceability
+- **Expiry** — Consider adding an expiration date so accepted risks are automatically re-evaluated
+
+See [`_examples/worker/`](../_examples/worker/) for a complete working example with disabled queries.
+
 ## Part 5: Provider Registration
 
 kspec uses Go's `init()` pattern for provider registration. Every program that uses kspec must import at least one provider package:

@@ -41,6 +41,63 @@ import (
 )
 
 // ---------------------------------------------------------------------------
+// Disabled queries (per asset)
+// ---------------------------------------------------------------------------
+
+// disabledQueries maps asset fingerprints to query UIDs that should be skipped.
+// In production, this would come from a database or API.
+var disabledQueries = map[string][]string{
+	AssetFingerprint("network", "host", "example.com"):    {"tls-cert-not-expiring"},
+	AssetFingerprint("network", "host", "cloudflare.com"): {"tls-modern-version", "tls-cert-not-expiring"},
+}
+
+// filterDisabledQueries returns a deep copy of the policies with checks matching
+// the disabled UIDs removed from both Groups[].Checks and top-level Queries.
+// The original slice is not modified so it can be reused across integrations.
+func filterDisabledQueries(policies []policy.Policy, disabled []string) []policy.Policy {
+	if len(disabled) == 0 {
+		return policies
+	}
+
+	set := make(map[string]struct{}, len(disabled))
+	for _, uid := range disabled {
+		set[uid] = struct{}{}
+	}
+
+	out := make([]policy.Policy, len(policies))
+	copy(out, policies)
+
+	for i, p := range out {
+		// Filter groups and their checks.
+		var groups []policy.Group
+		for _, g := range p.Groups {
+			var checks []policy.Check
+			for _, c := range g.Checks {
+				if _, skip := set[c.UID]; !skip {
+					checks = append(checks, c)
+				}
+			}
+			if len(checks) > 0 {
+				g.Checks = checks
+				groups = append(groups, g)
+			}
+		}
+		out[i].Groups = groups
+
+		// Filter top-level queries.
+		var queries []policy.Check
+		for _, q := range p.Queries {
+			if _, skip := set[q.UID]; !skip {
+				queries = append(queries, q)
+			}
+		}
+		out[i].Queries = queries
+	}
+
+	return out
+}
+
+// ---------------------------------------------------------------------------
 // Asset Store
 // ---------------------------------------------------------------------------
 
@@ -136,13 +193,14 @@ type IntegrationResult struct {
 	ResourceTypes  int
 	TotalResources int
 	// Scan
-	Score     uint32
-	Grade     string
-	RiskLevel string
-	Findings  scoring.Findings
-	Duration  time.Duration
-	Phase     string // "discovery", "sync", "scan", "complete"
-	Err       error
+	Score         uint32
+	Grade         string
+	RiskLevel     string
+	Findings      scoring.Findings
+	DisabledCount int // Number of queries disabled for this asset
+	Duration      time.Duration
+	Phase         string // "discovery", "sync", "scan", "complete"
+	Err           error
 }
 
 // ---------------------------------------------------------------------------
@@ -309,6 +367,15 @@ func processIntegration(ctx context.Context, store AssetStore, integration Integ
 		return result
 	}
 
+	// Apply per-asset disabled queries.
+	if disabled, ok := disabledQueries[fingerprint]; ok {
+		policies = filterDisabledQueries(policies, disabled)
+		result.DisabledCount = len(disabled)
+
+		fmt.Fprintf(os.Stderr, "[%s]   Disabled %d queries for asset %s: %v\n",
+			integration.ID, len(disabled), integration.AssetName, disabled)
+	}
+
 	s := scanner.NewScanner(scanner.ScanConfig{
 		ProviderName:   integration.Provider,
 		ProviderConfig: integration.Config,
@@ -433,8 +500,8 @@ func main() {
 	fmt.Println("=== Results ===")
 	fmt.Println()
 
-	header := fmt.Sprintf("%-34s %-18s %6s %6s %-10s %4s %4s %4s %4s %10s %-10s",
-		"Fingerprint", "Asset", "ResTyp", "ResAll", "Grade", "Crit", "High", "Med", "Low", "Duration", "Phase")
+	header := fmt.Sprintf("%-34s %-18s %6s %6s %-10s %4s %4s %4s %4s %4s %10s %-10s",
+		"Fingerprint", "Asset", "ResTyp", "ResAll", "Grade", "Skip", "Crit", "High", "Med", "Low", "Duration", "Phase")
 	fmt.Println(header)
 	fmt.Println(strings.Repeat("-", len(header)))
 
@@ -444,10 +511,10 @@ func main() {
 		if r.Err != nil {
 			failed++
 
-			fmt.Printf("%-34s %-18s %6s %6s %-10s %4s %4s %4s %4s %10s %-10s  ERR: %v\n",
+			fmt.Printf("%-34s %-18s %6s %6s %-10s %4s %4s %4s %4s %4s %10s %-10s  ERR: %v\n",
 				truncate(r.Fingerprint, 34),
 				truncate(r.Asset, 18),
-				"-", "-", "-", "-", "-", "-", "-",
+				"-", "-", "-", "-", "-", "-", "-", "-",
 				r.Duration.Truncate(time.Millisecond),
 				r.Phase,
 				r.Err,
@@ -458,12 +525,13 @@ func main() {
 
 		succeeded++
 
-		fmt.Printf("%-34s %-18s %6d %6d %-10s %4d %4d %4d %4d %10s %-10s\n",
+		fmt.Printf("%-34s %-18s %6d %6d %-10s %4d %4d %4d %4d %4d %10s %-10s\n",
 			truncate(r.Fingerprint, 34),
 			truncate(r.Asset, 18),
 			r.ResourceTypes,
 			r.TotalResources,
 			fmt.Sprintf("%s (%d)", r.Grade, r.Score),
+			r.DisabledCount,
 			r.Findings.Critical,
 			r.Findings.High,
 			r.Findings.Medium,
