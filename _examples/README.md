@@ -28,6 +28,12 @@ go run ./_examples/discovery/basic/ example.com
 | [check-engine/basic](check-engine/basic/) | End-to-end scan with `scanner.NewScanner()` | `go run ./_examples/check-engine/basic/ example.com` |
 | [check-engine/advanced](check-engine/advanced/) | Events, scoring, JSON/CSV report export | `go run ./_examples/check-engine/advanced/ example.com` |
 
+### Worker / High Availability (Go API)
+
+| Example | Description | Run |
+|---------|-------------|-----|
+| [worker](worker/) | Production worker: discovery → sync → scan pipeline | `go run ./_examples/worker/` |
+
 ### CI/CD
 
 | File | Description |

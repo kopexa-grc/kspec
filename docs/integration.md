@@ -400,7 +400,74 @@ fi
 
 See [`_examples/ci-cd/scan.sh`](../_examples/ci-cd/scan.sh) for a reusable wrapper script.
 
-## Part 4: Provider Registration
+## Part 4: High-Availability Worker Integration
+
+When integrating kspec as a backend service (e.g., Kopexa), a **worker pool** processes many integrations concurrently. Each integration goes through a full lifecycle:
+
+```
+┌───────────┐    ┌────────────┐    ┌──────┐    ┌─────────┐
+│ Discovery │───▶│ Asset Sync │───▶│ Scan │───▶│ Results │
+└───────────┘    └────────────┘    └──────┘    └─────────┘
+```
+
+1. **Discovery** — `discovery.Discover()` enumerates resources for a given provider/asset
+2. **Asset Sync** — Track each asset with a stable fingerprint, preserving `first_seen` / `last_seen`
+3. **Scan** — Load policies, create a `scanner.NewScanner()`, run evaluation
+4. **Result Collection** — Results keyed by fingerprint for platform entity mapping
+
+### 4.1 AssetStore Pattern
+
+Define an interface for asset persistence so you can swap implementations:
+
+```go
+type AssetStore interface {
+    Upsert(record AssetRecord) error
+    Get(fingerprint string) (*AssetRecord, bool)
+    List() []AssetRecord
+}
+```
+
+The `Upsert` method preserves `FirstSeen` from existing records while updating `LastSeen`, scores, and grades. Use an in-memory implementation for development and swap for a database, Redis, or API client in production.
+
+### 4.2 Asset Fingerprinting
+
+Generate stable identifiers for assets so that scan results can be mapped back to the correct platform entity across runs:
+
+```go
+func AssetFingerprint(provider, assetType, assetName string) string {
+    h := sha256.Sum256([]byte(provider + ":" + assetType + ":" + assetName))
+    return hex.EncodeToString(h[:16])
+}
+```
+
+The fingerprint is deterministic — the same provider/type/name always produces the same ID, allowing you to track assets across discovery cycles.
+
+### 4.3 Worker Pool
+
+Process integrations concurrently using a channel-based worker pool:
+
+```go
+func processIntegrations(ctx context.Context, store AssetStore, integrations []Integration, numWorkers int) []IntegrationResult {
+    jobs := make(chan Integration, len(integrations))
+    results := make(chan IntegrationResult, len(integrations))
+    // Start N workers, feed jobs, collect results...
+}
+```
+
+Each worker runs the full pipeline (discover → sync → scan → update) for one integration at a time. Use `context.WithTimeout` per integration so one slow provider doesn't block others.
+
+### 4.4 Production Considerations
+
+- **Persistent store** — Replace the in-memory `AssetStore` with PostgreSQL, Redis, or an API client
+- **Retry logic** — Wrap each phase with exponential backoff for transient failures
+- **Metrics** — Export worker utilization, phase durations, and error rates to Prometheus/OpenTelemetry
+- **Queue systems** — Replace the in-process channel with NATS, RabbitMQ, or SQS for distributed workers
+- **Graceful shutdown** — Use `signal.NotifyContext` to cancel in-flight work on SIGINT/SIGTERM
+- **Worker count** — Read from environment (`KSPEC_WORKERS`) with a sensible default (`runtime.NumCPU()`)
+
+See [`_examples/worker/`](../_examples/worker/) for a complete working example.
+
+## Part 5: Provider Registration
 
 kspec uses Go's `init()` pattern for provider registration. Every program that uses kspec must import at least one provider package:
 
