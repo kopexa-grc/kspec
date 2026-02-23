@@ -66,7 +66,7 @@ require (
 	github.com/hetznercloud/hcloud-go/v2 v2.36.0
 	github.com/invopop/jsonschema v0.13.0
 	github.com/microcosm-cc/bluemonday v1.0.27
-	github.com/microsoftgraph/msgraph-sdk-go v1.95.0
+	github.com/microsoftgraph/msgraph-sdk-go v1.96.0
 	github.com/miekg/dns v1.1.72
 	github.com/rs/zerolog v1.34.0
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
