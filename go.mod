@@ -50,7 +50,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/rds v1.116.0
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.96.0
 	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.41.1
-	github.com/aws/aws-sdk-go-v2/service/securityhub v1.67.3
+	github.com/aws/aws-sdk-go-v2/service/securityhub v1.67.4
 	github.com/aws/aws-sdk-go-v2/service/sns v1.39.11
 	github.com/aws/aws-sdk-go-v2/service/sqs v1.42.21
 	github.com/aws/aws-sdk-go-v2/service/ssm v1.68.0
