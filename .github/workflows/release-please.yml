@@ -130,7 +130,7 @@ jobs:
           fi
 
       - name: Upload archive
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: archive-${{ matrix.goos }}-${{ matrix.goarch }}
           path: |
