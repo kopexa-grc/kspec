@@ -28,7 +28,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.10
 	github.com/aws/aws-sdk-go-v2/service/acm v1.37.19
 	github.com/aws/aws-sdk-go-v2/service/apigateway v1.38.5
-	github.com/aws/aws-sdk-go-v2/service/apigatewayv2 v1.33.5
+	github.com/aws/aws-sdk-go-v2/service/apigatewayv2 v1.33.7
 	github.com/aws/aws-sdk-go-v2/service/autoscaling v1.64.0
 	github.com/aws/aws-sdk-go-v2/service/cloudfront v1.60.0
 	github.com/aws/aws-sdk-go-v2/service/cloudtrail v1.55.5
