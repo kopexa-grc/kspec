@@ -29,7 +29,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/acm v1.37.19
 	github.com/aws/aws-sdk-go-v2/service/apigateway v1.38.5
 	github.com/aws/aws-sdk-go-v2/service/apigatewayv2 v1.33.7
-	github.com/aws/aws-sdk-go-v2/service/autoscaling v1.64.0
+	github.com/aws/aws-sdk-go-v2/service/autoscaling v1.64.3
 	github.com/aws/aws-sdk-go-v2/service/cloudfront v1.60.3
 	github.com/aws/aws-sdk-go-v2/service/cloudtrail v1.55.8
 	github.com/aws/aws-sdk-go-v2/service/cloudwatch v1.55.1
