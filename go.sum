@@ -63,8 +63,8 @@ github.com/antlr4-go/antlr/v4 v4.13.1 h1:SqQKkuVZ+zWkMMNkjy5FZe5mr5WURWnlpmOuzYW
 github.com/antlr4-go/antlr/v4 v4.13.1/go.mod h1:GKmUxMtwp6ZgGwZSva4eWPC5mS6vUAmOABFgjdkM7Nw=
 github.com/aws/aws-sdk-go-v2 v1.41.4 h1:10f50G7WyU02T56ox1wWXq+zTX9I1zxG46HYuG1hH/k=
 github.com/aws/aws-sdk-go-v2 v1.41.4/go.mod h1:mwsPRE8ceUUpiTgF7QmQIJ7lgsKUPQOUl3o72QBrE1o=
-github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.5 h1:zWFmPmgw4sveAYi1mRqG+E/g0461cJ5M4bJ8/nc6d3Q=
-github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.5/go.mod h1:nVUlMLVV8ycXSb7mSkcNu9e3v/1TJq2RTlrPwhYWr5c=
+github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.7 h1:3kGOqnh1pPeddVa/E37XNTaWJ8W6vrbYV9lJEkCnhuY=
+github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.7/go.mod h1:lyw7GFp3qENLh7kwzf7iMzAxDn+NzjXEAGjKS2UOKqI=
 github.com/aws/aws-sdk-go-v2/config v1.32.10 h1:9DMthfO6XWZYLfzZglAgW5Fyou2nRI5CuV44sTedKBI=
 github.com/aws/aws-sdk-go-v2/config v1.32.10/go.mod h1:2rUIOnA2JaiqYmSKYmRJlcMWy6qTj1vuRFscppSBMcw=
 github.com/aws/aws-sdk-go-v2/credentials v1.19.11 h1:NdV8cwCcAXrCWyxArt58BrvZJ9pZ9Fhf9w6Uh5W3Uyc=
@@ -93,8 +93,8 @@ github.com/aws/aws-sdk-go-v2/service/cloudtrail v1.55.7 h1:yd6F0NesTmsJVOCINfKXB
 github.com/aws/aws-sdk-go-v2/service/cloudtrail v1.55.7/go.mod h1:t6XfFh0GZGngXjAlsmFedoylELOo9t/XetRCeTEfZEc=
 github.com/aws/aws-sdk-go-v2/service/cloudwatch v1.55.1 h1:s+ZS2lmYFeCISy20RkSerTmfMIzxlevj4LyWNuE3cfY=
 github.com/aws/aws-sdk-go-v2/service/cloudwatch v1.55.1/go.mod h1:xXUsqpyas4oCIPxrKoCeqvyvFBLEYSohybRVV0bHq9A=
-github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.63.2 h1:9Zc/otv2WzK7gbhXIbDfzV5aWUoaFDV7WHPcpvp4B8o=
-github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.63.2/go.mod h1:dvfInk3WN/sz8is2m5iN5EFYQzIXcQLaT2UnauE8uL4=
+github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.64.1 h1:O0hE9Wepd/nkAKdbgGpHRrOBH6Dy2CNn+ZHoOumm5TA=
+github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.64.1/go.mod h1:P62x5mIaXIlnnUBRBK6Lyv3O/anojE8nMxOD7A3MTcM=
 github.com/aws/aws-sdk-go-v2/service/configservice v1.61.1 h1:aho+qoT/ybRPv3EKee98Pc1hZcKRd5ECrv+KdCdj2I8=
 github.com/aws/aws-sdk-go-v2/service/configservice v1.61.1/go.mod h1:jAsoyYj8HSPYo4ZMaoGtDG622Nz8VXtsYVA8jyPYyqI=
 github.com/aws/aws-sdk-go-v2/service/dynamodb v1.56.2 h1:xi/ECwajy2mixviBD7bKAlGGSwzEaFKX2wIhrZt9NGw=
