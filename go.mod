@@ -31,7 +31,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/apigatewayv2 v1.33.7
 	github.com/aws/aws-sdk-go-v2/service/autoscaling v1.64.0
 	github.com/aws/aws-sdk-go-v2/service/cloudfront v1.60.3
-	github.com/aws/aws-sdk-go-v2/service/cloudtrail v1.55.7
+	github.com/aws/aws-sdk-go-v2/service/cloudtrail v1.55.8
 	github.com/aws/aws-sdk-go-v2/service/cloudwatch v1.55.1
 	github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.64.1
 	github.com/aws/aws-sdk-go-v2/service/configservice v1.62.0
