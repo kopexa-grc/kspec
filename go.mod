@@ -32,7 +32,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/autoscaling v1.64.4
 	github.com/aws/aws-sdk-go-v2/service/cloudfront v1.60.4
 	github.com/aws/aws-sdk-go-v2/service/cloudtrail v1.55.9
-	github.com/aws/aws-sdk-go-v2/service/cloudwatch v1.55.2
+	github.com/aws/aws-sdk-go-v2/service/cloudwatch v1.55.3
 	github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.65.0
 	github.com/aws/aws-sdk-go-v2/service/configservice v1.62.1
 	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.57.1
