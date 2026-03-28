@@ -87,8 +87,8 @@ github.com/aws/aws-sdk-go-v2/service/apigatewayv2 v1.34.1 h1:KdeMmKNbHOcFsiFe8Bh
 github.com/aws/aws-sdk-go-v2/service/apigatewayv2 v1.34.1/go.mod h1:QdVi7bF8U8HE8FWQ77pa4wcAMFnxI/UPx4mmQ4azRQs=
 github.com/aws/aws-sdk-go-v2/service/autoscaling v1.64.4 h1:9ytLDWrppFYTtWVVx80nefvaf/v02yG5pT+8HGk0vv8=
 github.com/aws/aws-sdk-go-v2/service/autoscaling v1.64.4/go.mod h1:Lg8BJb1TOzVTJ6RFfkJ9zyI/XFcjcfZem+Iu4PeQxPE=
-github.com/aws/aws-sdk-go-v2/service/cloudfront v1.60.3 h1:RB1bsGTqfbLymRdVDqHoomyZ6XfPcXtBP041qHLtlv4=
-github.com/aws/aws-sdk-go-v2/service/cloudfront v1.60.3/go.mod h1:hF/cipBvnkoCnN0v+lw1ZnKTj6LyDfSX7yZW2d9buJQ=
+github.com/aws/aws-sdk-go-v2/service/cloudfront v1.60.4 h1:IvmTOyh1CZB0Gq6fUqVwmGqy8L9GApUr+cAK/Wq4oPs=
+github.com/aws/aws-sdk-go-v2/service/cloudfront v1.60.4/go.mod h1:4/Vk7LHrr16Zkvy71Th2BJPNmCMPJFP91TaGcEqywWs=
 github.com/aws/aws-sdk-go-v2/service/cloudtrail v1.55.9 h1:ndjU1c3H1BYJy7fG0Y6Nh/sgD2M/KN+PZaqyCK/Fdfs=
 github.com/aws/aws-sdk-go-v2/service/cloudtrail v1.55.9/go.mod h1:aH6yXmBYSr1k8uycfqxH5pv4T5N3x2cfFPvrlhyWjAU=
 github.com/aws/aws-sdk-go-v2/service/cloudwatch v1.55.2 h1:mleWBVIxwceEzyItUVoqMFiv6TmOP6ECPoN6WB/VWXc=
