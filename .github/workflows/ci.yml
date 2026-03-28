@@ -17,7 +17,8 @@ permissions:
 jobs:
   lint:
     name: Lint
-    runs-on: ubuntu-4c
+    runs-on: arc-runner-set
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -36,7 +37,8 @@ jobs:
 
   test:
     name: Test
-    runs-on: ubuntu-4c
+    runs-on: arc-runner-set-large
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -68,10 +70,10 @@ jobs:
           fail_ci_if_error: false
         continue-on-error: true
 
-  # Race detection runs separately (slower but important)
   test-race:
     name: Test (Race Detection)
-    runs-on: ubuntu-4c
+    runs-on: arc-runner-set-large
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -95,7 +97,8 @@ jobs:
 
   build:
     name: Build
-    runs-on: ubuntu-4c
+    runs-on: arc-runner-set-large
+    timeout-minutes: 20
     strategy:
       matrix:
         goos: [linux, darwin, windows]
@@ -132,7 +135,8 @@ jobs:
 
   goreleaser-check:
     name: GoReleaser Check
-    runs-on: ubuntu-latest
+    runs-on: arc-runner-set
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v6

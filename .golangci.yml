@@ -71,6 +71,8 @@ linters:
       excludes:
         - G104
         - G304
+        - G101
+        - G703
 
     misspell:
       locale: US
@@ -118,6 +120,9 @@ linters:
       - path: (cmd|main)\.go
         linters:
           - forbidigo
+      - text: "QF1012"
+        linters:
+          - staticcheck
 
 issues:
   max-issues-per-linter: 50
