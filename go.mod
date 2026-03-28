@@ -55,7 +55,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sqs v1.42.24
 	github.com/aws/aws-sdk-go-v2/service/ssm v1.68.4
 	github.com/aws/aws-sdk-go-v2/service/sts v1.41.9
-	github.com/aws/aws-sdk-go-v2/service/wafv2 v1.70.7
+	github.com/aws/aws-sdk-go-v2/service/wafv2 v1.71.3
 	github.com/charmbracelet/bubbles v1.0.0
 	github.com/charmbracelet/bubbletea v1.3.10
 	github.com/charmbracelet/lipgloss v1.1.0
