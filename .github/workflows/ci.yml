@@ -23,12 +23,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: go.mod
-          cache: true
-
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v9
         with:
@@ -37,17 +31,12 @@ jobs:
 
   test:
     name: Test
+    needs: lint
     runs-on: arc-runner-set-large
     timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: go.mod
-          cache: true
 
       - name: Go Test Cache
         uses: actions/cache@v5
@@ -72,17 +61,12 @@ jobs:
 
   test-race:
     name: Test (Race Detection)
+    needs: lint
     runs-on: arc-runner-set-large
     timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: go.mod
-          cache: true
 
       - name: Go Test Cache (Race)
         uses: actions/cache@v5
@@ -97,6 +81,7 @@ jobs:
 
   build:
     name: Build
+    needs: lint
     runs-on: arc-runner-set-large
     timeout-minutes: 20
     strategy:
@@ -109,12 +94,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: go.mod
-          cache: true
 
       - name: Go Build Cache
         uses: actions/cache@v5
@@ -135,6 +114,7 @@ jobs:
 
   goreleaser-check:
     name: GoReleaser Check
+    needs: lint
     runs-on: arc-runner-set
     timeout-minutes: 10
     steps:
@@ -142,12 +122,6 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: go.mod
-          cache: true
 
       - name: Check GoReleaser config
         uses: goreleaser/goreleaser-action@v6
