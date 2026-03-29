@@ -17,7 +17,7 @@ permissions:
 jobs:
   lint:
     name: Lint
-    runs-on: arc-runner-set
+    runs-on: arc-runner-set-large
     timeout-minutes: 20
     steps:
       - name: Checkout
