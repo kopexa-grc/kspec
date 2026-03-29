@@ -39,7 +39,6 @@ jobs:
     if: ${{ needs.release-please.outputs.release_created == 'true' }}
     runs-on: arc-runner-set-large
     timeout-minutes: 20
-    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
