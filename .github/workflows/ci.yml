@@ -62,7 +62,7 @@ jobs:
   test-race:
     name: Test (Race Detection)
     needs: lint
-    runs-on: arc-runner-set-large
+    runs-on: ubuntu-4c
     timeout-minutes: 20
     steps:
       - name: Checkout
@@ -75,6 +75,12 @@ jobs:
           key: ${{ runner.os }}-go-test-race-${{ hashFiles('**/*.go') }}
           restore-keys: |
             ${{ runner.os }}-go-test-race-
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
 
       - name: Run tests with race detector
         run: go test -race ./...
