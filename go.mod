@@ -26,7 +26,7 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.41.5
 	github.com/aws/aws-sdk-go-v2/config v1.32.13
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.13
-	github.com/aws/aws-sdk-go-v2/service/acm v1.37.23
+	github.com/aws/aws-sdk-go-v2/service/acm v1.38.0
 	github.com/aws/aws-sdk-go-v2/service/apigateway v1.39.1
 	github.com/aws/aws-sdk-go-v2/service/apigatewayv2 v1.34.1
 	github.com/aws/aws-sdk-go-v2/service/autoscaling v1.64.4
