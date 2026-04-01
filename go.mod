@@ -48,7 +48,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/lambda v1.88.5
 	github.com/aws/aws-sdk-go-v2/service/organizations v1.51.0
 	github.com/aws/aws-sdk-go-v2/service/rds v1.117.1
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.97.3
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.98.0
 	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.41.5
 	github.com/aws/aws-sdk-go-v2/service/securityhub v1.68.3
 	github.com/aws/aws-sdk-go-v2/service/sns v1.39.15
