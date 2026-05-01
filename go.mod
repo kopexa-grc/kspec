@@ -61,7 +61,7 @@ require (
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/cloudflare/cloudflare-go/v4 v4.6.0
 	github.com/ctreminiom/go-atlassian v1.6.1
-	github.com/google/cel-go v0.27.0
+	github.com/google/cel-go v0.28.0
 	github.com/google/go-github/v62 v62.0.0
 	github.com/hetznercloud/hcloud-go/v2 v2.37.0
 	github.com/invopop/jsonschema v0.13.0
