@@ -23,7 +23,7 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/security/armsecurity v0.14.0
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/sql/armsql v1.2.0
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage v1.8.1
-	github.com/aws/aws-sdk-go-v2 v1.41.5
+	github.com/aws/aws-sdk-go-v2 v1.41.7
 	github.com/aws/aws-sdk-go-v2/config v1.32.13
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.13
 	github.com/aws/aws-sdk-go-v2/service/acm v1.38.0
@@ -33,7 +33,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/cloudfront v1.60.4
 	github.com/aws/aws-sdk-go-v2/service/cloudtrail v1.55.9
 	github.com/aws/aws-sdk-go-v2/service/cloudwatch v1.55.3
-	github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.66.0
+	github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.71.1
 	github.com/aws/aws-sdk-go-v2/service/configservice v1.62.1
 	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.57.1
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.296.2
@@ -86,10 +86,10 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.11.2 // indirect
 	github.com/AzureAD/microsoft-authentication-library-for-go v1.6.0 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
-	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.8 // indirect
+	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.10 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.21 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.21 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.7.21 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.23 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.7.23 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/ini v1.8.6 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/v4a v1.4.22 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.7 // indirect
@@ -100,7 +100,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/signin v1.0.9 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sso v1.30.14 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.35.18 // indirect
-	github.com/aws/smithy-go v1.24.2 // indirect
+	github.com/aws/smithy-go v1.25.1 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
